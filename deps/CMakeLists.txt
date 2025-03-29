@@ -31,4 +31,9 @@ add_subdirectory(glad)
 #add imgui library
 add_subdirectory(imgui)
 
-target_link_libraries(dependancies INTERFACE glfw assimp glm stb glad imgui)
+#add nlohmann json library
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+
+add_subdirectory(json)
+
+target_link_libraries(dependancies INTERFACE glfw assimp glm stb glad imgui nlohmann_json::nlohmann_json)
