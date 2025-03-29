@@ -36,4 +36,8 @@ set(JSON_BuildTests OFF CACHE INTERNAL "")
 
 add_subdirectory(json)
 
-target_link_libraries(dependancies INTERFACE glfw assimp glm stb glad imgui nlohmann_json::nlohmann_json)
+#add bullet3 library
+
+add_subdirectory(bullet3)
+
+target_link_libraries(dependancies INTERFACE glfw assimp glm stb glad imgui nlohmann_json::nlohmann_json bullet3)
