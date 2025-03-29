@@ -42,5 +42,7 @@ add_subdirectory(bullet3)
 #add lua library
 add_subdirectory(lua) 
 
+#add soloud library
+add_subdirectory(soloud) 
 
-target_link_libraries(dependancies INTERFACE glfw assimp glm stb glad imgui nlohmann_json::nlohmann_json bullet3 lua::lib)
+target_link_libraries(dependancies INTERFACE glfw assimp glm stb glad imgui nlohmann_json::nlohmann_json bullet3 lua::lib soloud)

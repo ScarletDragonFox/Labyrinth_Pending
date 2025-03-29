@@ -13,3 +13,6 @@
 [submodule "deps/lua"]
 	path = deps/lua
 	url = https://github.com/lubgr/lua-cmake
+[submodule "deps/soloud/soloud"]
+	path = deps/soloud/soloud
+	url = https://github.com/jarikomppa/soloud
