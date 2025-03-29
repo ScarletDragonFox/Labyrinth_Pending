@@ -12,6 +12,8 @@
 #include <nlohmann/json.hpp>
 #include <bullet/btBulletCollisionCommon.h>
 
+#include <lua.h>
+
 int main()
 {
     IMGUI_CHECKVERSION();
