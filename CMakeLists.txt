@@ -16,6 +16,12 @@ set(CDF_HEADERS #list of all header files in the includes/Labyrinth/ directory
 list(TRANSFORM CDF_SOURCES PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/)
 list(TRANSFORM CDF_HEADERS PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/includes/Labyrinth/)
 
+
+
 add_executable(Labyrinth ${CDF_SOURCES} ${CDF_HEADERS})
 target_include_directories(Labyrinth PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/includes)
 target_compile_features(Labyrinth PRIVATE cxx_std_20)
+
+add_subdirectory(deps)
+
+target_link_libraries(Labyrinth PRIVATE dependancies)
