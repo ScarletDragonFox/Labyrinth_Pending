@@ -39,8 +39,8 @@ set( SOLOUD_SOURCE_FILES
     soloud/src/audiosource/monotone/soloud_monotone.cpp
     soloud/src/audiosource/noise/soloud_noise.cpp
 
-    #soloud/src/audiosource/openmpt/soloud_openmpt.cpp
-    #soloud/src/audiosource/openmpt/soloud_openmpt_dll.c # this uses a DLL and will not work in wasm
+    soloud/src/audiosource/openmpt/soloud_openmpt.cpp
+    soloud/src/audiosource/openmpt/soloud_openmpt_dll.c # this uses a DLL and will not work in wasm
 
 
     soloud/src/audiosource/sfxr/soloud_sfxr.cpp
@@ -57,6 +57,8 @@ set( SOLOUD_SOURCE_FILES
     soloud/src/audiosource/wav/dr_impl.cpp
     soloud/src/audiosource/wav/soloud_wav.cpp
     soloud/src/audiosource/wav/soloud_wavstream.cpp
+    soloud/src/audiosource/wav/stb_vorbis.c
+
     soloud/src/filter/soloud_bassboostfilter.cpp
     soloud/src/filter/soloud_biquadresonantfilter.cpp
     soloud/src/filter/soloud_dcremovalfilter.cpp
