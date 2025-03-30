@@ -23,4 +23,6 @@ CMakeUserPresets.json
 # End of https://www.toptal.com/developers/gitignore/api/cmake
 
 # Do not commit the build directory
-build/ 
+build/
+
+.vscode/ 

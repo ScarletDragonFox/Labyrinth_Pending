@@ -13,8 +13,8 @@ set(CDF_HEADERS #list of all header files in the includes/Labyrinth/ directory
     test_header.hpp 
     )
 
-list(TRANSFORM CDF_SOURCES PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/)
-list(TRANSFORM CDF_HEADERS PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/includes/Labyrinth/)
+list(TRANSFORM CDF_SOURCES PREPEND src/)
+list(TRANSFORM CDF_HEADERS PREPEND includes/Labyrinth/)
 
 
 
