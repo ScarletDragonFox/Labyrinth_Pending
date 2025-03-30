@@ -14,6 +14,7 @@ set(IMGUI_SOURCE_FILES
     "src/imgui_tables.cpp"
     "src/imgui_widgets.cpp"
     "src/imgui.cpp"
+    "src/imgui_impl_opengl3.cpp"
 )
 
 set(IMGUI_HEADER_FILES 
