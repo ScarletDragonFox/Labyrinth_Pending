@@ -1,0 +1,127 @@
+{
+    "version": 3,
+    "configurePresets": [
+	{
+		"name": "debug-base",
+		"hidden": true,
+		"binaryDir": "${sourceDir}/build/${presetName}",
+		"cacheVariables": {
+			"CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+			"CMAKE_BUILD_TYPE": "Debug",
+			"CDF_COMPILE_FLAGS": "$env{CDF_COMPILE_COMMON} $env{CDF_COMPILE_DEBUG}"
+		}
+	},
+	{
+		"name": "release-base",
+		"hidden": true,
+		"binaryDir": "${sourceDir}/build/${presetName}",
+		"cacheVariables": {
+			"CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+			"CMAKE_DEBUG_TYPE": "Release",
+			"CDF_COMPILE_FLAGS": "$env{CDF_COMPILE_COMMON} $env{CDF_COMPILE_RELEASE}"
+		}
+	},
+	{
+		"name": "gcc-base",
+		"hidden": true,
+		"cacheVariables": {
+			"CMAKE_C_COMPILER": "gcc",
+			"CMAKE_CXX_COMPILER": "g++"
+		},
+		"environment": {
+			"CDF_COMPILE_COMMON": "-Wall -Wpedantic -Wextra -Wmissing-include-dirs -Wcast-align -Wcast-qual -Wdisabled-optimization -Wduplicated-branches -Wduplicated-cond -Wformat=2 -Wlogical-op -Wnull-dereference -Woverloaded-virtual -Wpointer-arith -Wshadow -Wswitch-enum -Wvla",
+			"CDF_COMPILE_DEBUG": "-Og -g3",
+			"CDF_COMPILE_RELEASE": "-O3"
+		}
+	},
+	{
+		"name": "gcc-MinGW-base",
+		"inherits": "gcc-base",
+		"hidden": true,
+		"generator": "MinGW Makefiles",
+		"condition": {
+			"type": "equals",
+			"lhs": "${hostSystemName}",
+			"rhs": "Windows"
+		}
+	},
+	{
+		"name": "gcc-Unix-base",
+		"inherits": "gcc-base",
+		"hidden": true,
+		"generator": "Unix Makefiles",
+		"condition": {
+			"type": "notEquals",
+			"lhs": "${hostSystemName}",
+			"rhs": "Windows"
+		}
+	},
+	{
+		"name": "gccWindowsRelease",
+		"inherits": ["gcc-MinGW-base", "release-base"]
+	},
+	{
+		"name": "gccWindowsDebug",
+		"inherits": ["gcc-MinGW-base", "debug-base"]
+	},
+	{
+		"name": "gccLinuxRelease",
+		"inherits": ["gcc-Unix-base", "release-base"]
+	},
+	{
+		"name": "gccLinuxDebug",
+		"inherits": ["gcc-Unix-base", "debug-base"]
+	}
+	
+    ],
+    "buildPresets": [
+	{
+		"name": "gccWindowsRelease",
+		"displayName": "gcc (MinGW) Release",
+		"description": "Release build with gcc through MinGW",
+		"configurePreset": "gccWindowsRelease",
+		"jobs": 15,
+		"condition": {
+                        "type": "equals",
+                        "lhs": "${hostSystemName}",
+                        "rhs": "Windows"
+                }
+	},
+	{
+		"name": "gccWindowsDebug",
+		"displayName": "gcc (MinGW) Debug",
+		"description": "Debug build with gcc through MinGW",
+		"configurePreset": "gccWindowsDebug",
+		"jobs": 15,
+		"condition": {
+                        "type": "equals",
+                        "lhs": "${hostSystemName}",
+                        "rhs": "Windows"
+                }
+	},
+	{
+		"name": "gccLinuxRelease",
+		"displayName": "gcc (UNIX) Release",
+		"description": "Release build with gcc",
+		"configurePreset": "gccLinuxRelease",
+		"jobs": 15,
+		"condition": {
+                        "type": "notEquals",
+                        "lhs": "${hostSystemName}",
+                        "rhs": "Windows"
+                }
+	},
+	{
+		"name": "gccLinuxDebug",
+		"displayName": "gcc (UNIX) Debug",
+		"description": "Debug build with gcc",
+		"configurePreset": "gccLinuxDebug",
+		"jobs": 15,
+		"condition": {
+                        "type": "notEquals",
+                        "lhs": "${hostSystemName}",
+                        "rhs": "Windows"
+                }
+	}
+    ]
+}
