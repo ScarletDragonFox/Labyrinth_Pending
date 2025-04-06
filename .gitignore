@@ -26,3 +26,6 @@ CMakeUserPresets.json
 build/
 
 .vscode/ 
+
+#ignore the imgui file
+imgui.ini 
