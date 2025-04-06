@@ -29,6 +29,8 @@ set(IMGUI_HEADER_FILES
     "include/imgui_internal.h"
 )
 
-add_library(imgui INTERFACE)
-target_sources( imgui INTERFACE ${IMGUI_SOURCE_FILES})
-target_include_directories(imgui INTERFACE include)
+add_library(imgui STATIC)
+target_sources( imgui PUBLIC ${IMGUI_SOURCE_FILES})
+target_include_directories(imgui PUBLIC include)
+target_link_libraries(imgui PRIVATE glfw)
+target_compile_options(imgui PRIVATE "-O3")
