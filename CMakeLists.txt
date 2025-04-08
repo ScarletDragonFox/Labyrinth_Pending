@@ -7,10 +7,14 @@ project(CDF_LABIRYNTH_PENDING
 
 set(CDF_SOURCES #list of all source files in the src/ directory
     main.cpp
+    Engine/eventManager.cpp
     )
 
 set(CDF_HEADERS #list of all header files in the includes/Labyrinth/ directory
-    test_header.hpp 
+    test_header.hpp
+    Engine/event.hpp
+    Engine/eventManager.hpp
+    Engine/types.hpp
     )
 
 list(TRANSFORM CDF_SOURCES PREPEND src/)
