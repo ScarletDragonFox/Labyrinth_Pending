@@ -11,7 +11,6 @@ set(CDF_SOURCES #list of all source files in the src/ directory
     )
 
 set(CDF_HEADERS #list of all header files in the includes/Labyrinth/ directory
-    test_header.hpp
     Engine/event.hpp
     Engine/eventManager.hpp
     Engine/types.hpp
