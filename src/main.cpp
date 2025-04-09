@@ -1,5 +1,3 @@
-#include <Labyrinth/test_header.hpp>
-
 #include <glad/gl.h> //
 #define GLFW_INCLUDE_NONE //we use our own opnegl header <- put this into cmake
 #include <GLFW/glfw3.h> //
@@ -83,15 +81,6 @@ int main()
     speech.setParams(2000U, 9.0f, 0.5f, 20);
     soloud.init();
     std::cout << "Using SoLoud backend: " << soloud.getBackendString() << "\n";
-    
-    
-        // SoLoud::Wav sonk; 
-        // if(sonk.load("C:/Users/radek/Music/Cacola - Yellow and Purple.mp3"))
-        // {
-        //     std::cerr << "Could not open file!\n";
-        // }
-        // SoLoud::handle hand =  soloud.play(sonk); //only plays if SoLoud::Wav is still in scope (how, I don't know, but it does!)
-        // soloud.setVolume(hand, 1.0f);
     
     bool imguiDoShowDemoWindow = true;
 
@@ -200,24 +189,6 @@ int main()
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
-
-    //TODO:
-    // figure out what audio formats we can work with:
-    // do a window with glfw & glad & imgui to test that out
-    //
-    //  fix bullet3:
-    //      - get the src/ directory from git (manually? or get cmake to do it) 
-    //      - get list of all .c / .cpp files to compile 
-    //      - copy all headers to {build_dir}/include/ (with respect to folders) (find way to automate, maybe with GLOB?)
-    //      - leave notes of what this does and stuff in a deps/bullet3/README.md file <- for maintnance & stuff
-    //
-    //  Merge into main, delete branch
-    //  Create documantation:
-    //      - STYLE.ms <- how to write code so that all code is (relatively) consistant 
-    //      - Read how to make & write a LICENSE.md
-    //      - create new CMakeLists.txt in docs/ to run doxygen wit hright settings & create docs in docs/gen/
-    //      - update main README.md describing every library we are using (see LICENSE.md)
-
 
     // // Wait until sounds have finished
     // while (soloud.getActiveVoiceCount() > 0)
