@@ -1,6 +1,6 @@
 #include "Labyrinth/Engine/ECS/coreECS.hpp"
 
-namespace lp
+namespace lp::ecs
 {
     Entity CoreECS::createEntity()
     {

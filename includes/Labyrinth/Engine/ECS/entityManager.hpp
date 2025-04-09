@@ -9,7 +9,7 @@
 
 #include <iostream>
 
-namespace lp
+namespace lp::ecs
 {
     /// @brief class that manages the creation and destruction of Entities
     ///

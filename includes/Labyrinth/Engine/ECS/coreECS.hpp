@@ -5,7 +5,7 @@
 #include "systemManager.hpp"
 #include "componentManager.hpp"
 
-namespace lp
+namespace lp::ecs
 {
     /// @brief The Core/Main ECS class.
     ///

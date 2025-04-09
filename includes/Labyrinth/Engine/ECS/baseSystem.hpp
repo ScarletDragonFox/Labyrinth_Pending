@@ -4,7 +4,7 @@
 
 #include <set>
 
-namespace lp
+namespace lp::ecs
 {
     /// @brief Base class for all Systems
     ///

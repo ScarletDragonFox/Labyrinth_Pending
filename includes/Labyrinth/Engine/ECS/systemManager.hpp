@@ -8,7 +8,7 @@
 #include <cassert>
 #include <unordered_map>
 
-namespace lp
+namespace lp::ecs
 {
     /// @brief The System Manager. Oversees BaseSystem's
     ///

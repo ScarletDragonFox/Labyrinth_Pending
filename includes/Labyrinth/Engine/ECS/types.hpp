@@ -2,7 +2,7 @@
 #define LABYRINTH_PENDING_ENGINE_ECS_TYPES_HPP
 #include <cstdint>
 
-namespace lp
+namespace lp::ecs
 {
     /// @brief Entity - simple number
     ///

@@ -1,6 +1,6 @@
 #include <Labyrinth/Engine/ECS/entityManager.hpp>
 
-namespace lp
+namespace lp::ecs
 {
     Entity EntityManager::createEntity()
     {

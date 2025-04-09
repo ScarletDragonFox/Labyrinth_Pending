@@ -5,7 +5,7 @@
 #include <cassert>
 #include <unordered_map>
 
-namespace lp
+namespace lp::ecs
 {
     /// @brief Pure Virtual Class.
     ///

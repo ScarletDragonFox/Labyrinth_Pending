@@ -1,6 +1,6 @@
 #include "Labyrinth/Engine/ECS/systemManager.hpp"
 
-namespace lp
+namespace lp::ecs
 {
     void SystemManager::destroyEntity(const Entity cv_entity)
     {

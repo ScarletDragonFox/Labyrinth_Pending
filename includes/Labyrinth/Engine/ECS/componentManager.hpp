@@ -8,7 +8,7 @@
 #include "types.hpp"
 #include "componentContainer.hpp"
 
-namespace lp
+namespace lp::ecs
 {
     /// @brief class that manages the creation and destruction of Components
     ///
