@@ -8,12 +8,24 @@ project(CDF_LABIRYNTH_PENDING
 set(CDF_SOURCES #list of all source files in the src/ directory
     main.cpp
     Engine/eventManager.cpp
+
+    Engine/ECS/coreECS.cpp
+    Engine/ECS/entityManager.cpp
+    Engine/ECS/systemManager.cpp
     )
 
 set(CDF_HEADERS #list of all header files in the includes/Labyrinth/ directory
     Engine/event.hpp
     Engine/eventManager.hpp
     Engine/types.hpp
+
+    Engine/ECS/baseSystem.hpp
+    Engine/ECS/componentContainer.hpp
+    Engine/ECS/componentManager.hpp
+    Engine/ECS/coreECS.hpp
+    Engine/ECS/entityManager.hpp
+    Engine/ECS/systemManager.hpp
+    Engine/ECS/types.hpp
     )
 
 list(TRANSFORM CDF_SOURCES PREPEND src/)
