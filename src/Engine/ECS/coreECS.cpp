@@ -16,6 +16,6 @@ namespace lp::ecs
 
     bool CoreECS::isAlive(const Entity cv_entity) const
     {
-        mEntity.isAliveEntity(cv_entity);
+        return mEntity.isAliveEntity(cv_entity);
     }
 }

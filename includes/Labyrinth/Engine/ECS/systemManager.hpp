@@ -46,7 +46,7 @@ namespace lp::ecs
         {
             const char* systemName = typeid(T).name();
             assert(mSystems.find(systemName) != mSystems.end() && "Using an unregistered system!");
-            return mSystemSignatures[systemName];
+            return mSystemSignatures.at(systemName);
         }
 
         /// @brief destory an entity. 

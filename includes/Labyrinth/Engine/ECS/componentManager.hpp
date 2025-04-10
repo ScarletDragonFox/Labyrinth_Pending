@@ -35,8 +35,8 @@ namespace lp::ecs
             assert(mNextComponentIDExponent == 16 && "Reached Component Limit!");
 
             mComponentSignatures.insert({typeName, 1 << mNextComponentIDExponent});
-            mComponentContainers.insert{typeName, std::make_shared<ComponentArray<T>>()};
-            
+            //mComponentContainers.insert{typeName, std::make_shared<ComponentContainer<T>>()};
+            mComponentContainers.insert(std::pair<const char*, std::shared_ptr<ComponentContainerBasePureVirtualClass>>(typeName, std::make_shared<ComponentContainer<T>>()));
             ++mNextComponentIDExponent;
         }
         

@@ -67,7 +67,7 @@ namespace lp::ecs
         template<typename T>
         inline void addComponent(const Entity cv_entity)
         {
-            mComponent.addComponent(cv_entity);
+            mComponent.addComponent<T>(cv_entity);
             Signature& entitySign = mEntity.getSignature(cv_entity);
             Signature componentSign = mComponent.getComponentSignature<T>();
             entitySign |= componentSign;

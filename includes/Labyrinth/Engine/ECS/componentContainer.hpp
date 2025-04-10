@@ -40,7 +40,7 @@ namespace lp::ecs
 
         /// @brief Remove a Component from an Entity
         ///
-        /// Does nothing if the Entity doesn't have that Component\
+        /// Does nothing if the Entity doesn't have that Component
         ///
         /// Is an Override of ComponentContainerBasePureVirtualClass::remove(const Entity)
         /// @param cv_entity Entity in question

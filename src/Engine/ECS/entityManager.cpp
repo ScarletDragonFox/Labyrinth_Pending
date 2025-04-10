@@ -24,7 +24,7 @@ namespace lp::ecs
 
     void EntityManager::destroyEntity(const Entity cv_entity)
     {
-        if(cv_entity != 0);
+        if(cv_entity != 0) return;
         mEntitiesAlive--;
         mSignatures.erase(cv_entity);
         mFreedEntities.push(cv_entity);
@@ -46,7 +46,7 @@ namespace lp::ecs
 
     bool EntityManager::isAliveEntity(const Entity cv_entity)const
     {
-        if(cv_entity == lp::const_entity_invalid) return false;
+        if(cv_entity == lp::ecs::const_entity_invalid) return false;
         auto it = mSignatures.find(cv_entity);
         if(it == mSignatures.end()) return false;
         return true;
