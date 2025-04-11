@@ -13,6 +13,9 @@ set(CDF_SOURCES #list of all source files in the src/ directory
     Engine/ECS/entityManager.cpp
     Engine/ECS/systemManager.cpp
 
+    Engine/Resource/resourceManager.cpp
+    Engine/Resource/shaderManager.cpp
+
     game.cpp
     engine.cpp
     )
@@ -29,6 +32,11 @@ set(CDF_HEADERS #list of all header files in the includes/Labyrinth/ directory
     Engine/ECS/entityManager.hpp
     Engine/ECS/systemManager.hpp
     Engine/ECS/types.hpp
+
+    Engine/Resource/resourceManager.hpp
+    Engine/Resource/shaderManager.hpp
+    
+    Engine/Graphics/types.hpp
 
     game.hpp
     engine.hpp
