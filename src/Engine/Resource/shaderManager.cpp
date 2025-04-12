@@ -103,14 +103,14 @@ namespace
     //RegularShader shader program filepaths:
 
     /// @brief vertex shader of SimpleColor
-    constexpr char* l_shaderpath_SimpleColor_vs = "shaders/simpleColor.vs.glsl";
+    const char* const l_shaderpath_SimpleColor_vs = "shaders/simpleColor.vs.glsl";
     /// @brief fragment shader of SimpleColor
-    constexpr char* l_shaderpath_SimpleColor_fs = "shaders/simpleColor.fs.glsl";
+    const char* const l_shaderpath_SimpleColor_fs = "shaders/simpleColor.fs.glsl";
     
     //ComputeShader shader program filepaths:
 
     /// @brief compute shader of name
-    constexpr char* l_shaderpath_name_cs = "";
+    const char* const l_shaderpath_name_cs = "";
 }
 
 namespace lp::res

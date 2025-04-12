@@ -7,6 +7,7 @@
 
 #include <iostream>
 
+#include <Labyrinth/Engine/Resource/shaderManager.hpp>
 
 namespace lp
 {
@@ -26,6 +27,12 @@ namespace lp
             return true;
         }
         
+        if(mResources.initialize())
+        {
+            std::cerr << "Resource Manager failed to initialize\n";
+            return true;
+        }
+
         return false;
     }
 

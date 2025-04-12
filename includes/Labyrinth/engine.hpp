@@ -4,6 +4,7 @@
 #include <soloud.h>
 #include <Labyrinth/Engine/ECS/coreECS.hpp>
 #include <Labyrinth/Engine/eventManager.hpp>
+#include <Labyrinth/Engine/Resource/resourceManager.hpp>
 
 namespace lp
 {
@@ -16,12 +17,20 @@ namespace lp
         bool initialize();
 
         /// @brief get reference to ECS
-        /// @return reference to ECS
+        /// @return reference to the Entity Component System
         lp::ecs::CoreECS& getECS() { return mECS; }
 
+        /// @brief get reference to the Event Manager
+        /// @return reference to Event Manager
         lp::EventManager& getEventManager() { return mEvents; }
 
+        /// @brief get sound engine
+        /// @return reference to SoLouds instance
         SoLoud::Soloud& getSoLoud() {return mSound;}
+
+        /// @brief get Resource Manager
+        /// @return reference to the resource manager
+        lp::ResourceManager& getResurceManager() { return mResources; }
 
         /// @brief destroy the Engine & all ts data
         void destroy();
@@ -33,6 +42,10 @@ namespace lp
         lp::ecs::CoreECS mECS;
         /// @brief The Event Manager
         lp::EventManager mEvents;
+        /// @brief The Resource Manager.
+        ///
+        /// Loads/Unloads & Stores all types of resources
+        lp::ResourceManager mResources;
     };
     
     extern Engine g_engine;
