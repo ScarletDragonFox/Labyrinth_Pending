@@ -3,7 +3,6 @@
 #include "Labyrinth/engine.hpp"
 
 #include <GLFW/glfw3.h>
-#include <cstring>
 
 #include <glm/gtc/quaternion.hpp> //glm::angleAxis, glm::quat
 
@@ -17,37 +16,26 @@ namespace lp
 
         this->mKeyboardListenerID = eventMan.on(lp::EventTypes::WindowKeyAction, [this](Event& v_event) -> void
         {
+            
             const auto check = [](lp::evt::WindowKeyAction left, KeyData right) -> bool
             {
-                if(left.scancode != right.scancode) return false;
+                if(left.key != right.key) return false;
                 if(left.modAlt == right.modAlt && left.modControl == right.modControl && left.modShift == right.modShift && left.modSuper == right.modSuper)
                 {
-                    return true;
+                   return true;
                 }
                 return false;
             };
 
             const auto data = v_event.getData<lp::evt::WindowKeyAction>();
 
-            if(check(data, this->mKeymapps[static_cast<int>(Action::Forward)]))
+            for(auto&i: this->mKeymapps)
             {
-                this->mPositionDelta += glm::dvec3(1, 0, 0);
-            }
-            if(check(data, this->mKeymapps[static_cast<int>(Action::Back)]))
-            {
-                this->mPositionDelta += glm::dvec3(-1, 0, 0);
-            }
-            if(check(data, this->mKeymapps[static_cast<int>(Action::Right)]))
-            {
-                this->mPositionDelta += glm::dvec3(0, 0, 1);
-            }
-            if(check(data, this->mKeymapps[static_cast<int>(Action::Left)]))
-            {
-                this->mPositionDelta += glm::dvec3(0, 0, -1);
-            }
-            if(check(data, this->mKeymapps[static_cast<int>(Action::Jump)]))
-            {
-                this->mPositionDelta += glm::dvec3(0, 1, 0); //TODO: jump should 'launch' the player up
+                if(check(data, i))
+                {
+                    i.pressed = data.pressed;
+                    return;
+                }
             }
         });
 
@@ -58,8 +46,77 @@ namespace lp
         });
     }
 
+    glm::mat4 Player::getViewMatrix()const
+    {
+        return (glm::mat4)glm::lookAt(this->mPosition, this->mPosition + this->mVectorFront, this->mVectorUp);
+    }
+
+    namespace{
+        inline glm::mat4 MakeInfReversedZProjRH(float fovY_radians, float aspectWbyH, float zNear)
+        {
+            float f = 1.0f / tan(fovY_radians / 2.0f);
+            return glm::mat4(
+                f / aspectWbyH, 0.0f, 0.0f, 0.0f,
+                0.0f, f, 0.0f, 0.0f,
+                0.0f, 0.0f, 0.0f, -1.0f,
+                0.0f, 0.0f, zNear, 0.0f);
+        }
+    }
+
+    glm::mat4 Player::getProjectionMatrix(double width_by_height)const
+    {
+        return MakeInfReversedZProjRH(glm::half_pi<float>(), (float)width_by_height, 0.1f);
+    }
+
     void Player::update(const double deltaTime)
     {
+        {
+            const bool lockPressed = this->mKeymapps[static_cast<int>(Action::DisableInput)].pressed;
+            static bool free_mouse_IsPressed = false;
+
+            if(!free_mouse_IsPressed){
+                if(lockPressed)
+                {
+                    free_mouse_IsPressed = true;
+                    mTriggerInput = !mTriggerInput;
+
+                    lp::Event evt(lp::EventTypes::PlayerTriggerInputs, mTriggerInput);
+                    g_engine.getEventManager().emit(evt);
+                }
+            }else{
+                if(!lockPressed)
+                {
+                    free_mouse_IsPressed = false;
+                }
+            }
+        }
+
+
+        if(!mTriggerInput) return;
+
+        {
+            if(this->mKeymapps[static_cast<int>(Action::Forward)].pressed)
+            {
+                this->mPositionDelta += glm::dvec3(1, 0, 0);
+            }
+            if(this->mKeymapps[static_cast<int>(Action::Back)].pressed)
+            {
+                this->mPositionDelta += glm::dvec3(-1, 0, 0);
+            }
+            if(this->mKeymapps[static_cast<int>(Action::Right)].pressed)
+            {
+                this->mPositionDelta += glm::dvec3(0, 0, 1);
+            }
+            if(this->mKeymapps[static_cast<int>(Action::Left)].pressed)
+            {
+                this->mPositionDelta += glm::dvec3(0, 0, -1);
+            }
+            if(this->mKeymapps[static_cast<int>(Action::Jump)].pressed)
+            {
+                this->mPositionDelta += glm::dvec3(0, 1, 0); //TODO: jump should 'launch' the player up
+            }
+        }
+
         if(mOrientationDelta != glm::dvec2(0.0)) //check if the mouse was moved since last update
         {
             mOrientationDelta *= this->mMouseSenstitivity;
@@ -127,7 +184,7 @@ namespace lp
 
     void Player::loadDefaultConfig()
     {
-        std::memset(&this->mKeymapps[0], 0, this->mKeymapps.size() * sizeof(KeyData));
+        this->mKeymapps.fill({});
         {
             auto& val = this->mKeymapps[static_cast<int>(Action::Forward)];
             val.key = GLFW_KEY_W;
@@ -147,6 +204,10 @@ namespace lp
         }{
             auto& val = this->mKeymapps[static_cast<int>(Action::Jump)];
             val.key = GLFW_KEY_SPACE;
+            val.scancode = glfwGetKeyScancode(val.key);
+        }{
+            auto& val = this->mKeymapps[static_cast<int>(Action::DisableInput)];
+            val.key = GLFW_KEY_F1;
             val.scancode = glfwGetKeyScancode(val.key);
         }
 

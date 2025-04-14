@@ -26,6 +26,12 @@ namespace lp
         /// Uses evt::WindowMouseMotion as data
         WindowMouseMotion,
 
+        /// @brief gets called when the inputs (keyboard/mouse) are enable/disabled
+        ///
+        /// Used bool as data, true if inputs are to be disabled, and false otherwise
+        PlayerTriggerInputs,
+
+
         /// @brief count of how many event types there are.
         /// @details Leave this here as the last event
         Count,
@@ -46,7 +52,7 @@ namespace lp
         /// @see https://www.glfw.org/docs/3.3/input_guide.html#input_key
         struct WindowKeyAction
         {
-            int key = 0; //key pressed (GLFW_KEY_NAME)
+            unsigned int key = 0; //key pressed (GLFW_KEY_NAME)
             int scancode = 0; //scancode of the key. More accurate, but platform-dependant.
             bool pressed: 1 = false; //true for GLFW_PRESS, false for GLFW_RELEASE
             bool modShift:1 = false; //was Shift pressed?

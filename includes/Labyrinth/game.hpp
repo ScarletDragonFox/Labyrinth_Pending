@@ -4,7 +4,8 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
-
+#include "Labyrinth/Engine/Graphics/basicFrowardRenderer.hpp"
+#include "Labyrinth/player.hpp"
 
 namespace lp
 {
@@ -22,6 +23,8 @@ namespace lp
         void destroy();
         private:
 
+        lp::gl::ForwardRenderer mRenndd;
+        lp::Player mPlayer;
         GLFWwindow* mWindow = nullptr;
     };
 }

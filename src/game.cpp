@@ -51,6 +51,22 @@ namespace
         lp::Event evt(lp::EventTypes::WindowMouseMotion, msy);
         lp::g_engine.getEventManager().emit(evt);
     }
+
+    void glfw_window_size_callback([[maybe_unused]] GLFWwindow* window, int v_width, int v_height)
+    {
+        static int lastWidth = -1;
+        static int lastHeight = -1;
+        if(lastWidth != v_width || lastHeight != v_height)
+        {
+            const lp::evt::WindowResize wre = 
+            {
+                .width = v_width,
+                .height = v_height
+            };
+            lp::Event evt(lp::EventTypes::WindowResize, wre);
+            lp::g_engine.getEventManager().emit(evt);
+        }
+    }
 }
 
 namespace lp
@@ -82,6 +98,22 @@ namespace lp
 
         glfwSetKeyCallback(mWindow, glfw_key_callback);
         glfwSetCursorPosCallback(mWindow, glfw_cursor_position_callback);
+        glfwSetWindowSizeLimits(mWindow, 10, 2, GLFW_DONT_CARE, GLFW_DONT_CARE); //stop user from creating a 0 x 0 size framebuffer.
+        glfwSetWindowSizeCallback(mWindow, glfw_window_size_callback);
+
+        g_engine.getEventManager().on(lp::EventTypes::PlayerTriggerInputs, [this](Event& rv_evt)
+        {
+            bool enable = rv_evt.getData<bool>();
+            std::cout << (enable?"Disabled Inputs!\n":"Enabled Inputs!\n");
+            if(enable){
+                glfwSetInputMode(this->mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            }else{
+                glfwSetInputMode(this->mWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            }
+        });
+
+
+        mRenndd.setup(640, 480);
 
         // Setup Dear ImGui context
         IMGUI_CHECKVERSION();
@@ -123,7 +155,7 @@ namespace lp
 
         SoLoud::Soloud &soloud = g_engine.getSoLoud();
 
-        std::cout << "HERE!\n";
+        std::cout << "HERE2!\n";
 
         while(!glfwWindowShouldClose(mWindow))
         {
@@ -198,13 +230,26 @@ namespace lp
                 
                 ImGui::End();
             }
-        
-            ImGui::Render();
+            double wbh = 0.0;
+            {
+                int width = 0, height = 0;
+                glfwGetFramebufferSize(mWindow, &width, &height);
+                wbh = (double)width / (double)height;
+                glViewport(0, 0, width, height);
+            }
             
-            int display_w, display_h;
-            glfwGetFramebufferSize(mWindow, &display_w, &display_h);
-            glViewport(0, 0, display_w, display_h);
-            glClear(GL_COLOR_BUFFER_BIT);
+            mPlayer.update(0.01);
+            gl::DebugRendererData dtttta;
+            
+            dtttta.mCamProjection = mPlayer.getProjectionMatrix(wbh);
+            dtttta.mCamView = mPlayer.getViewMatrix();
+
+          
+
+            mRenndd.render(dtttta);
+
+            ImGui::Render();
+
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 

@@ -29,6 +29,9 @@ namespace lp
             this->updateVectors();
         }
 
+        glm::mat4 getViewMatrix()const;
+        glm::mat4 getProjectionMatrix(double width_by_height)const;
+
         void update(const double deltaTime);
 
         ~Player();
@@ -41,13 +44,14 @@ namespace lp
             Left,
             Right,
             Jump,
+            DisableInput,
             Count
         };
 
         struct KeyData
         {
             unsigned int key = 0; //key being pressed (GLFW_KEY_XXX)
-            unsigned int scancode = 0; //scan (platform-specific key code)
+            int scancode = 0; //scan (platform-specific key code)
             bool pressed:1; //true for GLFW_PRESS, false for GLFW_RELEASE
             bool modShift:1; //was Shift pressed?
             bool modControl:1; //was Control pressed?
@@ -84,6 +88,8 @@ namespace lp
 
         double mMouseSenstitivity = 0.1;
         double mFreeCamSpeed = 10.0;
+
+        bool mTriggerInput = true; //if false, disables input & frees mouse (by sending an event)
 
         /// @brief ID of the keyboard press state change event listener
         lp::EventListenerID mKeyboardListenerID = 0;

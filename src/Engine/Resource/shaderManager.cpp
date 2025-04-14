@@ -117,9 +117,8 @@ namespace lp::res
 {
     bool ShaderManager::initialize()
     {
-        return false;
         {
-            mRegularShaders[static_cast<int>(lp::gl::ShaderType::SimpleColor)].mFragmentPath = l_shaderpath_SimpleColor_vs;
+            mRegularShaders[static_cast<int>(lp::gl::ShaderType::SimpleColor)].mVertexPath = l_shaderpath_SimpleColor_vs;
             mRegularShaders[static_cast<int>(lp::gl::ShaderType::SimpleColor)].mFragmentPath = l_shaderpath_SimpleColor_fs;
 
             //mRegularShaders[static_cast<int>(lp::gl::ShaderType::SimpleColor)].mFragmentPath = l_shaderpath_SimpleColor_vs;
@@ -141,7 +140,7 @@ namespace lp::res
                 error_happened = true;
             }
         }
-
+        
         for(const auto&i: this->mRegularShaders)
         {
             if(!fs::exists(i.mVertexPath))
@@ -160,6 +159,8 @@ namespace lp::res
         {
             return true;
         }
+
+        std::cout << "inside shader Manager!\n";
 
         this->reloadAllShaders();
 
@@ -185,6 +186,10 @@ namespace lp::res
             {
                 if(i.mProgramID != 0) glDeleteProgram(i.mProgramID);
                 i.mProgramID = newProgram;
+                
+            } else 
+            {
+                std ::cerr << "OH NOES!!!\n";
             }
         }
 
@@ -195,6 +200,10 @@ namespace lp::res
             {
                 if(i.mProgramID != 0) glDeleteProgram(i.mProgramID);
                 i.mProgramID = newProgram;
+                std ::cout << "ProgramID = " << newProgram << "\n";
+            } else
+            {
+                std ::cerr << "OH NOES!!!\n";
             }
         }
     }

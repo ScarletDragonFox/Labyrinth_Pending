@@ -88,3 +88,5 @@ do we want physics to run at a constant framerate?
          + who will 'own' the data?
          + how do you ahndle scene changes?
          + create a new scene every time, or have a buffer???  
+
+    ./build/gccWindowsRelease/Labyrinth.exe to run exe     
