@@ -104,7 +104,6 @@ namespace lp
         g_engine.getEventManager().on(lp::EventTypes::PlayerTriggerInputs, [this](Event& rv_evt)
         {
             bool enable = rv_evt.getData<bool>();
-            std::cout << (enable?"Disabled Inputs!\n":"Enabled Inputs!\n");
             if(enable){
                 glfwSetInputMode(this->mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             }else{

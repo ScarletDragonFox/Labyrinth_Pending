@@ -52,7 +52,7 @@ namespace lp
         /// @see https://www.glfw.org/docs/3.3/input_guide.html#input_key
         struct WindowKeyAction
         {
-            unsigned int key = 0; //key pressed (GLFW_KEY_NAME)
+            int key = 0; //key pressed (GLFW_KEY_NAME)
             int scancode = 0; //scancode of the key. More accurate, but platform-dependant.
             bool pressed: 1 = false; //true for GLFW_PRESS, false for GLFW_RELEASE
             bool modShift:1 = false; //was Shift pressed?
