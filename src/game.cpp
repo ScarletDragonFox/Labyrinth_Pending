@@ -19,7 +19,7 @@
 
 namespace
 {
-    void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+    void glfw_key_callback([[maybe_unused]] GLFWwindow* window, int key, int scancode, int action, int mods)
     {
         if(action == GLFW_REPEAT) return;
         const lp::evt::WindowKeyAction kay = 
@@ -27,16 +27,16 @@ namespace
             .key = key,
             .scancode = scancode,
             .pressed = (action == GLFW_PRESS),
-            .modShift = mods & GLFW_MOD_SHIFT,
-            .modControl = mods & GLFW_MOD_CONTROL,
-            .modAlt = mods & GLFW_MOD_ALT,
-            .modSuper = mods & GLFW_MOD_SUPER
+            .modShift = static_cast<bool>(mods & GLFW_MOD_SHIFT),
+            .modControl = static_cast<bool>(mods & GLFW_MOD_CONTROL),
+            .modAlt = static_cast<bool>(mods & GLFW_MOD_ALT),
+            .modSuper = static_cast<bool>(mods & GLFW_MOD_SUPER)
         };
         lp::Event evt(lp::EventTypes::WindowKeyAction, kay);
         lp::g_engine.getEventManager().emit(evt);
     }
 
-    void glfw_cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
+    void glfw_cursor_position_callback([[maybe_unused]] GLFWwindow* window, double xpos, double ypos)
     {
         static double previousPosX = xpos;
         static double previousPosY = ypos;

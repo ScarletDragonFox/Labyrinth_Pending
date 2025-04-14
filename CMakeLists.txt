@@ -21,6 +21,7 @@ set(CDF_SOURCES #list of all source files in the src/ directory
 
     game.cpp
     engine.cpp
+    player.cpp
     )
 
 set(CDF_HEADERS #list of all header files in the includes/Labyrinth/ directory
@@ -45,6 +46,7 @@ set(CDF_HEADERS #list of all header files in the includes/Labyrinth/ directory
 
     game.hpp
     engine.hpp
+    player.hpp
     )
 
 list(TRANSFORM CDF_SOURCES PREPEND src/)
