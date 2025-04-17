@@ -245,10 +245,3 @@ set(BULLET3_SOURCE_FILES
 add_library(bullet3 STATIC ${BULLET3_SOURCE_FILES})
 target_include_directories(bullet3 PUBLIC include include/bullet)
 target_compile_options(bullet3 PRIVATE "-O3")
-
-include(CheckIPOSupported)
-
-check_ipo_supported(RESULT result)
-if(result)
-  set_target_properties(bullet3 PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
-endif()
