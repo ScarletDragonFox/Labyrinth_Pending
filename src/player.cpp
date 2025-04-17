@@ -54,7 +54,7 @@ namespace lp
     namespace{
         inline glm::mat4 MakeInfReversedZProjRH(float fovY_radians, float aspectWbyH, float zNear)
         {
-            float f = 1.0f / tan(fovY_radians / 2.0f);
+            const float f = 1.0f / tan(fovY_radians / 2.0f);
             return glm::mat4(
                 f / aspectWbyH, 0.0f, 0.0f, 0.0f,
                 0.0f, f, 0.0f, 0.0f,
@@ -65,7 +65,7 @@ namespace lp
 
     glm::mat4 Player::getProjectionMatrix(double width_by_height)const
     {
-        return MakeInfReversedZProjRH(glm::half_pi<float>(), (float)width_by_height, 0.1f);
+        return MakeInfReversedZProjRH(mCameraFoV, (float)width_by_height, 0.1f);
     }
 
     void Player::update(const double deltaTime)
@@ -127,7 +127,7 @@ namespace lp
         }
         if(mPositionDelta != glm::dvec3(0.0))
         {
-            mPositionDelta *= mFreeCamSpeed * deltaTime;
+            mPositionDelta = glm::normalize(mPositionDelta) * mFreeCamSpeed * deltaTime;
             mPosition += mPositionDelta.x * mVectorFront;
             mPosition += mPositionDelta.y * mVectorUp;
             mPosition += mPositionDelta.z * mVectorRight;
@@ -165,8 +165,8 @@ namespace lp
         constexpr glm::dvec3 ConstexprCameraFront = glm::dvec3(0.0f, 0.0f, -1.0f);
         constexpr glm::dvec3 ConstexprCameraRight = glm::dvec3(1.0f, 0.0f, 0.0f);
 
-        glm::dquat qPitch = glm::angleAxis(glm::radians(-this->mOrientationDelta.y), ConstexprCameraRight); //'right'
-        glm::dquat qYaw = glm::angleAxis(glm::radians(this->mOrientationDelta.x), ConstexprCameraUp); //'up'
+        glm::dquat qPitch = glm::angleAxis(glm::radians(-this->mOrientation.y), ConstexprCameraRight); //'right'
+        glm::dquat qYaw = glm::angleAxis(glm::radians(this->mOrientation.x), ConstexprCameraUp); //'up'
         //glm::quat qRoll = glm::angleAxis(0.0f, -ConstexprCameraFront);//this does not work? //'front'
 
         glm::dquat orient = normalize(qPitch * qYaw);
@@ -188,27 +188,21 @@ namespace lp
         {
             auto& val = this->mKeymapps[static_cast<int>(Action::Forward)];
             val.key = GLFW_KEY_W;
-            val.scancode = glfwGetKeyScancode(val.key);
         }{
             auto& val = this->mKeymapps[static_cast<int>(Action::Back)];
             val.key = GLFW_KEY_S;
-            val.scancode = glfwGetKeyScancode(val.key);
         }{
             auto& val = this->mKeymapps[static_cast<int>(Action::Left)];
             val.key = GLFW_KEY_A;
-            val.scancode = glfwGetKeyScancode(val.key);
         }{
             auto& val = this->mKeymapps[static_cast<int>(Action::Right)];
             val.key = GLFW_KEY_D;
-            val.scancode = glfwGetKeyScancode(val.key);
         }{
             auto& val = this->mKeymapps[static_cast<int>(Action::Jump)];
             val.key = GLFW_KEY_SPACE;
-            val.scancode = glfwGetKeyScancode(val.key);
         }{
             auto& val = this->mKeymapps[static_cast<int>(Action::DisableInput)];
             val.key = GLFW_KEY_F1;
-            val.scancode = glfwGetKeyScancode(val.key);
         }
 
         mMouseSenstitivity = 0.1; //default value
