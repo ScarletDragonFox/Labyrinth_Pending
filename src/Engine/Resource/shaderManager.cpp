@@ -159,9 +159,6 @@ namespace lp::res
         {
             return true;
         }
-
-        std::cout << "inside shader Manager!\n";
-
         this->reloadAllShaders();
 
         return false; //true if error
@@ -189,7 +186,7 @@ namespace lp::res
                 
             } else 
             {
-                std ::cerr << "OH NOES!!!\n";
+                std ::cerr << "mComputeShaders compile error for: " << i.mComputePath << "\n";
             }
         }
 
@@ -200,10 +197,9 @@ namespace lp::res
             {
                 if(i.mProgramID != 0) glDeleteProgram(i.mProgramID);
                 i.mProgramID = newProgram;
-                std ::cout << "ProgramID = " << newProgram << "\n";
             } else
             {
-                std ::cerr << "OH NOES!!!\n";
+                std ::cerr << "mRegularShaders compile error for: " << i.mFragmentPath << "\n";
             }
         }
     }
