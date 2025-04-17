@@ -16,6 +16,13 @@ namespace lp::gl
         /// Outputs the given color to the framebuffer in the 0-slot
         SimpleColor,
 
+        /// @brief Simple Debug shader for drawing lines
+        ///
+        /// Used mainly by the Bullet debug line renderer
+        ///
+        /// Outputs interpolated line color to the framebuffer in the 0-slot
+        DebugLine,
+
         /// @brief Last ''shader'', serves as an invalid value and a count of how many shader there are in here 
         /// @warning DO NOT TOUCH! must be last
         Count
@@ -37,8 +44,11 @@ namespace lp::gl
     {
         const char* names[] = {
             "SimpleColor",
+            "DebugLine",
             "Count"
         };
+        static_assert((sizeof(names) / sizeof(names[0])) != static_cast<std::size_t>(ShaderType::Count), "The 'name' array of shader names was not updated!");
+        
         return names[static_cast<int>(cv_shadertype)];
     }
 
@@ -50,6 +60,9 @@ namespace lp::gl
         const char* names[] = {
             "Count"
         };
+
+        static_assert((sizeof(names) / sizeof(names[0])) != static_cast<std::size_t>(ShaderTypeCompute::Count), "The 'name' array of shader names was not updated!");
+
         return names[static_cast<int>(cv_shadertype)];
     }
 }

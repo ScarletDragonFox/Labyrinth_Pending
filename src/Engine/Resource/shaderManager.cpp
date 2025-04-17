@@ -106,6 +106,11 @@ namespace
     const char* const l_shaderpath_SimpleColor_vs = "shaders/simpleColor.vs.glsl";
     /// @brief fragment shader of SimpleColor
     const char* const l_shaderpath_SimpleColor_fs = "shaders/simpleColor.fs.glsl";
+
+    /// @brief vertex shader of lineDebug
+    const char* const l_shaderpath_lineDebug_vs = "shaders/lineDebug/lineDebug.vs.glsl";
+    /// @brief fragment shader of SimpleColor
+    const char* const l_shaderpath_lineDebug_fs = "shaders/lineDebug/lineDebug.fs.glsl";
     
     //ComputeShader shader program filepaths:
 
@@ -121,8 +126,8 @@ namespace lp::res
             mRegularShaders[static_cast<int>(lp::gl::ShaderType::SimpleColor)].mVertexPath = l_shaderpath_SimpleColor_vs;
             mRegularShaders[static_cast<int>(lp::gl::ShaderType::SimpleColor)].mFragmentPath = l_shaderpath_SimpleColor_fs;
 
-            //mRegularShaders[static_cast<int>(lp::gl::ShaderType::SimpleColor)].mFragmentPath = l_shaderpath_SimpleColor_vs;
-            //mRegularShaders[static_cast<int>(lp::gl::ShaderType::SimpleColor)].mFragmentPath = l_shaderpath_SimpleColor_fs;
+            mRegularShaders[static_cast<int>(lp::gl::ShaderType::DebugLine)].mVertexPath = l_shaderpath_lineDebug_vs;
+            mRegularShaders[static_cast<int>(lp::gl::ShaderType::DebugLine)].mFragmentPath = l_shaderpath_lineDebug_fs;
         }
 
         {
