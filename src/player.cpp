@@ -72,7 +72,7 @@ namespace lp
     {
         {
             const bool lockPressed = this->mKeymapps[static_cast<int>(Action::DisableInput)].pressed;
-            static bool free_mouse_IsPressed = false;
+            static bool free_mouse_IsPressed = true;
 
             if(!free_mouse_IsPressed){
                 if(lockPressed)

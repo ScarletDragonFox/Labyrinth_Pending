@@ -145,7 +145,7 @@ namespace lp
         /// @brief Is input enabled?
         ///
         /// if false, disables input & frees mouse (by sending an event)
-        bool mTriggerInput = true;
+        bool mTriggerInput = false;
 
         /// @brief ID of the keyboard press state change event listener
         lp::EventListenerID mKeyboardListenerID = 0;
