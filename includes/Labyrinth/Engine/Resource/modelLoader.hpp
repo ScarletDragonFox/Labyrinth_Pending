@@ -17,48 +17,17 @@
 
 #include "Labyrinth/Engine/Graphics/textures.hpp"
 
+#include "Labyrinth/Engine/Resource/loadedModel.hpp"
+
 namespace lp::res
 {
-    /// @brief represents a loaded model
-    struct LoadedModel
-    {
-        /// @brief typedef of material id
-        using MaterialID_t = unsigned int;
-
-        /// @brief Simple Mesh.
-        ///
-        /// Has the minimum ammount of data possible to render the mesh
-        struct Mesh
-        {
-            /// @brief the Vertex Buffer Object storing all Verticies OpenGL-side
-            GLuint mVBO = 0;
-            /// @brief the Element Buffer Object storing all Indicies OpenGL-side
-            GLuint mEBO = 0;
-            /// @brief how many Elements the EBO has
-            GLuint mDrawCount = 0;
-            /// @brief is of used material.
-            ///
-            /// Used as index into mMaterials
-            MaterialID_t mMaterialID = 0;
-        };
-        /// @brief Simple Material
-        ///
-        /// Represents a material (a series of textures to load)
-        struct Material
-        {
-            /// @brief a BaseColor/Albedo Texture of the material
-            lp::gl::Texture mColor;
-        };
-
-        std::vector<LoadedModel::Mesh> mMeshes;
-        std::vector<LoadedModel::Material> mMaterials;
-        std::filesystem::path mFile = {};
-    };
-
     //TODO: strings need to be hashed every time
     // use a typdef'd int for ids
     //TODO: find way to delete stray threads of std::async on destructor
 
+    /// @brief Model loader.
+    /// 
+    /// Loads & unloads models+textures asynchronously
     class ModelLoader
     {
         public:

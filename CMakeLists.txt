@@ -46,6 +46,7 @@ set(CDF_HEADERS #list of all header files in the includes/Labyrinth/ directory
     Engine/Resource/shaderManager.hpp
 
     Engine/Resource/modelLoader.hpp
+    Engine/Resource/loadedModel.hpp
 
     Engine/Graphics/types.hpp
     Engine/Graphics/textures.hpp
