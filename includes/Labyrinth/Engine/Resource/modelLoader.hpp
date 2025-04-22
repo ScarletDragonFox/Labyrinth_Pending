@@ -1,0 +1,182 @@
+#ifndef LABYRINTH_PENDING_ENGINE_RESOURCE_MODELLOADER_HPP
+#define LABYRINTH_PENDING_ENGINE_RESOURCE_MODELLOADER_HPP
+
+#include <memory>
+#include <future>
+#include <list>
+#include <vector>
+#include <unordered_map>
+#include <mutex> //std::mutex, std::scoped_lock
+#include <queue>
+#include <latch>
+#include <filesystem>
+
+#include <glad/gl.h>
+#include <string>
+#include <string_view>
+
+#include "Labyrinth/Engine/Graphics/textures.hpp"
+
+namespace lp::res
+{
+    /// @brief represents a loaded model
+    struct LoadedModel
+    {
+        /// @brief typedef of material id
+        using MaterialID_t = unsigned int;
+
+        /// @brief Simple Mesh.
+        ///
+        /// Has the minimum ammount of data possible to render the mesh
+        struct Mesh
+        {
+            /// @brief the Vertex Buffer Object storing all Verticies OpenGL-side
+            GLuint mVBO = 0;
+            /// @brief the Element Buffer Object storing all Indicies OpenGL-side
+            GLuint mEBO = 0;
+            /// @brief how many Elements the EBO has
+            GLuint mDrawCount = 0;
+            /// @brief is of used material.
+            ///
+            /// Used as index into mMaterials
+            MaterialID_t mMaterialID = 0;
+        };
+        /// @brief Simple Material
+        ///
+        /// Represents a material (a series of textures to load)
+        struct Material
+        {
+            /// @brief a BaseColor/Albedo Texture of the material
+            lp::gl::Texture mColor;
+        };
+
+        std::vector<LoadedModel::Mesh> mMeshes;
+        std::vector<LoadedModel::Material> mMaterials;
+        std::filesystem::path mFile = {};
+    };
+
+    //TODO: strings need to be hashed every time
+    // use a typdef'd int for ids
+    //TODO: find way to delete stray threads of std::async on destructor
+
+    class ModelLoader
+    {
+        public:
+
+        /// @brief initialize the model loader.
+        ///
+        /// Sets up Assimp logging mainly.
+        void initialize();
+
+        /// @brief Runs 'Tasks' up to cv_maxTime seconds
+        /// @param cv_maxTime max time to spend loading data into OpenGL
+        void update(const double cv_maxTime);
+
+        /// @brief Return a previously loaded model via const pointer, or nullptr if not loaded
+        /// @param cv_name 'name' ("path") of the model to get
+        /// @return const pointer if loaded, nullptr if not loaded
+        LoadedModel const* getLoadedModel(const std::string_view cv_name)const;
+
+        /// @brief schedule to load a model
+        /// @param cv_name name/path of the model to load
+        void scheduleLoad(const std::string_view cv_name);
+
+        /// @brief unloads a model from memory
+        /// @param cv_name name/path of model
+        /// @return true if error, false if succeded
+        bool unload(const std::string_view cv_name);
+
+        /// @brief struct to organise all slave struct of this one
+        struct LoadingModel
+        {
+            /// @brief vertex format of all models loaded by ModelLoader
+            struct Vertex
+            {
+                glm::vec3 mPosition = {};
+                glm::vec2 mTextureCoords = {};
+                glm::vec3 mNormal = {};
+                glm::vec3 mTangent = {};
+                // glm::vec3 mBitangent = {};
+            };
+
+            /// @brief data used by taskMesh()
+            struct TaskMeshData
+            {
+                /// @brief mesh (pointer) to output to.
+                ///
+                /// Should never be nullptr!
+                LoadedModel::Mesh* mMesh = nullptr;
+                /// @brief container of input verticies
+                std::vector<Vertex> mVerticies;
+                /// @brief container of input indicies
+                std::vector<unsigned int> mIndicies;
+                /// @brief latch to count_down() after mesh is loaded
+                std::shared_ptr<std::latch> mLatchPtr;
+            };
+
+            /// @brief data used by taskTexture
+            struct TaskTextureData
+            {
+                /// @brief file this texture comes from
+                std::filesystem::directory_entry mFile = {};
+                /// @brief Texure (pointer) to output to.
+                ///
+                /// Should never be nullptr!
+                lp::gl::Texture* mTex = nullptr;
+                /// @brief format of the texture to load
+                lp::gl::Format mTexFormat = lp::gl::Format::R8;
+                /// @brief size of the texture
+                glm::uvec2 mTexSize = {};
+                /// @brief mipmap count of the texture to load
+                std::uint_fast32_t mMipmapCount = 0;
+                /// @brief should this texture have mipmaps?
+                bool noMipmaps = false;
+                /// @brief storage of raw image data with mTexFormat Format
+                ///
+                /// dont't forget to stbi_image_free() after use!
+                void* mTextureData = nullptr;
+                /// @brief latch to count_down() after texture is loaded
+                std::shared_ptr<std::latch> mLatchPtr;
+            };
+        };
+
+        private:
+
+        /// @brief loads a single mesh into OpenGL
+        /// @param data input/output data
+        void taskMesh(LoadingModel::TaskMeshData& data);
+
+        /// @brief loads a single texture into OpenGL & free()'s previously allocated memory
+        /// @param data input/output data
+        void taskTexture(LoadingModel::TaskTextureData& data);
+
+        /// @brief internal function load a texture
+        /// @param data output of the function
+        /// @param path path/name of image
+        /// @param directory directory the path/name is in
+        /// @return true on error, false otherwise
+        static bool loadTexture(LoadingModel::TaskTextureData& data, const char* path, const std::filesystem::path directory);
+
+        /// @brief queue of Mesh-load tasks to finish.
+        ///
+        /// Used by multiple threads, use mTasksMeshLoadMutex when push-ing or pop-ing
+        std::queue<LoadingModel::TaskMeshData> mTasksMeshLoad;
+        /// @brief mutex for the mTasksMeshLoad container.
+        std::mutex mTasksMeshLoadMutex;
+        
+        /// @brief queue of Texture-load tasks to finish.
+        ///
+        /// Used by multiple threads, use mTasksTextureLoadMutex when push-ing or pop-ing
+        std::queue<LoadingModel::TaskTextureData> mTasksTextureLoad;
+        /// @brief mutex for the mTasksTextureLoad container.
+        std::mutex mTasksTextureLoadMutex;
+
+        /// @brief storage for all loaded models
+        std::unordered_map<std::string, std::unique_ptr<LoadedModel>> mModels;
+
+        /// @brief storage for all loading models
+        std::list<std::future<std::unique_ptr<LoadedModel>>> mLoaders;
+    };
+}
+
+#endif //LABYRINTH_PENDING_ENGINE_RESOURCE_MODELLOADER_HPP

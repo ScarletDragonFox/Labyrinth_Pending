@@ -16,12 +16,13 @@ set(CDF_SOURCES #list of all source files in the src/ directory
     Engine/Resource/resourceManager.cpp
     Engine/Resource/shaderManager.cpp
 
+    Engine/Resource/modelLoader.cpp
+
     Engine/Graphics/textures.cpp
     Engine/Graphics/regularShader.cpp
 
     Engine/Graphics/framebuffer.cpp
     Engine/Graphics/basicFrowardRenderer.cpp
-
 
     game.cpp
     engine.cpp
@@ -43,7 +44,9 @@ set(CDF_HEADERS #list of all header files in the includes/Labyrinth/ directory
 
     Engine/Resource/resourceManager.hpp
     Engine/Resource/shaderManager.hpp
-    
+
+    Engine/Resource/modelLoader.hpp
+
     Engine/Graphics/types.hpp
     Engine/Graphics/textures.hpp
     Engine/Graphics/regularShader.hpp
