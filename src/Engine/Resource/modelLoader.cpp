@@ -361,10 +361,10 @@ namespace
 
     void int_processMesh(aiMesh* mesh, lp::res::ModelLoader::LoadingModel::TaskMeshData& v_output)
     {
-        v_output.mVerticies.reserve(std::size_t(mesh->mNumFaces) * 3);
-        v_output.mIndicies.reserve(mesh->mNumVertices); //TODO: why is this called verticies??? It works, but ...
+        v_output.mVerticies.reserve(mesh->mNumVertices);
+        v_output.mIndicies.reserve(std::size_t(mesh->mNumFaces) * 3); //TODO: why is this called verticies??? It works, but ...
         v_output.mMesh->mMaterialID = mesh->mMaterialIndex;
-        v_output.mMesh->mDrawCount = mesh->mNumVertices;
+        v_output.mMesh->mDrawCount = std::size_t(mesh->mNumFaces) * 3;
 
         std::cerr << "matIndex = " << mesh->mMaterialIndex << "\n";
         std::cerr << "mDrawCount = " << mesh->mNumVertices << "\n";
