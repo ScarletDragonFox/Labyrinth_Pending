@@ -145,7 +145,7 @@ namespace lp::res
             Assimp::Importer importer;
             
             const aiScene* scene = importer.ReadFile(cv_filename.data(), Flags);
-            std::cerr << "After importer.ReadFile()\n";
+            //std::cerr << "After importer.ReadFile()\n";
             // check for errors
             if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
             {
@@ -157,7 +157,7 @@ namespace lp::res
 
             outputModel.mMaterials.resize(scene->mNumMaterials);
 
-            std::cerr << "Before Txtures!\n";
+            //std::cerr << "Before Txtures!\n";
 
             ///process textures
             for (unsigned int i = 0; i < scene->mNumMaterials; i++)
@@ -220,7 +220,7 @@ namespace lp::res
                 }
             }
             
-            std::cerr << "Before Node Flattening!\n";
+            //std::cerr << "Before Node Flattening!\n";
 
 
             std::vector <aiMesh*> assimp_meshes;
@@ -237,7 +237,7 @@ namespace lp::res
 
             std::shared_ptr<std::latch> vLatchMeshes = std::make_shared<std::latch>(static_cast<std::ptrdiff_t>(assimp_meshes.size()));
 
-            std::cerr << "Before Mesh Processing!\n";
+            //std::cerr << "Before Mesh Processing!\n";
 
             for(std::size_t i = 0; i < assimp_meshes.size(); i++)
             {
@@ -255,10 +255,10 @@ namespace lp::res
 
             //wait for all tasks to finish before returning
 
-            std::cerr << "Model \"" << c_path.filename().string() << "\" is waiting for tasks to finish!\n";
+            //std::cerr << "Model \"" << c_path.filename().string() << "\" is waiting for tasks to finish!\n";
 
-            std::cerr << "Model has " << scene->mNumMaterials << " materials & " << scene->mNumMeshes << " meshes!\n";
-            std::cerr << "Model had " << assimp_meshes.size() << " meshes!\n"; 
+            //std::cerr << "Model has " << scene->mNumMaterials << " materials & " << scene->mNumMeshes << " meshes!\n";
+            //std::cerr << "Model had " << assimp_meshes.size() << " meshes!\n"; 
 
             vLatchTextures->wait();
             vLatchMeshes->wait();
@@ -269,7 +269,7 @@ namespace lp::res
                 std::cerr << "You should shut down this game, a model refused to be loaded and memory leaked all over!\n";
             }
 
-            std::cerr << "Model \"" << c_path.filename().string() << "\" has finished loading!\n";
+            //std::cerr << "Model \"" << c_path.filename().string() << "\" has finished loading!\n";
 
             return resultModelActualStorage;
         };
@@ -366,9 +366,9 @@ namespace
         v_output.mMesh->mMaterialID = mesh->mMaterialIndex;
         v_output.mMesh->mDrawCount = std::size_t(mesh->mNumFaces) * 3;
 
-        std::cerr << "matIndex = " << mesh->mMaterialIndex << "\n";
-        std::cerr << "mDrawCount = " << mesh->mNumVertices << "\n";
-        std::cerr << "faces =  = " << mesh->mNumFaces << " * 3\n";
+        //std::cerr << "matIndex = " << mesh->mMaterialIndex << "\n";
+        //std::cerr << "mDrawCount = " << mesh->mNumVertices << "\n";
+        //std::cerr << "faces =  = " << mesh->mNumFaces << " * 3\n";
 
         for (unsigned int i = 0; i < mesh->mNumVertices; i++)
         {
