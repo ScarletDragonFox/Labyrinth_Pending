@@ -109,9 +109,14 @@ namespace
 
     /// @brief vertex shader of lineDebug
     const char* const l_shaderpath_lineDebug_vs = "shaders/lineDebug/lineDebug.vs.glsl";
-    /// @brief fragment shader of SimpleColor
+    /// @brief fragment shader of lineDebug
     const char* const l_shaderpath_lineDebug_fs = "shaders/lineDebug/lineDebug.fs.glsl";
     
+    /// @brief vertex shader of ModelTextured
+    const char* const l_shaderpath_ModelTextured_vs = "shaders/modelTextured/modelTextured.vs.glsl";
+    /// @brief fragment shader of ModelTextured
+    const char* const l_shaderpath_ModelTextured_fs = "shaders/modelTextured/modelTextured.fs.glsl";
+
     //ComputeShader shader program filepaths:
 
     /// @brief compute shader of name
@@ -128,6 +133,9 @@ namespace lp::res
 
             mRegularShaders[static_cast<int>(lp::gl::ShaderType::DebugLine)].mVertexPath = l_shaderpath_lineDebug_vs;
             mRegularShaders[static_cast<int>(lp::gl::ShaderType::DebugLine)].mFragmentPath = l_shaderpath_lineDebug_fs;
+
+            mRegularShaders[static_cast<int>(lp::gl::ShaderType::ModelTextured)].mVertexPath = l_shaderpath_ModelTextured_vs;
+            mRegularShaders[static_cast<int>(lp::gl::ShaderType::ModelTextured)].mFragmentPath = l_shaderpath_ModelTextured_fs;
         }
 
         {
