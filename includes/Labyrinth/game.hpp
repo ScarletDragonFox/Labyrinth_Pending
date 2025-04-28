@@ -1,7 +1,6 @@
 #ifndef LABYRINTH_PENDING_GAME_HPP
 #define LABYRINTH_PENDING_GAME_HPP
 
-#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
 #include "Labyrinth/Engine/Graphics/basicFrowardRenderer.hpp"

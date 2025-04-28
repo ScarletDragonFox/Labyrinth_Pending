@@ -53,4 +53,6 @@ add_subdirectory(soloud)
 target_link_libraries(dependancies INTERFACE glfw assimp glm stb glad imgui nlohmann_json::nlohmann_json bullet3 lua::lib soloud)
 
 #add global #defines
-target_compile_definitions(dependancies INTERFACE GLM_FORCE_DEPTH_ZERO_TO_ONE)
+# GLFW_INCLUDE_NONE - makes GLFW header not include OpenGL
+# GLM_FORCE_DEPTH_ZERO_TO_ONE - makes GLM depth be <0 -- 1> inclusive, instead of standatd <-1 -- 1>
+target_compile_definitions(dependancies INTERFACE GLM_FORCE_DEPTH_ZERO_TO_ONE GLFW_INCLUDE_NONE)
