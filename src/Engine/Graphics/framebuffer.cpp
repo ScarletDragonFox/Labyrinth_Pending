@@ -231,7 +231,7 @@ namespace lp::gl
                 return;
             }
             glCreateFramebuffers(1, &FramebufferID);
-            for (int i = 0; i < mDataCopy->size(); i++) {
+            for (std::size_t i = 0; i < mDataCopy->size(); i++) {
                 if ((*mDataCopy)[i].mType == Framebuffer::Attachment_Type::Image)
                 {
                     this->createTexture((*mDataCopy)[i].mFormat);
@@ -255,7 +255,7 @@ namespace lp::gl
             mDataCopy = new std::vector<AttachmentData>;
             mDataCopy->swap(mData);
             //JustBind();
-            for (int i = 0; i < mDataCopy->size(); i++) {
+            for (std::size_t i = 0; i < mDataCopy->size(); i++) {
                 if ((*mDataCopy)[i].mType == Framebuffer::Attachment_Type::Image)
                 {
                     glDeleteTextures(1, &(*mDataCopy)[i].mId);
@@ -365,7 +365,7 @@ namespace lp::gl
     void Framebuffer::test()
     {
         std::cout << "\033[1;34mSamples:\033[0m " << samples_count << "\n";
-        for (int i = 0; i < mData.size(); i++)
+        for (std::size_t i = 0; i < mData.size(); i++)
         {
             Image_Formats_Information info = Decode_IFI(mData[i].mFormat);
             std::cout << "\033[1;35mAttachment[\033[0m" << i << "\033[1;35m]:\033[0m\n" <<
