@@ -244,9 +244,9 @@ namespace lp::res
                 lp::res::ModelLoader::LoadingModel::TaskMeshData data;
                 data.mLatchPtr = vLatchMeshes;
                 data.mMesh = &(outputModel.mMeshes[i]);
-                std::cerr << "processing mesh #" << i << " name = \"" <<assimp_meshes[i]->mName.C_Str() << "\"\n";
+                //std::cerr << "processing mesh #" << i << " name = \"" <<assimp_meshes[i]->mName.C_Str() << "\"\n";
                 int_processMesh(assimp_meshes[i], data);
-                std::cerr << "finished!\n";
+                //std::cerr << "finished!\n";
                 {
                     std::scoped_lock<std::mutex> LOK(this->mTasksMeshLoadMutex);
                     mTasksMeshLoad.push(data);
