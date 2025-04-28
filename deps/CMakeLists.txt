@@ -51,3 +51,6 @@ add_subdirectory(lua)
 add_subdirectory(soloud) 
 
 target_link_libraries(dependancies INTERFACE glfw assimp glm stb glad imgui nlohmann_json::nlohmann_json bullet3 lua::lib soloud)
+
+#add global #defines
+target_compile_definitions(dependancies INTERFACE GLM_FORCE_DEPTH_ZERO_TO_ONE)

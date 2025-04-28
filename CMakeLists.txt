@@ -71,8 +71,6 @@ add_executable(Labyrinth ${CDF_SOURCES} ${CDF_HEADERS})
 target_compile_features(Labyrinth PRIVATE cxx_std_20)
 target_include_directories(Labyrinth PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/includes)
 
-target_compile_definitions(Labyrinth PRIVATE GLM_FORCE_DEPTH_ZERO_TO_ONE)
-
 string(REPLACE " " ";" CDF_COMPILE_FLAGS_FIXED ${CDF_COMPILE_FLAGS})
 target_compile_options(Labyrinth PRIVATE ${CDF_COMPILE_FLAGS_FIXED})
 
