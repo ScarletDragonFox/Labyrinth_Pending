@@ -1,10 +1,9 @@
 #ifndef LABYRINTH_PENDING_GAME_HPP
 #define LABYRINTH_PENDING_GAME_HPP
 
-#include <GLFW/glfw3.h>
-
 #include "Labyrinth/Engine/Graphics/basicFrowardRenderer.hpp"
 #include "Labyrinth/player.hpp"
+#include "Labyrinth/window.hpp"
 
 namespace lp
 {
@@ -20,11 +19,12 @@ namespace lp
 
         /// @brief called to destroy the window
         void destroy();
-        private:
 
+        private:
+        
         lp::gl::ForwardRenderer mRenndd;
         lp::Player mPlayer;
-        GLFWwindow* mWindow = nullptr;
+        lp::Window mWindow;
     };
 }
 

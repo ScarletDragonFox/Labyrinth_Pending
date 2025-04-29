@@ -19,112 +19,11 @@
 
 #include "Labyrinth/Helpers/compilerErrors.hpp"
 
+#include <GLFW/glfw3.h>
+
+
 namespace
 {
-    void glfw_key_callback([[maybe_unused]] GLFWwindow* window, int key, int scancode, int action, int mods)
-    {
-        if(action == GLFW_REPEAT) return;
-        const lp::evt::WindowKeyAction kay = 
-        {
-            .key = key,
-            .scancode = scancode,
-            .pressed = (action == GLFW_PRESS),
-            .modShift = static_cast<bool>(mods & GLFW_MOD_SHIFT),
-            .modControl = static_cast<bool>(mods & GLFW_MOD_CONTROL),
-            .modAlt = static_cast<bool>(mods & GLFW_MOD_ALT),
-            .modSuper = static_cast<bool>(mods & GLFW_MOD_SUPER)
-        };
-        lp::Event evt(lp::EventTypes::WindowKeyAction, kay);
-        lp::g_engine.getEventManager().emit(evt);
-    }
-
-    void glfw_cursor_position_callback([[maybe_unused]] GLFWwindow* window, double xpos, double ypos)
-    {
-        static double previousPosX = xpos;
-        static double previousPosY = ypos;
-        const lp::evt::WindowMouseMotion msy = 
-        {
-            .posX = xpos,
-            .posY = ypos,
-            .deltaX = xpos - previousPosX,
-            .deltaY = previousPosY - ypos
-        };
-        previousPosX = xpos;
-        previousPosY = ypos;
-        lp::Event evt(lp::EventTypes::WindowMouseMotion, msy);
-        lp::g_engine.getEventManager().emit(evt);
-    }
-
-    void glfw_window_size_callback([[maybe_unused]] GLFWwindow* window, int v_width, int v_height)
-    {
-        static int lastWidth = -1;
-        static int lastHeight = -1;
-        if(lastWidth != v_width || lastHeight != v_height)
-        {
-            const lp::evt::WindowResize wre = 
-            {
-                .width = v_width,
-                .height = v_height
-            };
-            lp::Event evt(lp::EventTypes::WindowResize, wre);
-            lp::g_engine.getEventManager().emit(evt);
-        }
-    }
-
-    void glfw_error_callback(int error, const char* description)
-    {
-        const char* errorName = "GLFW_NO_ERROR";
-        switch(error)
-        {
-            case GLFW_NOT_INITIALIZED:
-                errorName = "GLFW_NOT_INITIALIZED";
-                break;
-            case GLFW_NO_CURRENT_CONTEXT:
-                errorName = "GLFW_NO_CURRENT_CONTEXT";
-                break;
-            case GLFW_INVALID_ENUM:
-                errorName = "GLFW_INVALID_ENUM";
-                break;
-            case GLFW_INVALID_VALUE:
-                errorName = "GLFW_INVALID_VALUE";
-                break;
-            case GLFW_OUT_OF_MEMORY:
-                errorName = "GLFW_OUT_OF_MEMORY";
-                break;
-            case GLFW_API_UNAVAILABLE:
-                errorName = "GLFW_API_UNAVAILABLE";
-                break;
-            case GLFW_VERSION_UNAVAILABLE:
-                errorName = "GLFW_VERSION_UNAVAILABLE";
-                break;
-            case GLFW_PLATFORM_ERROR:
-                errorName = "GLFW_PLATFORM_ERROR";
-                break;
-            case GLFW_FORMAT_UNAVAILABLE:
-                errorName = "GLFW_FORMAT_UNAVAILABLE";
-                break;
-            case GLFW_NO_WINDOW_CONTEXT:
-                errorName = "GLFW_NO_WINDOW_CONTEXT";
-                break;
-            case GLFW_CURSOR_UNAVAILABLE:
-                errorName = "GLFW_CURSOR_UNAVAILABLE";
-                break;
-            case GLFW_FEATURE_UNAVAILABLE:
-                errorName = "GLFW_FEATURE_UNAVAILABLE";
-                break;
-            case GLFW_FEATURE_UNIMPLEMENTED:
-                errorName = "GLFW_FEATURE_UNIMPLEMENTED";
-                break;
-            case GLFW_PLATFORM_UNAVAILABLE:
-                errorName = "GLFW_PLATFORM_UNAVAILABLE";
-                break;
-            default:
-                errorName = "GLFW unrecoginsed error!";
-                break;
-        }
-        std::cerr << "ERROR: " << errorName << " " << description << "\n";
-    }
-
     void opengl_message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, [[maybe_unused]]  GLsizei length, GLchar const* message, [[maybe_unused]] void const* user_param)
     {
         auto const src_str = [source]() {
@@ -190,35 +89,15 @@ namespace lp
 
     bool Game::create()
     {
-        glfwSetErrorCallback(glfw_error_callback);
 
-        if(!glfwInit()) return true;
-        
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-        
-
-        //GLFW_SCALE_TO_MONITOR  GLFW_SCALE_FRAMEBUFFER 
-        mWindow = glfwCreateWindow(640, 480, "Labyrinth Pending", NULL, NULL);
-        if(!mWindow)
+        if(mWindow.create("Labyrinth Pending", 640, 480))
         {
-            glfwTerminate();
             return true;
         }
-        glfwMakeContextCurrent(mWindow);
         
         if(lp::g_engine.initialize())
         {
             return true;
-        }
-
-        if(glfwRawMouseMotionSupported())
-        {
-            glfwSetInputMode(mWindow, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
         }
 
         glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, false);
@@ -228,37 +107,7 @@ namespace lp
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
-        glfwSetKeyCallback(mWindow, glfw_key_callback);
-        glfwSetCursorPosCallback(mWindow, glfw_cursor_position_callback);
-        glfwSetWindowSizeLimits(mWindow, 10, 2, GLFW_DONT_CARE, GLFW_DONT_CARE); //stop user from creating a 0 x 0 size framebuffer.
-        glfwSetWindowSizeCallback(mWindow, glfw_window_size_callback);
-
-        g_engine.getEventManager().on(lp::EventTypes::PlayerTriggerInputs, [this](Event& rv_evt)
-        {
-            bool enable = rv_evt.getData<bool>();
-            if(enable){
-                glfwSetInputMode(this->mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            }else{
-                glfwSetInputMode(this->mWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-            }
-        });
-
-
         mRenndd.setup(640, 480);
-
-        // Setup Dear ImGui context
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO();
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-        // Setup Dear ImGui style
-        ImGui::StyleColorsDark(); //ImGui::StyleColorsLight();
-       
-        ImGui_ImplGlfw_InitForOpenGL(mWindow, true);
-        ImGui_ImplOpenGL3_Init();
-        
 
         return false;
     }
@@ -303,6 +152,7 @@ namespace lp
         std::unique_ptr<btRigidBody> fallRigidBody;
         std::unique_ptr<btCollisionShape> groundShape = std::make_unique<btStaticPlaneShape>(btVector3(0,1,0), 1);
         std::unique_ptr<btCollisionShape> fallShape = std::make_unique<btSphereShape>((btScalar)1.0f);
+
         {
             std::unique_ptr<btDefaultMotionState> groundMotionState = std::make_unique<btDefaultMotionState>(btTransform(btQuaternion(0,0,0,1), btVector3(0,-1,0)));
     
@@ -310,7 +160,6 @@ namespace lp
         
             groundRigidBody =  std::make_unique<btRigidBody>(groundRigidBodyCI);
         }
-        
         
     
         dynamicsWorld->addRigidBody(groundRigidBody.get());
@@ -366,17 +215,14 @@ namespace lp
 
         bool mDoPhysics = false;
         double lastFrameTime = glfwGetTime();
-        while(!glfwWindowShouldClose(mWindow))
+        while(!mWindow.shouldClose())
         {
-            glfwPollEvents();
+            mWindow.pollEvents();
+
             const double deltaTime = glfwGetTime() - lastFrameTime;
             lastFrameTime = glfwGetTime();
 
             {
-                ImGui_ImplOpenGL3_NewFrame();
-                ImGui_ImplGlfw_NewFrame();
-                ImGui::NewFrame();
-
                 ImGui::BeginMainMenuBar();
                 if(ImGui::BeginMenu("Options"))
                 {
@@ -536,7 +382,7 @@ namespace lp
             double wbh = 0.0;
             {
                 int width = 0, height = 0;
-                glfwGetFramebufferSize(mWindow, &width, &height);
+                mWindow.debugGetFramebufferSize(width, height);
                 wbh = (double)width / (double)height;
                 glViewport(0, 0, width, height);
             }
@@ -565,23 +411,13 @@ namespace lp
 
             glDeleteBuffers(1, &dtttta.VBO);
 
-            ImGui::Render();
-
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-            glfwSwapBuffers(mWindow);
+            mWindow.swapBuffers();
         }
     }
 
     void Game::destroy()
-    {   
-        ImGui_ImplOpenGL3_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
-        ImGui::DestroyContext();
-
+    {
         g_engine.destroy();
-        
-        glfwDestroyWindow(mWindow); mWindow = nullptr;
-        glfwTerminate();
+        mWindow.destroy();
     }
 }

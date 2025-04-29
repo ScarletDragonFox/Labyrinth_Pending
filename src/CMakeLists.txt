@@ -23,6 +23,7 @@ set(CDF_SOURCES #list of all source files in the src/ directory
     game.cpp
     engine.cpp
     player.cpp
+    window.cpp
     )
 
 set(CDF_HEADERS #list of all header files in the includes/Labyrinth/ directory (optional, could be empty with no consequence)
@@ -55,6 +56,7 @@ set(CDF_HEADERS #list of all header files in the includes/Labyrinth/ directory (
     game.hpp
     engine.hpp
     player.hpp
+    window.hpp
     )
 
     # include(CMakePrintHelpers)

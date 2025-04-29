@@ -13,14 +13,6 @@ namespace lp
 {
     bool Engine::initialize()
     {
-        int glversion = gladLoadGL(glfwGetProcAddress);
-        if (glversion == 0) {
-            std::cerr << "Failed to initialize OpenGL context\n";
-            return true;
-        }
-        //// Successfully loaded OpenGL
-        //std::cout << "Loaded OpenGL " << GLAD_VERSION_MAJOR(glversion) << "." << GLAD_VERSION_MINOR(glversion) << "\n";
-
         if(mSound.init() != SoLoud::SO_NO_ERROR)
         {
             std::cerr << "Failed to initialize SoLoud\n";
