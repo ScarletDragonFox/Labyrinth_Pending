@@ -108,6 +108,11 @@ namespace lp
         glfwGetFramebufferSize(mWindow, &o_width, &o_height);
     }
 
+    void Window::getWindowSize(int& o_width, int& o_height)
+    {
+        glfwGetWindowSize(mWindow, &o_width, &o_height);
+    }
+
     bool Window::shouldClose()const
     {
         return glfwWindowShouldClose(this->mWindow);

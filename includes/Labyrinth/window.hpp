@@ -47,6 +47,11 @@ namespace lp
         /// TODO: Remove me!!!
         void debugGetFramebufferSize(int& o_width, int& o_height);
 
+        /// @brief get size of the window (could be diffrent from framebuffer size)
+        /// @param o_width output, width of the window
+        /// @param o_height output, height of the window
+        void getWindowSize(int& o_width, int& o_height);
+
         /// @brief Peramamently destroys the window & its OpenGL context.
         ///
         /// Should only be called on shutdown.
