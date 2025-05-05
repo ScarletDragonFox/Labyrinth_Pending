@@ -41,6 +41,10 @@ namespace lp
         /// @return the players position (or the camera's position)
         inline glm::vec3 getPosition() const { return mPosition; }
 
+        /// @brief get the direction the camera is 'looking' at, as a vector
+        /// @return vector in question
+        inline glm::vec3 getViewDirection() const {return this->mVectorFront;}
+
         /// @brief get the players orientation (or the camera's orientation)
         ///
         /// .x is yaw, .y is pitch
