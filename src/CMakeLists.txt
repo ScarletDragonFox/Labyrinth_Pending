@@ -71,16 +71,19 @@ set(CDF_HEADERS #list of all header files in the includes/Labyrinth/ directory (
 list(TRANSFORM CDF_SOURCES PREPEND ${PROJECT_SOURCE_DIR}/src/)
 list(TRANSFORM CDF_HEADERS PREPEND ${PROJECT_SOURCE_DIR}/includes/Labyrinth/)
 
-add_library(lp_source_library STATIC ${CDF_SOURCES} ${CDF_HEADERS})
+add_library(lp_source_library INTERFACE)
 
-target_compile_features(lp_source_library PUBLIC cxx_std_20)
+target_sources(lp_source_library INTERFACE ${CDF_SOURCES})
 
-target_include_directories(lp_source_library PUBLIC ${PROJECT_SOURCE_DIR}/includes)
+target_compile_features(lp_source_library INTERFACE cxx_std_20)
+
+target_include_directories(lp_source_library INTERFACE ${PROJECT_SOURCE_DIR}/includes)
 
 # Quick Fix for CDF_COMPILE_FLAGS list being interpreted by target_compile_options as one string
 string(REPLACE " " ";" CDF_COMPILE_FLAGS_FIXED ${CDF_COMPILE_FLAGS})
-target_compile_options(lp_source_library PUBLIC ${CDF_COMPILE_FLAGS_FIXED})
+target_compile_options(lp_source_library INTERFACE ${CDF_COMPILE_FLAGS_FIXED})
 
-# Reason why this file MUST by added AFTER deps/
-# the 'dependancies' target wouldn't be defined, throwing en error
-target_link_libraries(lp_source_library PUBLIC dependancies)
+# This cannot be added back in:
+# target_link_libraries(lp_source_library INTERFACE dependancies)
+# Causes unavoidable multiple definition warnings from linker
+# Caused by the addition of other executable targets (tools/ in this case)
