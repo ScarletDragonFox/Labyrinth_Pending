@@ -1,33 +1,24 @@
 #include <iostream>
 #include <memory>
+#include <vector>
+#include <string>
 
 #include "Labyrinth/Helpers/compilerErrors.hpp"
-
 #include "Labyrinth/engine.hpp"
 #include "Labyrinth/window.hpp"
+#include "Labyrinth/Engine/Graphics/bullet3Debug.hpp"
+#include "Labyrinth/Engine/Graphics/regularShader.hpp"
+#include "Labyrinth/player.hpp"
 
 LP_PRAGMA_DISABLE_ALL_WARNINGS_PUSH();
 #include <imgui.h>
 #include <glad/gl.h>
 #include <glm/glm.hpp>
-#include <bullet/btBulletDynamicsCommon.h> //TODO: causes multiple definitions (.lib) with bullet???? FIXME!!!
+#include <bullet/btBulletDynamicsCommon.h>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 
-
-#include <bullet/BulletCollision/CollisionShapes/btCompoundShape.h>
-
 LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
-
-#include "Labyrinth/Engine/Graphics/bullet3Debug.hpp"
-#include "Labyrinth/Engine/Graphics/regularShader.hpp"
-#include "Labyrinth/player.hpp"
-
-#include <array>
-#include <vector>
-#include <string>
-#include <string_view>
-#include <variant>
 
 #include "BulletShape.hpp"
 
@@ -38,448 +29,275 @@ namespace
     btCollisionWorld::ClosestRayResultCallback RayTestObtain(btDynamicsWorld* v_world, const lp::Player& cr_Player, lp::Window& r_window, const glm::vec2 cv_mousePos);
 }
 
-template <typename T>
-class TreeNode
+class RigidBodyContainerSingular
 {
     public:
-    TreeNode()
+    RigidBodyContainerSingular(std::shared_ptr<btDynamicsWorld> vWorld, lpt::BulletShape& vShape)
     {
-        data = new T;
+        mWorld = vWorld;
+        mBodyMotionState = std::make_shared<btDefaultMotionState>();
+        
+        mShape = std::move(vShape);
+
+        btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, mBodyMotionState.get(), (btCollisionShape*)mShape.getRaw(), btVector3(0,0,0));
+        mBody =  std::make_shared<btRigidBody>(groundRigidBodyCI);
+        mBody->setFlags(btCollisionObject::CF_KINEMATIC_OBJECT);
+        vWorld->addRigidBody(mBody.get());
     }
-    // inline std::size_t addChild(T& child_data)
-    // {
-    //     TreeNode<T> node = TreeNode<T>(child_data);
-    //     node.setName(name + "-" + std::to_string(mChildren.size()));
-    //     mChildren.push_back(TreeNode<T>(child_data));
-    //     return mChildren.size() - 1;
-    // }
-    inline std::size_t addChild()
+    RigidBodyContainerSingular(RigidBodyContainerSingular&) = delete;
+    RigidBodyContainerSingular(RigidBodyContainerSingular&&) = default;
+    const char* getName() const
     {
-        TreeNode<T> node;
-        node.setName(name + "-" + std::to_string(mChildren.size()));
-        mChildren.push_back(node);
-        return mChildren.size() - 1;
+        if((btCollisionShape*)mShape.getRaw() == nullptr) return "ERROR!";
+        return ((btCollisionShape*)mShape.getRaw())->getName();
     }
-    // if return 8008500 - not found
-    inline std::size_t findChild(const std::string_view searchedName) const
+    void ui()
     {
-        for(std::size_t i = 0; i < mChildren.size(); ++i)
+        ImGui::Text("Name: \"%s\"", this->getName());
         {
-            if(mChildren[i].getName() == searchedName)
+            bool updated = false;
+            btTransform tranz;
+            mBodyMotionState->getWorldTransform(tranz);
+            const btVector3 btPos = tranz.getOrigin();
+            glm::vec3 pos = glm::vec3(btPos.getX(), btPos.getY(), btPos.getZ());
+            if(ImGui::SliderFloat3("position", &pos.x, -100.0, 100.0, "%.3f", ImGuiSliderFlags_NoRoundToFormat))
             {
-                return i;
+                tranz.setOrigin(btVector3(pos.x, pos.y, pos.z));
+                updated = true;
+            }
+            const btQuaternion btRot = tranz.getRotation();
+            glm::vec3 rot = {};
+            btRot.getEulerZYX(rot.z, rot.y, rot.x);
+
+            if(ImGui::SliderFloat3("rotation", &rot.x, -glm::pi<float>(), glm::pi<float>(), "%.3f rad", ImGuiSliderFlags_NoRoundToFormat))
+            {
+                tranz.setRotation(btQuaternion(rot.z, rot.y, rot.x));
+                updated = true;
+            }
+            if(updated)
+            {
+                mBodyMotionState->setWorldTransform(tranz);
+                mBody->setMotionState(mBodyMotionState.get());
             }
         }
-        return 8008500;
     }
-
-    void suicide()
+    void changeCollision(lpt::BulletShape& vShape)
     {
-        for(auto& child:mChildren)
-        {
-            child.suicide();
-        }
-        if((bool)mDeathCallback) //retrurns true if mDeathCallback was assigned a value
-        {
-            std::cout << "Suocide!\n";
-            mDeathCallback(*this);
-        }
+        mBody->setCollisionShape(static_cast<btCollisionShape*>(vShape.getRaw()));
+        mBody->activate();
+        mShape = std::move(vShape);
     }
-
-    void killChild(const std::size_t child_id)
+    ~RigidBodyContainerSingular()
     {
-        if(mChildren.size() <= child_id)
-        {
-            std::cerr << "TreeNode::killChild() ERROR: child_id too big!\n";
-            return;
-        }
-        mChildren[child_id].suicide();
-        mChildren.erase(mChildren.begin() + child_id);
+        mWorld->removeRigidBody(mBody.get());
     }
-
-    void setDeathCallback(std::function<void(TreeNode<T>&)> v_callback)
-    {
-        mDeathCallback = v_callback;
-    }
-
-    std::vector<TreeNode<T>>& getChildren(){return mChildren;}
-    void orphan(){mChildren.clear();}
-    inline T& getData(){return *data;}
-    std::string_view getName() const {return name;}
-    void setName(std::string_view newName){name = newName;}
-
-    ~TreeNode()
-    {
-        if(data) delete data;
-    }
-
     private:
-    std::function<void(TreeNode<T>&)> mDeathCallback;
-    T* data;
-    std::string name = "Node";
-    std::vector<TreeNode<T>> mChildren;
+    lpt::BulletShape mShape;
+    std::shared_ptr<btRigidBody> mBody;
+    std::shared_ptr<btDefaultMotionState> mBodyMotionState;
+    std::shared_ptr<btDynamicsWorld> mWorld;
 };
 
-
-
-void ImGui_DrawTreeNode(TreeNode<int>& node, TreeNode<int>* parent = nullptr)
+class RigidBosyContainerCreationClassThing
 {
-    if(ImGui::TreeNode(node.getName().data()))
+    public:
+    RigidBosyContainerCreationClassThing(std::shared_ptr<btDynamicsWorld> vWorld)
     {
-        ImGui::SliderInt("value", &node.getData(), 0, 100);
-        if(ImGui::Button("Create child"))
+        mWorld = vWorld;
+    }
+    //bool mWindowVisisible = true;
+    void drawUI()
+    {
+        if(ImGui::Button("Create new"))
         {
-            node.addChild();
+            mModalLastSelected = lpt::BulletShapeType::SphereShape;
+            mModalFloatVariable[0] = 1.0f;
+            mModalFloatVariable[1] = 1.0f;
+            mModalFloatVariable[2] = 1.0f;
+            ImGui::OpenPopup("Create New Shape - Modal");
         }
-        ImGui::SameLine();
-        if(ImGui::Button("Kill child"))
+        bool doDelete = false;
+        std::size_t iref_deleta = 0;
+        std::size_t iref = 0;
+        for(auto& i : mObjects)
         {
-            if(parent != nullptr)
+            std::string name = i->getName();
+            name += "###" + std::to_string(iref++);
+            if(ImGui::TreeNode(name.c_str()))
             {
-                parent->killChild(parent->findChild(node.getName()));
-                //return early to avoid dead children.
+                if(ImGui::Button("Kil"))
+                {
+                    iref_deleta = iref; 
+                    doDelete = true;
+                }
+                i->ui();
                 ImGui::TreePop();
-                return;
             }
         }
-        for(auto& child: node.getChildren())
+        if(doDelete)
         {
-            ImGui_DrawTreeNode(child, &node);
+            if(iref_deleta < mObjects.size())
+            {
+                mObjects.erase(mObjects.begin() + iref_deleta);
+            }
         }
-        ImGui::TreePop();
+        drawModalPopup();
     }
-}
+    private:
 
-struct TreeNode_Data
-{
-    //std::unique_ptr<btCollisionShape> mShape;
-    btCollisionShape* mShape;
-    // using GenericPtr = std::unique_ptr<btCollisionShape>;
-    // using ContainerPtr = std::unique_ptr<btCompoundShape>;
-
-    // std::variant<GenericPtr, ContainerPtr> mShape;
-    
-    lpt::BulletShapeType mType = lpt::BulletShapeType::Size;
-    bool not_loaded = true;
-
-    // TreeNode_Data()
-    // {
-
-    // }
-
-    // TreeNode_Data(TreeNode_Data& cpy) = delete;
-};
-
-static TreeNode_Data* g_Modal_CreateNew_Shape_TreeNode_Data = nullptr;
-// /// @brief called when Modal_CreateNew_Shape() has "OK" button pressed by user
-// static std::function<void(TreeNode_Data*)> g_Modal_CreateNew_Shape_creation_callback_func;
-
-
-// call by  ImGui::OpenPopup("Create New Shape - Modal");
-void Modal_CreateNew_Shape()
-{
-    constexpr std::size_t val_previously_selected_default = static_cast<std::size_t>(lpt::BulletShapeType::SphereShape);
-    static TreeNode_Data* out_data = nullptr;
-    static std::size_t val_previously_selected = val_previously_selected_default;
-    // 0 - radius ; boxHalfExtents.X ; radius
-    // 1 -        ; boxHalfExtents.Y ; height
-    // 2 -        ; boxHalfExtents.Z ;
-    static float var_float[3] = {};
-
-    
-    if(out_data != g_Modal_CreateNew_Shape_TreeNode_Data)
+    void drawModalPopup()
     {
-        //reset all values in here
-        val_previously_selected = val_previously_selected_default;
-
-        out_data = g_Modal_CreateNew_Shape_TreeNode_Data;
-        var_float[0] = 1.0f;
-        var_float[1] = 1.0f;
-        var_float[2] = 1.0f;
-
-        std::cout << "out_data = " <<(void*)out_data << "\n";
-        std::cout << "g_Modal_CreateNew_Shape_TreeNode_Data = " <<(void*)g_Modal_CreateNew_Shape_TreeNode_Data << "\n";
-    }
-   
-    ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-
-    if(ImGui::BeginPopupModal("Create New Shape - Modal", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        // /*
-
-        const char* val_preview = lpt::getName(static_cast<lpt::BulletShapeType>(val_previously_selected));
-        if(ImGui::BeginCombo("btCollisionShape", val_preview))
+        ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        if(ImGui::BeginPopupModal("Create New Shape - Modal", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
         {
-            for(std::size_t i = 0; i < static_cast<std::size_t>(lpt::BulletShapeType::Size); ++i)
+            const char* value_preview = lpt::getName(mModalLastSelected);
+            if(ImGui::BeginCombo("btCollisionShape", value_preview))
             {
-                const bool is_selected = (val_previously_selected == i);
-                if(ImGui::Selectable(lpt::getName(static_cast<lpt::BulletShapeType>(i)), is_selected))
+                for(std::size_t i = 0; i < static_cast<std::size_t>(lpt::BulletShapeType::Size); ++i)
                 {
-                    val_previously_selected = i;
+                    const lpt::BulletShapeType type = static_cast<lpt::BulletShapeType>(i);
+                    const bool is_selected = mModalLastSelected == type;
+                    if(ImGui::Selectable(lpt::getName(type), is_selected))
+                    {
+                        mModalLastSelected = type;
+                    }
                 }
-            }
-            ImGui::EndCombo();
-        }
-
-        const lpt::BulletShapeType enumType = static_cast<lpt::BulletShapeType>(val_previously_selected);
-
-        switch(enumType)
-        {
-            case lpt::BulletShapeType::CompoundShape:
-            {
-                ImGui::Text("CompoundShape settings here");
-                break;
+                ImGui::EndCombo();
             }
 
-            case lpt::BulletShapeType::CapsuleShapeY:
-            [[fallthrough]];
-            case lpt::BulletShapeType::CapsuleShapeX:
-            [[fallthrough]];
-            case lpt::BulletShapeType::CapsuleShapeZ:
-            [[fallthrough]];
-            case lpt::BulletShapeType::ConeShapeY:
-            [[fallthrough]];
-            case lpt::BulletShapeType::ConeShapeX:
-            [[fallthrough]];
-            case lpt::BulletShapeType::ConeShapeZ:
+            switch(mModalLastSelected)
             {
-                ImGui::SliderFloat("radius", &var_float[0], 0.001f, 100.0f);
-                ImGui::SliderFloat("height", &var_float[1], 0.001f, 100.0f);
-                break;
-            }
-
-            case lpt::BulletShapeType::CylinderShapeY:
-            [[fallthrough]];
-            case lpt::BulletShapeType::CylinderShapeX:
-            [[fallthrough]];
-            case lpt::BulletShapeType::CylinderShapeZ:
-            [[fallthrough]];
-            case lpt::BulletShapeType::BoxShape:
-            {
-                ImGui::SliderFloat3("boxHalfExtents", &var_float[0], 0.001f, 100.0f);
-                break;
-            }
-            case lpt::BulletShapeType::SphereShape:
-            {
-                ImGui::SliderFloat("radius", &var_float[0], 0.001f, 100.0f);
-                break;
-            }
-            case lpt::BulletShapeType::ConvexHullShape:
-            {
-                ImGui::Text("ConvexHullShape settings here");
-                ImGui::Text("ConvexHullShape model load here?");
-                ImGui::Text("maybe even model optimisation??");
-                break;
-            }
-
-            case lpt::BulletShapeType::Size:
-            [[fallthrough]];
-            default:
-                ImGui::Text("Impossible value chosen. Quo vadis?");
-                break;
-        }
-
-        if (ImGui::Button("OK", ImVec2(120, 0))) 
-        {
-            std::cout << "HERE - 0!\n";
-            std::cout << "out_data = " <<(void*)out_data << "\n";
-            std::cout << "g_Modal_CreateNew_Shape_TreeNode_Data = " <<(void*)g_Modal_CreateNew_Shape_TreeNode_Data << "\n";
-            //out_data; //fill this out in here
-            out_data->mType = enumType;
-            out_data->not_loaded = false;
-            std::cout << "HERE - 1!\n";
-
-            std::cout << "Creating a " << lpt::getName(enumType) << "\n";
-
-            switch(enumType)
-            {
-                case lpt::BulletShapeType::CompoundShape:
-                {
-                    break;
-                }
                 case lpt::BulletShapeType::CapsuleShapeY:
-                {
-                    //out_data->mShape = std::make_unique<btCapsuleShape>(var_float[0], var_float[1]);
-                    out_data->mShape = new btCapsuleShape(var_float[0], var_float[1]);
-                    break;
-                }
+                [[fallthrough]];
                 case lpt::BulletShapeType::CapsuleShapeX:
-                {
-                    //out_data->mShape = std::make_unique<btCapsuleShapeX>(var_float[0], var_float[1]);
-                    out_data->mShape = new btCapsuleShapeX(var_float[0], var_float[1]);
-                    break;
-                }
+                [[fallthrough]];
                 case lpt::BulletShapeType::CapsuleShapeZ:
-                {
-                    //out_data->mShape = std::make_unique<btCapsuleShapeZ>(var_float[0], var_float[1]);
-                    out_data->mShape = new btCapsuleShapeZ(var_float[0], var_float[1]);
-                    break;
-                }
-
+                [[fallthrough]];
                 case lpt::BulletShapeType::ConeShapeY:
-                {
-                    //out_data->mShape = std::make_unique<btConeShape>(var_float[0], var_float[1]);
-                    out_data->mShape = new btConeShape(var_float[0], var_float[1]);
-                    break;
-                }
+                [[fallthrough]];
                 case lpt::BulletShapeType::ConeShapeX:
-                {
-                    //out_data->mShape = std::make_unique<btConeShapeX>(var_float[0], var_float[1]);
-                    out_data->mShape = new btConeShapeX(var_float[0], var_float[1]);
-                    break;
-                }
+                [[fallthrough]];
                 case lpt::BulletShapeType::ConeShapeZ:
                 {
-                    //out_data->mShape = std::make_unique<btConeShapeZ>(var_float[0], var_float[1]);
-                    out_data->mShape = new btConeShapeZ(var_float[0], var_float[1]);
+                    ImGui::SliderFloat("radius", &mModalFloatVariable[0], 0.001f, 100.0f);
+                    ImGui::SliderFloat("height", &mModalFloatVariable[1], 0.001f, 100.0f);
                     break;
                 }
 
                 case lpt::BulletShapeType::CylinderShapeY:
-                {
-                    //out_data->mShape = std::make_unique<btCylinderShape>(btVector3(var_float[0], var_float[1], var_float[2]));
-                    out_data->mShape = new btCylinderShape(btVector3(var_float[0], var_float[1], var_float[2]));
-                    break;
-                }
+                [[fallthrough]];
                 case lpt::BulletShapeType::CylinderShapeX:
-                {
-                    //out_data->mShape = std::make_unique<btCylinderShapeX>(btVector3(var_float[0], var_float[1], var_float[2]));
-                    out_data->mShape = new btCylinderShapeX(btVector3(var_float[0], var_float[1], var_float[2]));
-                    break;
-                }
+                [[fallthrough]];
                 case lpt::BulletShapeType::CylinderShapeZ:
-                {
-                    //out_data->mShape = std::make_unique<btCylinderShapeZ>(btVector3(var_float[0], var_float[1], var_float[2]));
-                    out_data->mShape = new btCylinderShapeZ(btVector3(var_float[0], var_float[1], var_float[2]));
-                    break;
-                }
-
+                [[fallthrough]];
                 case lpt::BulletShapeType::BoxShape:
                 {
-                    //out_data->mShape = std::make_unique<btBoxShape>(btVector3(var_float[0], var_float[1], var_float[2]));
-                    out_data->mShape = new btBoxShape(btVector3(var_float[0], var_float[1], var_float[2]));
+                    ImGui::SliderFloat3("boxHalfExtents", &mModalFloatVariable[0], 0.001f, 100.0f);
                     break;
                 }
-
                 case lpt::BulletShapeType::SphereShape:
                 {
-                    //std::unique_ptr<btCollisionShape> ptr = std::make_unique<btSphereShape>(var_float[0]);
-                    out_data->mShape = new btSphereShape(var_float[0]);
-                    std::cout << "Created, saving!\n";
-                    out_data->mType = lpt::BulletShapeType::SphereShape;
-                    std::cout << "Created  actually\n";
-
-                    //std::unique_ptr<btSphereShape>  <- what this was orignally, didn't change anything!!!!
-                    //out_data->mShape = std::move(ptr); //SIGSEGV <- segfault-s
-                    //ptr.release();
-                    //EVERY SINGLE ONE CRASES!!
-                    // maybe move this into a class, in a file of its own???
-                    // the refactoring may solve this problem
-                    // but every single one crashing means the problem must be either:
-                    // - moving the pointer, somehow 
-                    //    (the bullet class seem to be a bit hit-or-miss with the virtual destructor, 
-                    //        althought at a glance all classes with data members of their own have them?)
-                    // - out_data, despite earlier write being successfull.
-                    // Either way, moving this into a class/file will require enough changes that it might just work???
-                    // NOTE TO SELF: rendering in main app can be done parallel to this, so if this is too hard ...
-                    std::cout << "Created, saved!\n";
+                    ImGui::SliderFloat("radius", &mModalFloatVariable[0], 0.001f, 100.0f);
                     break;
                 }
-
+                // {
+                //     ImGui::Text("ConvexHullShape settings here");
+                //     ImGui::Text("ConvexHullShape model load here?");
+                //     ImGui::Text("maybe even model optimisation??");
+                //     break;
+                // }
                 case lpt::BulletShapeType::ConvexHullShape:
-                {
-                    break;
-                }
-
+                [[fallthrough]];
+                case lpt::BulletShapeType::CompoundShape:
+                [[fallthrough]];
+                case lpt::BulletShapeType::TriangleMeshShape:
+                [[fallthrough]];
+                case lpt::BulletShapeType::StaticPlaneShape:
+                [[fallthrough]];
                 case lpt::BulletShapeType::Size:
                 [[fallthrough]];
                 default:
-                    std::cerr << "Queo Vadis?\n";
+                    ImGui::Text("Unsupported value chosen. Quo vadis?");
                     break;
+            }
+
+            if (ImGui::Button("OK", ImVec2(120, 0)))
+            {
+                lpt::BulletShape shape;
+                switch(mModalLastSelected)
+                {
+                    case lpt::BulletShapeType::CapsuleShapeY:
+                        shape = shape.create<btCapsuleShape>(mModalFloatVariable[0], mModalFloatVariable[1]);
+                        break;
+                    case lpt::BulletShapeType::CapsuleShapeX:
+                        shape = shape.create<btCapsuleShapeX>(mModalFloatVariable[0], mModalFloatVariable[1]);
+                        break;
+                    case lpt::BulletShapeType::CapsuleShapeZ:
+                        shape = shape.create<btCapsuleShapeZ>(mModalFloatVariable[0], mModalFloatVariable[1]);
+                        break;
+                    case lpt::BulletShapeType::ConeShapeY:
+                        shape = shape.create<btConeShape>(mModalFloatVariable[0], mModalFloatVariable[1]);
+                        break;
+                    case lpt::BulletShapeType::ConeShapeX:
+                        shape = shape.create<btConeShapeX>(mModalFloatVariable[0], mModalFloatVariable[1]);
+                        break;
+                    case lpt::BulletShapeType::ConeShapeZ:
+                        shape = shape.create<btConeShapeZ>(mModalFloatVariable[0], mModalFloatVariable[1]);
+                        break;
+
+                    case lpt::BulletShapeType::CylinderShapeY:
+                        shape = shape.create<btCylinderShape>(btVector3(mModalFloatVariable[0], mModalFloatVariable[1], mModalFloatVariable[2]));
+                        break;
+                    case lpt::BulletShapeType::CylinderShapeX:
+                        shape = shape.create<btCylinderShapeX>(btVector3(mModalFloatVariable[0], mModalFloatVariable[1], mModalFloatVariable[2]));
+                        break;
+                    case lpt::BulletShapeType::CylinderShapeZ:
+                        shape = shape.create<btCylinderShapeZ>(btVector3(mModalFloatVariable[0], mModalFloatVariable[1], mModalFloatVariable[2]));
+                        break;
+                    case lpt::BulletShapeType::BoxShape:
+                        shape = shape.create<btBoxShape>(btVector3(mModalFloatVariable[0], mModalFloatVariable[1], mModalFloatVariable[2]));
+                        break;
+                    case lpt::BulletShapeType::SphereShape:
+                        shape = shape.create<btSphereShape>(mModalFloatVariable[0]);
+                        break;
+
+                    case lpt::BulletShapeType::ConvexHullShape:
+                    [[fallthrough]];
+                    case lpt::BulletShapeType::CompoundShape:
+                    [[fallthrough]];
+                    case lpt::BulletShapeType::TriangleMeshShape:
+                    [[fallthrough]];
+                    case lpt::BulletShapeType::StaticPlaneShape:
+                    [[fallthrough]];
+                    case lpt::BulletShapeType::Size:
+                    [[fallthrough]];
+                    default:
+                        goto GOTO_INSTR_SKIP;
+                        break;
                 }
-            std::cout << "HERE - 1-a!\n";
-            ImGui::CloseCurrentPopup();
-            g_Modal_CreateNew_Shape_TreeNode_Data = nullptr;
-            std::cout << "HERE - 1-b!\n";
+                ImGui::CloseCurrentPopup();
+                {
+                    mObjects.push_back(std::make_unique<RigidBodyContainerSingular>(mWorld, shape));
+                }
+                GOTO_INSTR_SKIP:;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel", ImVec2(120, 0))) 
+            { 
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
         }
-        ImGui::SameLine();
-        //*/
-        if (ImGui::Button("Cancel", ImVec2(120, 0))) 
-        { 
-            ImGui::CloseCurrentPopup();
-            g_Modal_CreateNew_Shape_TreeNode_Data = nullptr;
-        }
-        ImGui::EndPopup();
     }
-    
+    std::vector<std::unique_ptr<RigidBodyContainerSingular>> mObjects;
+    lpt::BulletShapeType mModalLastSelected = lpt::BulletShapeType::SphereShape;
+    std::shared_ptr<btDynamicsWorld> mWorld;
+    // 0 - radius ; boxHalfExtents.X ; radius
+    // 1 -        ; boxHalfExtents.Y ; height
+    // 2 -        ; boxHalfExtents.Z ;
+    float mModalFloatVariable[3] = {};
 };
 
-void ImGui_DrawTreeNode(TreeNode<TreeNode_Data>& node, TreeNode<TreeNode_Data>* parent = nullptr)
-{
-    const bool child_not_yet_alive = node.getData().not_loaded;
-    if(child_not_yet_alive) ImGui::BeginDisabled();
-    if(ImGui::TreeNode(node.getName().data()))
-    {
-        auto& node_data = node.getData();
-        ImGui::Text("Name: \"%s\"", node_data.mShape->getName());
-
-        if(ImGui::Button("Create child"))
-        {
-            const auto death_callback = [parent](TreeNode<TreeNode_Data>& dcb_v_node) -> void
-            {
-                auto& c_data = dcb_v_node.getData();
-                auto& p_data = parent->getData();
-                if(p_data.mType != lpt::BulletShapeType::CompoundShape)
-                {
-                    std::cerr << "parent of a node is not a legal parent. How?\n";
-                    return;
-                }
-                btCompoundShape* pptr = dynamic_cast<btCompoundShape*>(p_data.mShape);
-                if(pptr != nullptr)
-                {
-                    pptr->removeChildShape(c_data.mShape);
-                } else
-                {
-                    std::cout << "dynamic_cast is broken!\n";
-                }
-                if(dcb_v_node.getData().mShape)
-                {
-                    delete dcb_v_node.getData().mShape;
-                    dcb_v_node.getData().mShape = nullptr;
-                }
-                
-                //pptr->getChildList();
-            };
-            std::size_t id = node.addChild();
-            auto& child_child = node.getChildren().at(id);
-            child_child.setDeathCallback(death_callback);
-            g_Modal_CreateNew_Shape_TreeNode_Data = &child_child.getData();
-
-            ImGui::OpenPopup("Create New Shape - Modal");
-            
-            std::cout << "Popup should've been created!\n";
-        }
-        ImGui::SameLine();
-        if(ImGui::Button("Kill child"))
-        {
-            if(parent != nullptr)
-            {
-                parent->killChild(parent->findChild(node.getName()));
-                //return early to avoid dead children.
-                ImGui::TreePop();
-                return;
-            }
-        }
-        for(auto& child: node.getChildren())
-        {
-            ImGui_DrawTreeNode(child, &node);
-        }
-        ImGui::TreePop();
-    }
-    if(child_not_yet_alive) ImGui::EndDisabled();
-
-    Modal_CreateNew_Shape(); //needs to be here for ID to match
-}
 
 int main()
 {
@@ -519,7 +337,7 @@ int main()
      std::unique_ptr<btSequentialImpulseConstraintSolver> solver = std::make_unique<btSequentialImpulseConstraintSolver>();
   
      // The world.
-     std::unique_ptr<btDiscreteDynamicsWorld> dynamicsWorld = std::make_unique<btDiscreteDynamicsWorld>(dispatcher.get(), broadphase.get(), solver.get(), collisionConfiguration.get());
+     std::shared_ptr<btDiscreteDynamicsWorld> dynamicsWorld = std::make_shared<btDiscreteDynamicsWorld>(dispatcher.get(), broadphase.get(), solver.get(), collisionConfiguration.get());
      dynamicsWorld->setDebugDrawer(&bulletDebugRenderer);
      
      dynamicsWorld->setGravity(btVector3(0, 0, 0));
@@ -553,18 +371,7 @@ int main()
             glVertexArrayAttribBinding(VAO_model, 1, 0);
         }
 
-
-    btTransform ModeltransIdentity;
-    ModeltransIdentity.setIdentity();
-    const btVector3 Modelcolor(1.0f, 1.0f, 1.0);
-    
-    TreeNode<int> test_rootNode; test_rootNode.getData() = 80085; //still looks cursed
-
-    TreeNode<TreeNode_Data> rootNode;
-    rootNode.setName("Root");
-    rootNode.getData().mShape = new btCompoundShape();//std::make_unique<btCompoundShape>();
-    rootNode.getData().mType = lpt::BulletShapeType::CompoundShape;
-    rootNode.getData().not_loaded = false;
+    RigidBosyContainerCreationClassThing RBCCCT((std::shared_ptr<btDynamicsWorld>)dynamicsWorld);
 
     double lastFrameTime = glfwGetTime();
     while(!window.shouldClose())
@@ -599,193 +406,12 @@ int main()
             ImGui::End();
         }
 
-        /*
-
-        if (0)
-        if(ImGui::Begin("Create model"))
-        {
-            static std::size_t val_previously_selected = 0;
-            const char* val_preview = gCollisionShapeTypesNames[val_previously_selected];
-            if(ImGui::BeginCombo("btCollisionShape", val_preview))
-            {
-                for(std::size_t i = 0; i < static_cast<std::size_t>(lpt::BulletShapeType::Size); ++i)
-                {
-                    const bool is_selected = (val_previously_selected == i);
-                    if(ImGui::Selectable(gCollisionShapeTypesNames[i], is_selected))
-                    {
-                        val_previously_selected = i;
-                    }
-                }
-                ImGui::EndCombo();
-            }
-            // 0 - radius ; boxHalfExtents.X ; radius
-            // 1 -        ; boxHalfExtents.Y ; height
-            // 2 -        ; boxHalfExtents.Z ;
-            static float var_float[3] = {};
-
-            switch(static_cast<lpt::BulletShapeType>(val_previously_selected))
-                {
-                    case lpt::BulletShapeType::CompoundShape:
-                    {
-                        
-                        break;
-                    }
-
-                    case lpt::BulletShapeType::CapsuleShapeY:
-                    [[fallthrough]];
-                    case lpt::BulletShapeType::CapsuleShapeX:
-                    [[fallthrough]];
-                    case lpt::BulletShapeType::CapsuleShapeZ:
-                    [[fallthrough]];
-                    case lpt::BulletShapeType::ConeShapeY:
-                    [[fallthrough]];
-                    case lpt::BulletShapeType::ConeShapeX:
-                    [[fallthrough]];
-                    case lpt::BulletShapeType::ConeShapeZ:
-                    {
-                        ImGui::SliderFloat("radius", &var_float[0], 0.001f, 100.0f);
-                        ImGui::SliderFloat("height", &var_float[1], 0.001f, 100.0f);
-                        break;
-                    }
-
-                    case lpt::BulletShapeType::CylinderShapeY:
-                    [[fallthrough]];
-                    case lpt::BulletShapeType::CylinderShapeX:
-                    [[fallthrough]];
-                    case lpt::BulletShapeType::CylinderShapeZ:
-                    [[fallthrough]];
-                    case lpt::BulletShapeType::BoxShape:
-                    {
-                        ImGui::SliderFloat3("boxHalfExtents", &var_float[0], 0.001f, 100.0f);
-                        break;
-                    }
-                    case lpt::BulletShapeType::SphereShape:
-                    {
-                        ImGui::SliderFloat("radius", &var_float[0], 0.001f, 100.0f);
-                        break;
-                    }
-                    case lpt::BulletShapeType::ConvexHullShape:
-                    {
-                        break;
-                    }
-
-                    case lpt::BulletShapeType::Size:
-                    [[fallthrough]];
-                    default:
-                        std::cerr << "Quo Vadis?\n";
-                        break; 
-                }
-
-            if(ImGui::Button("Create"))
-            {
-                
-                switch(static_cast<lpt::BulletShapeType>(val_previously_selected))
-                {
-                    case lpt::BulletShapeType::CompoundShape:
-                    {
-                        break;
-                    }
-
-                    case lpt::BulletShapeType::CapsuleShapeY:
-                    {
-                        delete vPhysicsShape;
-                        vPhysicsShape = new btCapsuleShape(var_float[0], var_float[1]);
-                        break;
-                    }
-                    case lpt::BulletShapeType::CapsuleShapeX:
-                    {
-                        delete vPhysicsShape;
-                        vPhysicsShape = new btCapsuleShapeX(var_float[0], var_float[1]);
-                        break;
-                    }
-                    case lpt::BulletShapeType::CapsuleShapeZ:
-                    {
-                        delete vPhysicsShape;
-                        vPhysicsShape = new btCapsuleShapeZ(var_float[0], var_float[1]);
-                        break;
-                    }
-
-                    case lpt::BulletShapeType::ConeShapeY:
-                    {
-                        delete vPhysicsShape;
-                        vPhysicsShape = new btConeShape(var_float[0], var_float[1]);
-                        break;
-                    }
-                    case lpt::BulletShapeType::ConeShapeX:
-                    {
-                        delete vPhysicsShape;
-                        vPhysicsShape = new btConeShapeX(var_float[0], var_float[1]);
-                        break;
-                    }
-                    case lpt::BulletShapeType::ConeShapeZ:
-                    {
-                        delete vPhysicsShape;
-                        vPhysicsShape = new btConeShapeZ(var_float[0], var_float[1]);
-                        break;
-                    }
-
-                    case lpt::BulletShapeType::CylinderShapeY:
-                    {
-                        delete vPhysicsShape;
-                        vPhysicsShape = new btCylinderShape(btVector3(var_float[0], var_float[1], var_float[2]));
-                        break;
-                    }
-                    case lpt::BulletShapeType::CylinderShapeX:
-                    {
-                        delete vPhysicsShape;
-                        vPhysicsShape = new btCylinderShapeX(btVector3(var_float[0], var_float[1], var_float[2]));
-                        break;
-                    }
-                    case lpt::BulletShapeType::CylinderShapeZ:
-                    {
-                        delete vPhysicsShape;
-                        vPhysicsShape = new btCylinderShapeZ(btVector3(var_float[0], var_float[1], var_float[2]));
-                        break;
-                    }
-
-                    case lpt::BulletShapeType::BoxShape:
-                    {
-                        delete vPhysicsShape;
-                        vPhysicsShape = new btBoxShape(btVector3(var_float[0], var_float[1], var_float[2]));
-                        break;
-                    }
-
-                    case lpt::BulletShapeType::SphereShape:
-                    {
-                        delete vPhysicsShape;
-                        vPhysicsShape = new btSphereShape(var_float[0]);
-                        break;
-                    }
-
-                    case lpt::BulletShapeType::ConvexHullShape:
-                    {
-                        break;
-                    }
-
-                    case lpt::BulletShapeType::Size:
-                    [[fallthrough]];
-                    default:
-                        std::cerr << "Queo Vadis?\n";
-                        break; 
-                }
-                vPhysicsBody->setCollisionShape(vPhysicsShape);
-            }
-           
-            
-            ImGui::End();
-        }
-
-        */
-
         ImGui::ShowDemoWindow();
 
         if(ImGui::Begin("Test"))
         {
-            //ImGui_DrawTreeNode(test_rootNode);
-
-            ImGui_DrawTreeNode(rootNode);
-
-            
+            //RBCS.ui();
+            RBCCCT.drawUI();
             ImGui::End();
         }
 
@@ -858,7 +484,7 @@ int main()
 
     lp::g_engine.destroy();
     window.destroy();
-
+}
     /**
      * TODO: eventually add fullscreen functionality in Window
      * 
@@ -903,7 +529,6 @@ int main()
      * CMakePresets.json release-base is broken +
      * CMAKE_INSTALL_PREFIX <- outdated, + what is this???
      */
-}
 
 namespace
 {
