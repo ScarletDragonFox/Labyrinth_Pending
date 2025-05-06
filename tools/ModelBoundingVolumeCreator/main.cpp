@@ -29,52 +29,12 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 #include <string_view>
 #include <variant>
 
+#include "BulletShape.hpp"
+
 namespace
 {
     void opengl_message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, [[maybe_unused]]  GLsizei length, GLchar const* message, [[maybe_unused]] void const* user_param);
 
-    enum class CollsionShapeTypes
-    {
-        CompoundShape,
-        CapsuleShapeY,
-        CapsuleShapeX,
-        CapsuleShapeZ,
-        ConeShapeY,
-        ConeShapeX,
-        ConeShapeZ,
-        CylinderShapeY,
-        CylinderShapeX,
-        CylinderShapeZ,
-        BoxShape,
-        SphereShape,
-        ConvexHullShape,
-
-        //STATIC:
-        StaticPlaneShape, //infinite plane
-        TriangleMeshShape, //mesh of triangles all with 1 material
-        Size
-    };
-
-    constexpr std::array<const char*, static_cast<std::size_t>(CollsionShapeTypes::Size)> gCollisionShapeTypesNames = 
-        {"btCompoundShape", "btCapsuleShape", "btCapsuleShapeX", "btCapsuleShapeZ", "btConeShape", "btConeShapeX", "btConeShapeZ", 
-        "btCylinderShape", "btCylinderShapeX", "btCylinderShapeZ", "btBoxShape", "btSphereShape", "btConvexHullShape", "btStaticPlaneShape", "btBvhTriangleMeshShape"};
-
-    consteval const char* CollsionShapeTypes_getName(const CollsionShapeTypes cv_type)
-    {
-        return gCollisionShapeTypesNames[static_cast<std::size_t>(cv_type)];
-    }
-
-    constexpr CollsionShapeTypes CollsionShapeTypes_getEnumFromName(const char* name)
-    {   
-        std::size_t ref = 0;
-        for(const auto i: gCollisionShapeTypesNames)
-        {
-            if(i == name)
-            {
-                return static_cast<CollsionShapeTypes>(ref++);
-            }
-        }
-    }
     btCollisionWorld::ClosestRayResultCallback RayTestObtain(btDynamicsWorld* v_world, const lp::Player& cr_Player, lp::Window& r_window, const glm::vec2 cv_mousePos);
 }
 
@@ -190,14 +150,6 @@ void ImGui_DrawTreeNode(TreeNode<int>& node, TreeNode<int>* parent = nullptr)
     }
 }
 
-namespace fk
-{
-    // a stupid class that stores a collisionShape ptr.
-    // acts as a unique_ptr, but stores a variant of every possible bullet value
-    // because 
-    
-};
-
 struct TreeNode_Data
 {
     //std::unique_ptr<btCollisionShape> mShape;
@@ -206,7 +158,8 @@ struct TreeNode_Data
     // using ContainerPtr = std::unique_ptr<btCompoundShape>;
 
     // std::variant<GenericPtr, ContainerPtr> mShape;
-    CollsionShapeTypes mType = CollsionShapeTypes::Size;
+    
+    lpt::BulletShapeType mType = lpt::BulletShapeType::Size;
     bool not_loaded = true;
 
     // TreeNode_Data()
@@ -225,7 +178,7 @@ static TreeNode_Data* g_Modal_CreateNew_Shape_TreeNode_Data = nullptr;
 // call by  ImGui::OpenPopup("Create New Shape - Modal");
 void Modal_CreateNew_Shape()
 {
-    constexpr std::size_t val_previously_selected_default = static_cast<std::size_t>(CollsionShapeTypes::SphereShape);
+    constexpr std::size_t val_previously_selected_default = static_cast<std::size_t>(lpt::BulletShapeType::SphereShape);
     static TreeNode_Data* out_data = nullptr;
     static std::size_t val_previously_selected = val_previously_selected_default;
     // 0 - radius ; boxHalfExtents.X ; radius
@@ -253,13 +206,14 @@ void Modal_CreateNew_Shape()
     if(ImGui::BeginPopupModal("Create New Shape - Modal", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
         // /*
-        const char* val_preview = gCollisionShapeTypesNames[val_previously_selected];
+
+        const char* val_preview = lpt::getName(static_cast<lpt::BulletShapeType>(val_previously_selected));
         if(ImGui::BeginCombo("btCollisionShape", val_preview))
         {
-            for(std::size_t i = 0; i < static_cast<std::size_t>(CollsionShapeTypes::Size); ++i)
+            for(std::size_t i = 0; i < static_cast<std::size_t>(lpt::BulletShapeType::Size); ++i)
             {
                 const bool is_selected = (val_previously_selected == i);
-                if(ImGui::Selectable(gCollisionShapeTypesNames[i], is_selected))
+                if(ImGui::Selectable(lpt::getName(static_cast<lpt::BulletShapeType>(i)), is_selected))
                 {
                     val_previously_selected = i;
                 }
@@ -267,50 +221,50 @@ void Modal_CreateNew_Shape()
             ImGui::EndCombo();
         }
 
-        const CollsionShapeTypes enumType = static_cast<CollsionShapeTypes>(val_previously_selected);
+        const lpt::BulletShapeType enumType = static_cast<lpt::BulletShapeType>(val_previously_selected);
 
         switch(enumType)
         {
-            case CollsionShapeTypes::CompoundShape:
+            case lpt::BulletShapeType::CompoundShape:
             {
                 ImGui::Text("CompoundShape settings here");
                 break;
             }
 
-            case CollsionShapeTypes::CapsuleShapeY:
+            case lpt::BulletShapeType::CapsuleShapeY:
             [[fallthrough]];
-            case CollsionShapeTypes::CapsuleShapeX:
+            case lpt::BulletShapeType::CapsuleShapeX:
             [[fallthrough]];
-            case CollsionShapeTypes::CapsuleShapeZ:
+            case lpt::BulletShapeType::CapsuleShapeZ:
             [[fallthrough]];
-            case CollsionShapeTypes::ConeShapeY:
+            case lpt::BulletShapeType::ConeShapeY:
             [[fallthrough]];
-            case CollsionShapeTypes::ConeShapeX:
+            case lpt::BulletShapeType::ConeShapeX:
             [[fallthrough]];
-            case CollsionShapeTypes::ConeShapeZ:
+            case lpt::BulletShapeType::ConeShapeZ:
             {
                 ImGui::SliderFloat("radius", &var_float[0], 0.001f, 100.0f);
                 ImGui::SliderFloat("height", &var_float[1], 0.001f, 100.0f);
                 break;
             }
 
-            case CollsionShapeTypes::CylinderShapeY:
+            case lpt::BulletShapeType::CylinderShapeY:
             [[fallthrough]];
-            case CollsionShapeTypes::CylinderShapeX:
+            case lpt::BulletShapeType::CylinderShapeX:
             [[fallthrough]];
-            case CollsionShapeTypes::CylinderShapeZ:
+            case lpt::BulletShapeType::CylinderShapeZ:
             [[fallthrough]];
-            case CollsionShapeTypes::BoxShape:
+            case lpt::BulletShapeType::BoxShape:
             {
                 ImGui::SliderFloat3("boxHalfExtents", &var_float[0], 0.001f, 100.0f);
                 break;
             }
-            case CollsionShapeTypes::SphereShape:
+            case lpt::BulletShapeType::SphereShape:
             {
                 ImGui::SliderFloat("radius", &var_float[0], 0.001f, 100.0f);
                 break;
             }
-            case CollsionShapeTypes::ConvexHullShape:
+            case lpt::BulletShapeType::ConvexHullShape:
             {
                 ImGui::Text("ConvexHullShape settings here");
                 ImGui::Text("ConvexHullShape model load here?");
@@ -318,7 +272,7 @@ void Modal_CreateNew_Shape()
                 break;
             }
 
-            case CollsionShapeTypes::Size:
+            case lpt::BulletShapeType::Size:
             [[fallthrough]];
             default:
                 ImGui::Text("Impossible value chosen. Quo vadis?");
@@ -334,95 +288,85 @@ void Modal_CreateNew_Shape()
             out_data->mType = enumType;
             out_data->not_loaded = false;
             std::cout << "HERE - 1!\n";
+
+            std::cout << "Creating a " << lpt::getName(enumType) << "\n";
+
             switch(enumType)
             {
-                case CollsionShapeTypes::CompoundShape:
+                case lpt::BulletShapeType::CompoundShape:
                 {
-                    std::cout << "Creating a " << CollsionShapeTypes_getName(CollsionShapeTypes::CompoundShape) << "\n";
                     break;
                 }
-
-                case CollsionShapeTypes::CapsuleShapeY:
+                case lpt::BulletShapeType::CapsuleShapeY:
                 {
-                    std::cout << "Creating a " << CollsionShapeTypes_getName(CollsionShapeTypes::CapsuleShapeY) << "\n";
                     //out_data->mShape = std::make_unique<btCapsuleShape>(var_float[0], var_float[1]);
                     out_data->mShape = new btCapsuleShape(var_float[0], var_float[1]);
                     break;
                 }
-                case CollsionShapeTypes::CapsuleShapeX:
+                case lpt::BulletShapeType::CapsuleShapeX:
                 {
-                    std::cout << "Creating a " << CollsionShapeTypes_getName(CollsionShapeTypes::CapsuleShapeX) << "\n";
                     //out_data->mShape = std::make_unique<btCapsuleShapeX>(var_float[0], var_float[1]);
                     out_data->mShape = new btCapsuleShapeX(var_float[0], var_float[1]);
                     break;
                 }
-                case CollsionShapeTypes::CapsuleShapeZ:
+                case lpt::BulletShapeType::CapsuleShapeZ:
                 {
-                    std::cout << "Creating a " << CollsionShapeTypes_getName(CollsionShapeTypes::CapsuleShapeZ) << "\n";
                     //out_data->mShape = std::make_unique<btCapsuleShapeZ>(var_float[0], var_float[1]);
                     out_data->mShape = new btCapsuleShapeZ(var_float[0], var_float[1]);
                     break;
                 }
 
-                case CollsionShapeTypes::ConeShapeY:
+                case lpt::BulletShapeType::ConeShapeY:
                 {
-                    std::cout << "Creating a " << CollsionShapeTypes_getName(CollsionShapeTypes::ConeShapeY) << "\n";
                     //out_data->mShape = std::make_unique<btConeShape>(var_float[0], var_float[1]);
                     out_data->mShape = new btConeShape(var_float[0], var_float[1]);
                     break;
                 }
-                case CollsionShapeTypes::ConeShapeX:
+                case lpt::BulletShapeType::ConeShapeX:
                 {
-                    std::cout << "Creating a " << CollsionShapeTypes_getName(CollsionShapeTypes::ConeShapeX) << "\n";
                     //out_data->mShape = std::make_unique<btConeShapeX>(var_float[0], var_float[1]);
                     out_data->mShape = new btConeShapeX(var_float[0], var_float[1]);
                     break;
                 }
-                case CollsionShapeTypes::ConeShapeZ:
+                case lpt::BulletShapeType::ConeShapeZ:
                 {
-                    std::cout << "Creating a " << CollsionShapeTypes_getName(CollsionShapeTypes::ConeShapeZ) << "\n";
                     //out_data->mShape = std::make_unique<btConeShapeZ>(var_float[0], var_float[1]);
                     out_data->mShape = new btConeShapeZ(var_float[0], var_float[1]);
                     break;
                 }
 
-                case CollsionShapeTypes::CylinderShapeY:
+                case lpt::BulletShapeType::CylinderShapeY:
                 {
-                    std::cout << "Creating a " << CollsionShapeTypes_getName(CollsionShapeTypes::CylinderShapeY) << "\n";
                     //out_data->mShape = std::make_unique<btCylinderShape>(btVector3(var_float[0], var_float[1], var_float[2]));
                     out_data->mShape = new btCylinderShape(btVector3(var_float[0], var_float[1], var_float[2]));
                     break;
                 }
-                case CollsionShapeTypes::CylinderShapeX:
+                case lpt::BulletShapeType::CylinderShapeX:
                 {
-                    std::cout << "Creating a " << CollsionShapeTypes_getName(CollsionShapeTypes::CylinderShapeX) << "\n";
                     //out_data->mShape = std::make_unique<btCylinderShapeX>(btVector3(var_float[0], var_float[1], var_float[2]));
                     out_data->mShape = new btCylinderShapeX(btVector3(var_float[0], var_float[1], var_float[2]));
                     break;
                 }
-                case CollsionShapeTypes::CylinderShapeZ:
+                case lpt::BulletShapeType::CylinderShapeZ:
                 {
-                    std::cout << "Creating a " << CollsionShapeTypes_getName(CollsionShapeTypes::CylinderShapeZ) << "\n";
                     //out_data->mShape = std::make_unique<btCylinderShapeZ>(btVector3(var_float[0], var_float[1], var_float[2]));
                     out_data->mShape = new btCylinderShapeZ(btVector3(var_float[0], var_float[1], var_float[2]));
                     break;
                 }
 
-                case CollsionShapeTypes::BoxShape:
+                case lpt::BulletShapeType::BoxShape:
                 {
-                    std::cout << "Creating a " << CollsionShapeTypes_getName(CollsionShapeTypes::BoxShape) << "\n";
                     //out_data->mShape = std::make_unique<btBoxShape>(btVector3(var_float[0], var_float[1], var_float[2]));
                     out_data->mShape = new btBoxShape(btVector3(var_float[0], var_float[1], var_float[2]));
                     break;
                 }
 
-                case CollsionShapeTypes::SphereShape:
+                case lpt::BulletShapeType::SphereShape:
                 {
-                    std::cout << "Creating a " << CollsionShapeTypes_getName(CollsionShapeTypes::SphereShape) << "\n";
                     //std::unique_ptr<btCollisionShape> ptr = std::make_unique<btSphereShape>(var_float[0]);
                     out_data->mShape = new btSphereShape(var_float[0]);
                     std::cout << "Created, saving!\n";
-                    out_data->mType = CollsionShapeTypes::SphereShape;
+                    out_data->mType = lpt::BulletShapeType::SphereShape;
                     std::cout << "Created  actually\n";
 
                     //std::unique_ptr<btSphereShape>  <- what this was orignally, didn't change anything!!!!
@@ -442,13 +386,12 @@ void Modal_CreateNew_Shape()
                     break;
                 }
 
-                case CollsionShapeTypes::ConvexHullShape:
+                case lpt::BulletShapeType::ConvexHullShape:
                 {
-                    std::cout << "Creating a " << CollsionShapeTypes_getName(CollsionShapeTypes::ConvexHullShape) << "\n";
                     break;
                 }
 
-                case CollsionShapeTypes::Size:
+                case lpt::BulletShapeType::Size:
                 [[fallthrough]];
                 default:
                     std::cerr << "Queo Vadis?\n";
@@ -486,7 +429,7 @@ void ImGui_DrawTreeNode(TreeNode<TreeNode_Data>& node, TreeNode<TreeNode_Data>* 
             {
                 auto& c_data = dcb_v_node.getData();
                 auto& p_data = parent->getData();
-                if(p_data.mType != CollsionShapeTypes::CompoundShape)
+                if(p_data.mType != lpt::BulletShapeType::CompoundShape)
                 {
                     std::cerr << "parent of a node is not a legal parent. How?\n";
                     return;
@@ -620,7 +563,7 @@ int main()
     TreeNode<TreeNode_Data> rootNode;
     rootNode.setName("Root");
     rootNode.getData().mShape = new btCompoundShape();//std::make_unique<btCompoundShape>();
-    rootNode.getData().mType = CollsionShapeTypes::CompoundShape;
+    rootNode.getData().mType = lpt::BulletShapeType::CompoundShape;
     rootNode.getData().not_loaded = false;
 
     double lastFrameTime = glfwGetTime();
@@ -656,6 +599,8 @@ int main()
             ImGui::End();
         }
 
+        /*
+
         if (0)
         if(ImGui::Begin("Create model"))
         {
@@ -663,7 +608,7 @@ int main()
             const char* val_preview = gCollisionShapeTypesNames[val_previously_selected];
             if(ImGui::BeginCombo("btCollisionShape", val_preview))
             {
-                for(std::size_t i = 0; i < static_cast<std::size_t>(CollsionShapeTypes::Size); ++i)
+                for(std::size_t i = 0; i < static_cast<std::size_t>(lpt::BulletShapeType::Size); ++i)
                 {
                     const bool is_selected = (val_previously_selected == i);
                     if(ImGui::Selectable(gCollisionShapeTypesNames[i], is_selected))
@@ -678,53 +623,53 @@ int main()
             // 2 -        ; boxHalfExtents.Z ;
             static float var_float[3] = {};
 
-            switch(static_cast<CollsionShapeTypes>(val_previously_selected))
+            switch(static_cast<lpt::BulletShapeType>(val_previously_selected))
                 {
-                    case CollsionShapeTypes::CompoundShape:
+                    case lpt::BulletShapeType::CompoundShape:
                     {
                         
                         break;
                     }
 
-                    case CollsionShapeTypes::CapsuleShapeY:
+                    case lpt::BulletShapeType::CapsuleShapeY:
                     [[fallthrough]];
-                    case CollsionShapeTypes::CapsuleShapeX:
+                    case lpt::BulletShapeType::CapsuleShapeX:
                     [[fallthrough]];
-                    case CollsionShapeTypes::CapsuleShapeZ:
+                    case lpt::BulletShapeType::CapsuleShapeZ:
                     [[fallthrough]];
-                    case CollsionShapeTypes::ConeShapeY:
+                    case lpt::BulletShapeType::ConeShapeY:
                     [[fallthrough]];
-                    case CollsionShapeTypes::ConeShapeX:
+                    case lpt::BulletShapeType::ConeShapeX:
                     [[fallthrough]];
-                    case CollsionShapeTypes::ConeShapeZ:
+                    case lpt::BulletShapeType::ConeShapeZ:
                     {
                         ImGui::SliderFloat("radius", &var_float[0], 0.001f, 100.0f);
                         ImGui::SliderFloat("height", &var_float[1], 0.001f, 100.0f);
                         break;
                     }
 
-                    case CollsionShapeTypes::CylinderShapeY:
+                    case lpt::BulletShapeType::CylinderShapeY:
                     [[fallthrough]];
-                    case CollsionShapeTypes::CylinderShapeX:
+                    case lpt::BulletShapeType::CylinderShapeX:
                     [[fallthrough]];
-                    case CollsionShapeTypes::CylinderShapeZ:
+                    case lpt::BulletShapeType::CylinderShapeZ:
                     [[fallthrough]];
-                    case CollsionShapeTypes::BoxShape:
+                    case lpt::BulletShapeType::BoxShape:
                     {
                         ImGui::SliderFloat3("boxHalfExtents", &var_float[0], 0.001f, 100.0f);
                         break;
                     }
-                    case CollsionShapeTypes::SphereShape:
+                    case lpt::BulletShapeType::SphereShape:
                     {
                         ImGui::SliderFloat("radius", &var_float[0], 0.001f, 100.0f);
                         break;
                     }
-                    case CollsionShapeTypes::ConvexHullShape:
+                    case lpt::BulletShapeType::ConvexHullShape:
                     {
                         break;
                     }
 
-                    case CollsionShapeTypes::Size:
+                    case lpt::BulletShapeType::Size:
                     [[fallthrough]];
                     default:
                         std::cerr << "Quo Vadis?\n";
@@ -734,90 +679,90 @@ int main()
             if(ImGui::Button("Create"))
             {
                 
-                switch(static_cast<CollsionShapeTypes>(val_previously_selected))
+                switch(static_cast<lpt::BulletShapeType>(val_previously_selected))
                 {
-                    case CollsionShapeTypes::CompoundShape:
+                    case lpt::BulletShapeType::CompoundShape:
                     {
                         break;
                     }
 
-                    case CollsionShapeTypes::CapsuleShapeY:
+                    case lpt::BulletShapeType::CapsuleShapeY:
                     {
                         delete vPhysicsShape;
                         vPhysicsShape = new btCapsuleShape(var_float[0], var_float[1]);
                         break;
                     }
-                    case CollsionShapeTypes::CapsuleShapeX:
+                    case lpt::BulletShapeType::CapsuleShapeX:
                     {
                         delete vPhysicsShape;
                         vPhysicsShape = new btCapsuleShapeX(var_float[0], var_float[1]);
                         break;
                     }
-                    case CollsionShapeTypes::CapsuleShapeZ:
+                    case lpt::BulletShapeType::CapsuleShapeZ:
                     {
                         delete vPhysicsShape;
                         vPhysicsShape = new btCapsuleShapeZ(var_float[0], var_float[1]);
                         break;
                     }
 
-                    case CollsionShapeTypes::ConeShapeY:
+                    case lpt::BulletShapeType::ConeShapeY:
                     {
                         delete vPhysicsShape;
                         vPhysicsShape = new btConeShape(var_float[0], var_float[1]);
                         break;
                     }
-                    case CollsionShapeTypes::ConeShapeX:
+                    case lpt::BulletShapeType::ConeShapeX:
                     {
                         delete vPhysicsShape;
                         vPhysicsShape = new btConeShapeX(var_float[0], var_float[1]);
                         break;
                     }
-                    case CollsionShapeTypes::ConeShapeZ:
+                    case lpt::BulletShapeType::ConeShapeZ:
                     {
                         delete vPhysicsShape;
                         vPhysicsShape = new btConeShapeZ(var_float[0], var_float[1]);
                         break;
                     }
 
-                    case CollsionShapeTypes::CylinderShapeY:
+                    case lpt::BulletShapeType::CylinderShapeY:
                     {
                         delete vPhysicsShape;
                         vPhysicsShape = new btCylinderShape(btVector3(var_float[0], var_float[1], var_float[2]));
                         break;
                     }
-                    case CollsionShapeTypes::CylinderShapeX:
+                    case lpt::BulletShapeType::CylinderShapeX:
                     {
                         delete vPhysicsShape;
                         vPhysicsShape = new btCylinderShapeX(btVector3(var_float[0], var_float[1], var_float[2]));
                         break;
                     }
-                    case CollsionShapeTypes::CylinderShapeZ:
+                    case lpt::BulletShapeType::CylinderShapeZ:
                     {
                         delete vPhysicsShape;
                         vPhysicsShape = new btCylinderShapeZ(btVector3(var_float[0], var_float[1], var_float[2]));
                         break;
                     }
 
-                    case CollsionShapeTypes::BoxShape:
+                    case lpt::BulletShapeType::BoxShape:
                     {
                         delete vPhysicsShape;
                         vPhysicsShape = new btBoxShape(btVector3(var_float[0], var_float[1], var_float[2]));
                         break;
                     }
 
-                    case CollsionShapeTypes::SphereShape:
+                    case lpt::BulletShapeType::SphereShape:
                     {
                         delete vPhysicsShape;
                         vPhysicsShape = new btSphereShape(var_float[0]);
                         break;
                     }
 
-                    case CollsionShapeTypes::ConvexHullShape:
+                    case lpt::BulletShapeType::ConvexHullShape:
                     {
                         break;
                     }
 
-                    case CollsionShapeTypes::Size:
+                    case lpt::BulletShapeType::Size:
                     [[fallthrough]];
                     default:
                         std::cerr << "Queo Vadis?\n";
@@ -829,6 +774,8 @@ int main()
             
             ImGui::End();
         }
+
+        */
 
         ImGui::ShowDemoWindow();
 
