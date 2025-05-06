@@ -10,35 +10,6 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 
 namespace lpt
 {
-    constexpr const char* getName(const BulletShapeType type)
-    {
-        switch(type)
-            {
-                case BulletShapeType::CompoundShape: return "btCompoundShape";
-                case BulletShapeType::CapsuleShapeY: return "btCapsuleShape";
-                case BulletShapeType::CapsuleShapeX: return "btCapsuleShapeX";
-                case BulletShapeType::CapsuleShapeZ: return "btCapsuleShapeZ";
-                case BulletShapeType::ConeShapeY: return "btConeShape";
-                case BulletShapeType::ConeShapeX: return "btConeShapeX";
-                case BulletShapeType::ConeShapeZ: return "btConeShapeZ";
-                case BulletShapeType::CylinderShapeY: return "btCylinderShape";
-                case BulletShapeType::CylinderShapeX: return "btCylinderShapeX";
-                case BulletShapeType::CylinderShapeZ: return "btCylinderShapeZ";
-                case BulletShapeType::BoxShape: return "btBoxShape";
-                case BulletShapeType::SphereShape: return "btSphereShape";
-                case BulletShapeType::ConvexHullShape: return "btConvexHullShape";
-                //STATIC:
-                case BulletShapeType::StaticPlaneShape: //infinite plane
-                    return "btStaticPlaneShape";  
-                case BulletShapeType::TriangleMeshShape: //mesh of triangles all with 1 material
-                    return "btBvhTriangleMeshShape";
-                case BulletShapeType::Size:
-                [[fallthrough]];
-                default:
-                    return "InvalidShape";
-            }
-    }
-
 
     BulletShape::~BulletShape()
     {

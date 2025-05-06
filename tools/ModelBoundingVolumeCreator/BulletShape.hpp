@@ -61,7 +61,35 @@ namespace lpt
     /// @brief get name of enum
     /// @param type BulletShapeType enum
     /// @return const char* to C-style string name
-    constexpr const char* getName(const BulletShapeType type);
+    constexpr const char* getName(const BulletShapeType type)
+    {
+        switch(type)
+            {
+                case BulletShapeType::CompoundShape: return "btCompoundShape";
+                case BulletShapeType::CapsuleShapeY: return "btCapsuleShape";
+                case BulletShapeType::CapsuleShapeX: return "btCapsuleShapeX";
+                case BulletShapeType::CapsuleShapeZ: return "btCapsuleShapeZ";
+                case BulletShapeType::ConeShapeY: return "btConeShape";
+                case BulletShapeType::ConeShapeX: return "btConeShapeX";
+                case BulletShapeType::ConeShapeZ: return "btConeShapeZ";
+                case BulletShapeType::CylinderShapeY: return "btCylinderShape";
+                case BulletShapeType::CylinderShapeX: return "btCylinderShapeX";
+                case BulletShapeType::CylinderShapeZ: return "btCylinderShapeZ";
+                case BulletShapeType::BoxShape: return "btBoxShape";
+                case BulletShapeType::SphereShape: return "btSphereShape";
+                case BulletShapeType::ConvexHullShape: return "btConvexHullShape";
+                //STATIC:
+                case BulletShapeType::StaticPlaneShape: //infinite plane
+                    return "btStaticPlaneShape";  
+                case BulletShapeType::TriangleMeshShape: //mesh of triangles all with 1 material
+                    return "btBvhTriangleMeshShape";
+                case BulletShapeType::Size:
+                [[fallthrough]];
+                default:
+                    return "InvalidShape";
+            }
+        return "InvalidShape2";
+    }
 
     /// @brief A horrific abomination of a function.
     ///
