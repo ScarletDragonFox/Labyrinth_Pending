@@ -1,5 +1,5 @@
-#ifndef CDF_TOOL_COLLISIONTREE_HPP
-#define CDF_TOOL_COLLISIONTREE_HPP
+#ifndef CDF_TOOL_BULLETSHAPE_HPP
+#define CDF_TOOL_BULLETSHAPE_HPP
 #include <type_traits>
 #include <utility> //std::forward
 
@@ -57,6 +57,11 @@ namespace lpt
         TriangleMeshShape, //mesh of triangles all with 1 material
         Size //should always be last. Also used as error value
     };
+
+    /// @brief get name of enum
+    /// @param type BulletShapeType enum
+    /// @return const char* to C-style string name
+    constexpr const char* getName(const BulletShapeType type);
 
     /// @brief A horrific abomination of a function.
     ///
@@ -205,4 +210,4 @@ namespace lpt
     };
 }
 
-#endif //CDF_TOOL_COLLISIONTREE_HPP
+#endif //CDF_TOOL_BULLETSHAPE_HPP
