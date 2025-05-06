@@ -9,8 +9,8 @@ project(Tool_ModelBoundingVolumeCreator
 set(TOOL_SOURCE 
     main.cpp
     
-    CollisionTree.hpp
-    CollisionTree.cpp
+    BulletShape.hpp
+    BulletShape.cpp
 )
 
 add_executable(Tool_ModelBoundingVolumeCreator ${TOOL_SOURCE} )
