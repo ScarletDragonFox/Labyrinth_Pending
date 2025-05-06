@@ -222,6 +222,10 @@ namespace lpt
             } else return static_cast<T*>(mData);
         }
 
+        /// @brief get the raw void pointer
+        /// @return void ptr. Can be nullptr
+        void* getRaw()const{return mData;}
+
         /// @brief clear/erase the pointer and value
         ///
         /// DOES NOT REMOVE CollisionShape from the bullet World!
