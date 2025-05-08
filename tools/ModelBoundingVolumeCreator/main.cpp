@@ -122,10 +122,10 @@ class RigidBosyContainerCreationClassThing
         for(auto& i : mObjects)
         {
             std::string name = i->getName();
-            name += "###" + std::to_string(iref++);
+            name += "###" + std::to_string(iref);
             if(ImGui::TreeNode(name.c_str()))
             {
-                if(ImGui::Button("Kil"))
+                if(ImGui::Button("Kill"))
                 {
                     iref_deleta = iref; 
                     doDelete = true;
@@ -133,6 +133,7 @@ class RigidBosyContainerCreationClassThing
                 i->ui();
                 ImGui::TreePop();
             }
+            ++iref;
         }
         if(doDelete)
         {
