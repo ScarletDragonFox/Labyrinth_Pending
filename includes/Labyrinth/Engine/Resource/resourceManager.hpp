@@ -66,6 +66,12 @@ namespace lp
         /// @return const_id_model_invalid (if see cv_DoNotLoad), or future/current id of model
         lp::res::ModelID_t getModel(const std::string_view cv_path, const bool cv_DoNotLoad = false);
 
+        /// @brief Return a previously loaded model via const pointer, or nullptr if not loaded
+        /// @param cv_id id of the model to get
+        /// @return const pointer if loaded, nullptr if not loaded
+        /// @see isValidModel()
+        lp::res::LoadedModel const* getLoadedModel(const lp::res::ModelID_t cv_id)const;
+
         /// @brief checks if given model id refers to a model currently loaded
         /// @param cv_id id of model to check
         /// @return true if valid, false otherwise

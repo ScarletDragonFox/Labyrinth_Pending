@@ -47,6 +47,12 @@ namespace lp
         return lp::res::const_id_model_invalid;
     }
 
+    lp::res::LoadedModel const* ResourceManager::getLoadedModel(const lp::res::ModelID_t cv_id)const
+    {
+        if(!isValidModel(cv_id)) return nullptr;
+        return mModel.getLoadedModel(this->mModelIDtoModelMap.at(cv_id));
+    }
+
     bool ResourceManager::isValidModel(const lp::res::ModelID_t cv_id) const
     {
         if(cv_id == lp::res::const_id_model_invalid) return false;
