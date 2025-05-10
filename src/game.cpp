@@ -82,8 +82,6 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 
 #include "Labyrinth/Engine/Graphics/bullet3Debug.hpp"
 
-#include "Labyrinth/Engine/Resource/modelLoader.hpp"
-
 namespace lp
 {
 
@@ -184,14 +182,13 @@ namespace lp
         //         break;
         //     }
         // }   
-        
-        lp::res::ModelLoader mLoad;
 
-        const char* temp_modelNamePath = "backpack.obj";
 
-        mLoad.scheduleLoad(temp_modelNamePath);
-        //mLoad.scheduleLoad("Spheres.gltf");
-        
+
+        const char* temp_modelNamePath = "NewSponza_Main_glTF_002.gltf";
+
+
+        const auto modelRef = g_engine.getResurceManager().getModel(temp_modelNamePath);
 
         dynamicsWorld->debugDrawWorld();
 
@@ -368,7 +365,7 @@ namespace lp
             
 
            // std::cout << "After ImGui!\n";
-            mLoad.update(1.0/12.0);
+           g_engine.getResurceManager().getModelLoaderRef().update(1.0/12.0);
          //   std::cout << "After update() of load\n";
 
             if(mDoPhysics)
@@ -403,8 +400,7 @@ namespace lp
             }
          //   std::cout << "After update() of bulletDebugRenderer.verticies\n";
 
-            const lp::res::LoadedModel* modeel = mLoad.getLoadedModel(temp_modelNamePath);
-            dtttta.mdl = modeel;
+            dtttta.mdl = g_engine.getResurceManager().getLoadedModel(modelRef);
             
             mRenndd.render(dtttta);
           //  std::cout << "After mRenndd.render(dtttta)\n";
