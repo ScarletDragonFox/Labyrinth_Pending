@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <glm/vec3.hpp>
+#include <glad/gl.h>
 
 namespace lp::gl
 {
@@ -22,11 +23,7 @@ namespace lp::gl
             glm::vec3 colour = {};
         };
 
-        /// @brief storage for Verticies
-        std::vector<Vertex> verticies;
-
-        /// @brief number of lines to draw
-        unsigned int drawCount = 0;
+        
 
         /// @brief draw a line
         /// @param from point from
@@ -39,14 +36,14 @@ namespace lp::gl
                 .position = {from.getX(), from.getY(), from.getZ()},
                 .colour =  {color.getX(), color.getY(), color.getZ()},
             };
-            verticies.push_back(v);
+            mVerticies.push_back(v);
             const Vertex v2 = 
             {
                 .position = {to.getX(), to.getY(), to.getZ()},
                 .colour =  {color.getX(), color.getY(), color.getZ()},
             };
-            verticies.push_back(v2);
-            drawCount += 2;
+            mVerticies.push_back(v2);
+            mDrawCount += 2;
             //std::cout << "BULLET::drawLine( from = (" << from.getX() << " ; " << from.getY() << " ; " << from.getZ() << 
             //"), to = (" << to.getX() << " ; " << to.getY() << " ; " << to.getZ() <<
             //"), color = (" << color.getX() << " ; " << color.getY() << " ; " << color.getZ() << "))\n";
@@ -74,14 +71,14 @@ namespace lp::gl
                 .position = {from.getX(), from.getY(), from.getZ()},
                 .colour =  {fromColor.getX(), fromColor.getY(), fromColor.getZ()},
             };
-            verticies.push_back(v);
+            mVerticies.push_back(v);
             const Vertex v2 = 
             {
                 .position = {to.getX(), to.getY(), to.getZ()},
                 .colour =  {toColor.getX(), toColor.getY(), toColor.getZ()},
             };
-            verticies.push_back(v2);
-            drawCount += 2;
+            mVerticies.push_back(v2);
+            mDrawCount += 2;
             // std::cout << "BULLET::drawLine( from = (" << from.getX() << " ; " << from.getY() << " ; " << from.getZ() << 
             // "), to = (" << to.getX() << " ; " << to.getY() << " ; " << to.getZ() <<
             // "), fromColor = (" << fromColor.getX() << " ; " << fromColor.getY() << " ; " << fromColor.getZ() <<
@@ -94,13 +91,42 @@ namespace lp::gl
         virtual void clearLines()
         {
             //std::cout << "BULLET::clearLines()\n";
-            this->verticies.clear();
-            this->drawCount = 0;
+            this->mVerticies.clear();
+            this->mDrawCount = 0;
         }
 
-        /// @brief gets called every draw by bullet at the end
+        /// @brief gets called every draw by bullet at the end - NOT
+        ///
+        /// UPDATE: this NEVER gets CALLED!!
+        /// Call this yourself!!
         virtual void flushLines()
         {
+            //std::cout << "POOP\n";
+            //make buffer smaller if 2x too big
+            //make buffer anew if too small
+            if(mVertexBuffer != 0 && (mVertexBufferSize * 2 >  mVerticies.size() || mVertexBufferSize < mVerticies.size())) 
+            {
+                glDeleteBuffers(1, &mVertexBuffer); mVertexBuffer = 0;
+            }
+
+            if(mVertexBuffer == 0)
+            {
+                glCreateBuffers(1, &mVertexBuffer);
+                glNamedBufferStorage(mVertexBuffer, mVerticies.size() * sizeof(lp::gl::Bullet3Debug::Vertex), mVerticies.data(), GL_DYNAMIC_STORAGE_BIT);
+                mVertexBufferSize = mVerticies.size();
+                return;
+            }
+
+            if(mVertexBuffer != 0 && mVertexBufferSize >= mVerticies.size())
+            {
+                glNamedBufferSubData(mVertexBuffer, 0, mVerticies.size() * sizeof(lp::gl::Bullet3Debug::Vertex), mVerticies.data());
+            } else
+            {
+                glDeleteBuffers(1, &mVertexBuffer); mVertexBuffer = 0;
+                glCreateBuffers(1, &mVertexBuffer);
+                glNamedBufferStorage(mVertexBuffer, mVerticies.size() * sizeof(lp::gl::Bullet3Debug::Vertex), mVerticies.data(), GL_DYNAMIC_STORAGE_BIT);
+                mVertexBufferSize = mVerticies.size();
+            }
             //std::cout << "BULLET::flushLines()\n";
         }
 
@@ -146,6 +172,39 @@ namespace lp::gl
         {
             std::cout << "BULLET::setDefaultColors( ... )\n";
         }
+
+        /// @brief virtual destructor
+        virtual ~Bullet3Debug()
+        {
+            if(mVertexBuffer)
+            {
+                glDeleteBuffers(1, &mVertexBuffer);
+            }
+        }
+
+        /// @brief get the OpenGL buffer used for drawing.
+        /// @return buffer ID or 0 if buffer uninitialized
+        inline GLuint getBuffer() const
+        {
+            return mVertexBuffer;
+        }
+
+        /// @brief get the triangle draw count.
+        /// @return draw count, or 0 if uninitialized
+        inline GLuint getDrawCount() const
+        {
+            return mDrawCount;
+        }   
+
+        private:
+        GLuint mVertexBuffer = 0;
+        GLuint mVertexBufferSize = 0;
+
+        /// @brief storage for Verticies
+        std::vector<Vertex> mVerticies;
+
+        /// @brief number of lines to draw
+        GLuint mDrawCount = 0;
 
         //all other functions either have proper implementations, or have temp ones to avoid a crash
     };
