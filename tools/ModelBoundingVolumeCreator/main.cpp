@@ -65,13 +65,31 @@ class RigidBodyContainerSingular
                 tranz.setOrigin(btVector3(pos.x, pos.y, pos.z));
                 updated = true;
             }
+            
+            btCollisionShape* shapePtr = ((btCollisionShape*)mShape.getRaw());
+            if(shapePtr != nullptr){
+                const btVector3 shIN = shapePtr->getLocalScaling();
+                glm::vec3 scale = {shIN.getX(), shIN.getY(), shIN.getZ()};
+                if(ImGui::SliderFloat3("scale", &scale.x, 0.01, 10.0)){
+                    shapePtr->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+                }
+            }
+
             const btQuaternion btRot = tranz.getRotation();
             glm::vec3 rot = {};
             btRot.getEulerZYX(rot.z, rot.y, rot.x);
-
-            if(ImGui::SliderFloat3("rotation", &rot.x, -glm::pi<float>(), glm::pi<float>(), "%.3f rad", ImGuiSliderFlags_NoRoundToFormat))
+            rot.x = glm::degrees(rot.x);
+            rot.y = glm::degrees(rot.y);
+            rot.z = glm::degrees(rot.z);
+            if(ImGui::SliderFloat3("rotation", &rot.x, -180, 180, "%.2f", ImGuiSliderFlags_NoRoundToFormat))
             {
-                tranz.setRotation(btQuaternion(rot.z, rot.y, rot.x));
+                tranz.setRotation(btQuaternion(glm::radians(rot.z), glm::radians(rot.y), glm::radians(rot.x)));
+                updated = true;
+            }
+            ImGui::SameLine();
+            if(ImGui::Button("Reset"))
+            {
+                tranz.setRotation(btQuaternion(0.0, 0.0, 0.0));
                 updated = true;
             }
             if(updated)
@@ -453,13 +471,8 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-        if(!bulletDebugRenderer.verticies.empty())
+        if(bulletDebugRenderer.getBuffer() != 0)
         {
-            GLuint VBO = 0;
-            glCreateBuffers(1, &VBO);
-            glNamedBufferStorage(VBO, bulletDebugRenderer.verticies.size() * sizeof(lp::gl::Bullet3Debug::Vertex), bulletDebugRenderer.verticies.data(), 0);
-            glVertexArrayVertexBuffer(VAO_model, 0, VBO, 0, 6 * sizeof(float));
-
             lp::gl::RegularShader shader;
             shader.LoadShader(lp::gl::ShaderType::DebugLine);
             shader.Use();
@@ -474,11 +487,10 @@ int main()
             shader.SetUniform(3, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
 
             glBindVertexArray(VAO_model);
-            glDrawArrays(GL_LINES, 0, bulletDebugRenderer.drawCount);
+            glVertexArrayVertexBuffer(VAO_model, 0, bulletDebugRenderer.getBuffer(), 0, 6 * sizeof(float));
+            glDrawArrays(GL_LINES, 0, bulletDebugRenderer.getDrawCount());
             glBindVertexArray(0);
-            glDeleteBuffers(1, &VBO);
         }
-
        
         window.swapBuffers();
     }
