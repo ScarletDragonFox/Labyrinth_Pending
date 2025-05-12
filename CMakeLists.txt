@@ -5,6 +5,10 @@ project(CDF_LABIRYNTH_PENDING
     LANGUAGES CXX
     DESCRIPTION "A game made from scratch about a foggy labyrinth.")
 
+# Makes some generators like Visual Studio use folders
+# Is ON by default in cmake 3.26
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 # 'dependancies' target is from here
 # has to be added BEFORE src/
 add_subdirectory(deps) 
