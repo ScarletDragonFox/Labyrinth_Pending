@@ -3,7 +3,7 @@
 
 #include <soloud.h>
 #include <Labyrinth/Engine/ECS/coreECS.hpp>
-#include <Labyrinth/Engine/eventManager.hpp>
+#include <Labyrinth/Engine/Event/eventManager.hpp>
 #include <Labyrinth/Engine/Resource/resourceManager.hpp>
 
 namespace lp

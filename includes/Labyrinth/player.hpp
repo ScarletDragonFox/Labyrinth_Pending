@@ -5,7 +5,7 @@
 
 #include <array>
 
-#include "Labyrinth/Engine/eventManager.hpp"
+#include "Labyrinth/Engine/Event/eventManager.hpp"
 
 namespace lp
 {

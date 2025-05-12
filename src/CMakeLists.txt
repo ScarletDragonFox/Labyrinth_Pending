@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.21...3.31)
 
 set(CDF_SOURCES #list of all source files in the src/ directory
 #    main.cpp # File added back in by the 'Labyrinth' main target, compiles codebase as the game
-    Engine/eventManager.cpp
+    Engine/Event/eventManager.cpp
 
     Engine/ECS/coreECS.cpp
     Engine/ECS/entityManager.cpp
@@ -27,9 +27,9 @@ set(CDF_SOURCES #list of all source files in the src/ directory
     )
 
 set(CDF_HEADERS #list of all header files in the includes/Labyrinth/ directory (optional, could be empty with no consequence)
-    Engine/event.hpp
-    Engine/eventManager.hpp
-    Engine/types.hpp
+    Engine/Event/event.hpp
+    Engine/Event/eventManager.hpp
+    Engine/Event/types.hpp
 
     Engine/ECS/baseSystem.hpp
     Engine/ECS/componentContainer.hpp
