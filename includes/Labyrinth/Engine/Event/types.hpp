@@ -2,6 +2,8 @@
 #define LABYRINTH_PENDING_ENGINE_TYPES_HPP
 #include <cstdint>
 
+#include "Labyrinth/Engine/ECS/types.hpp"
+
 namespace lp
 {
     /// @brief enum for all possible Event types.
@@ -31,6 +33,19 @@ namespace lp
         /// Used bool as data, true if inputs are to be disabled, and false otherwise
         PlayerTriggerInputs,
 
+        /// @brief called when an Entity gets a new Component (AFTER CREATION)
+        ///
+        /// Only gets called when setComponentEventListenablesSignature() is set for that Component!
+        ///
+        /// Uses evt::ECS_Component as data
+        ECS_ComponentCreated,
+
+        /// @brief called when an Entity removes a Component (BEFORE DELETION)
+        ///
+        /// Only gets called when setComponentEventListenablesSignature() is set for that Component!
+        ///
+        /// Uses evt::ECS_Component as data
+        ECS_ComponentDestroyed,
 
         /// @brief count of how many event types there are.
         /// @details Leave this here as the last event
@@ -73,6 +88,15 @@ namespace lp
             double deltaX = 0.0;
             /// @brief offset Y of the mouse cursor from the last position reported
             double deltaY = 0.0;
+        };
+
+        /// @brief stores data for lp::EventTypes::ECS_ComponentCreated & ECS_ComponentDestroyed
+        struct ECS_Component
+        {
+            /// @brief the entity that had its signature changed
+            lp::ecs::Entity entity = lp::ecs::const_entity_invalid;
+            /// @brief the signture of the Component that was added/removed
+            lp::ecs::Signature signature = 0;
         };
 
     }

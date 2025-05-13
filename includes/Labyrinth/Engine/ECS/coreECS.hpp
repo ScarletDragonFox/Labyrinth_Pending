@@ -72,6 +72,10 @@ namespace lp::ecs
             Signature componentSign = mComponent.getComponentSignature<T>();
             entitySign |= componentSign;
             mSystem.entitySignatureChanged(cv_entity, entitySign);
+            if(mEventListenableSign & componentSign == mEventListenableSign)
+            {
+                this->sendEventComponentCreated(componentSign, cv_entity);
+            }
         }
 
         /// @brief Remove a Component from an Entity
@@ -82,9 +86,13 @@ namespace lp::ecs
         template<typename T>
         inline void removeComponent(const Entity cv_entity)
         {
+            const Signature componentSign = mComponent.getComponentSignature<T>();
+            if(mEventListenableSign & componentSign == mEventListenableSign)
+            {
+                this->sendEventComponentDestroyed(componentSign, cv_entity);
+            }
             mComponent.removeComponent<T>(cv_entity);
             Signature& entitySign = mEntity.getSignature(cv_entity);
-            Signature componentSign = mComponent.getComponentSignature<T>();
             entitySign &= ~componentSign;
             mSystem.entitySignatureChanged(cv_entity, entitySign);
         }
@@ -133,6 +141,17 @@ namespace lp::ecs
             return mSystem.registerSystem<T>(cv_systemSignature); //automatic signature!!!!!
         }
 
+        /// @brief get the Signature that stores all Components that will send out an Event upon their creation/destruction
+        /// @return Signature
+        inline Signature getComponentEventListenablesSignature() const { return mEventListenableSign; }
+
+        /// @brief get the Signature that stores all Components that will send out an Event upon their creation/destruction
+        /// @param cv_sign Signature
+        inline void setComponentEventListenablesSignature(const Signature cv_sign)
+        {
+            mEventListenableSign = cv_sign;
+        }
+
         private:
         /// @brief The Manager of Systems
         SystemManager mSystem;
@@ -140,6 +159,16 @@ namespace lp::ecs
         EntityManager mEntity;
         /// @brief The Manager of Components
         ComponentManager mComponent;
+
+        /// @brief internal function
+        void sendEventComponentDestroyed(const Signature cv_signature, const Entity cv_entity);
+
+        /// @brief internal function
+        void sendEventComponentCreated(const Signature cv_signature, const Entity cv_entity);
+
+        /// @brief signature of which Components to send an Event upon the creation/destruction of
+        Signature mEventListenableSign = 0;
+
     };
 }
 
