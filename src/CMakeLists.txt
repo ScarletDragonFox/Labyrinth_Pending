@@ -20,6 +20,8 @@ set(CDF_SOURCES #list of all source files in the src/ directory
     Engine/Graphics/framebuffer.cpp
     Engine/Graphics/basicFrowardRenderer.cpp
 
+    Engine/Graphics/LightSystem.cpp
+
     game.cpp
     engine.cpp
     player.cpp
@@ -51,6 +53,9 @@ set(CDF_HEADERS #list of all header files in the includes/Labyrinth/ directory (
 
     Engine/Graphics/framebuffer.hpp
     Engine/Graphics/basicFrowardRenderer.hpp
+
+    Engine/Graphics/LightSystem.hpp
+    Engine/ComponentLight.hpp
 
 
     game.hpp
