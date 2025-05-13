@@ -1,8 +1,8 @@
-#include <Labyrinth/Engine/eventManager.hpp>
+#include <Labyrinth/Engine/Event/eventManager.hpp>
 
 //Test to see if the event manager works correctly
 
-int main();
+int main()
 {
     int l1 = 0;
     int l2 = 0;
