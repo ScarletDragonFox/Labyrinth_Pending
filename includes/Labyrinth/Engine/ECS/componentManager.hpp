@@ -28,11 +28,9 @@ namespace lp::ecs
         template<typename T>
         inline void registerComponent()
         {
-            constexpr uint16_t MAX_EXPONENT = 1 << 15;
-
             const char* typeName = typeid(T).name();
             assert(mComponentSignatures.find(typeName) == mComponentSignatures.end() && "Registering component type more than once.");
-            assert(mNextComponentIDExponent == 16 && "Reached Component Limit!");
+            assert(mNextComponentIDExponent != 16 && "Reached Component Limit!");
 
             mComponentSignatures.insert({typeName, 1 << mNextComponentIDExponent});
             //mComponentContainers.insert{typeName, std::make_shared<ComponentContainer<T>>()};
