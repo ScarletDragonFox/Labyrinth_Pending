@@ -141,7 +141,7 @@ namespace lp
         std::unique_ptr<btSequentialImpulseConstraintSolver> solver = std::make_unique<btSequentialImpulseConstraintSolver>();
      
         // The world.
-        std::unique_ptr<btDiscreteDynamicsWorld> dynamicsWorld = std::make_unique<btDiscreteDynamicsWorld>(dispatcher.get(), broadphase.get(), solver.get(), collisionConfiguration.get());
+        std::unique_ptr<btDiscreteDynamicsWorld> dynamicsWorld = std::make_unique<btDiscreteDynamicsWorld>(dispatcher.get(), broadphase.get(), solver.get(), collisionConfiguration.get()); //this is what crashes. in the destructor it tries to free some stuff, and ... (std::unique_ptr)
         dynamicsWorld->setDebugDrawer(&bulletDebugRenderer);
         
         dynamicsWorld->setGravity(btVector3(0,-10,0));
@@ -151,26 +151,31 @@ namespace lp
         std::unique_ptr<btCollisionShape> groundShape = std::make_unique<btStaticPlaneShape>(btVector3(0,1,0), 1);
         std::unique_ptr<btCollisionShape> fallShape = std::make_unique<btSphereShape>((btScalar)1.0f);
 
-        {
+       // {
             std::unique_ptr<btDefaultMotionState> groundMotionState = std::make_unique<btDefaultMotionState>(btTransform(btQuaternion(0,0,0,1), btVector3(0,-1,0)));
     
             btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, groundMotionState.get(), groundShape.get(), btVector3(0,0,0));
         
             groundRigidBody =  std::make_unique<btRigidBody>(groundRigidBodyCI);
-        }
+       // }
         
     
         dynamicsWorld->addRigidBody(groundRigidBody.get());
     
-        std::unique_ptr<btDefaultMotionState> fallMotionState = std::make_unique<btDefaultMotionState>(btTransform(btQuaternion(0,0,0,1), btVector3(0,500,0)));
+        
+       // {
+            std::unique_ptr<btDefaultMotionState> fallMotionState = std::make_unique<btDefaultMotionState>(btTransform(btQuaternion(0,0,0,1), btVector3(0,500,0)));
     
-        btScalar mass = 1;
-        btVector3 fallInertia(0,0,0);
-        fallShape->calculateLocalInertia(mass,fallInertia);
-    
-        btRigidBody::btRigidBodyConstructionInfo fallRigidBodyCI(mass, fallMotionState.get() ,fallShape.get(), fallInertia);
-        fallRigidBody = std::make_unique<btRigidBody>(fallRigidBodyCI);
-        dynamicsWorld->addRigidBody(fallRigidBody.get());
+            btScalar mass = 1;
+            btVector3 fallInertia(0,0,0);
+            fallShape->calculateLocalInertia(mass,fallInertia);
+        
+            btRigidBody::btRigidBodyConstructionInfo fallRigidBodyCI(mass, fallMotionState.get() ,fallShape.get(), fallInertia);
+            fallRigidBody = std::make_unique<btRigidBody>(fallRigidBodyCI);
+
+      //  }
+        
+         dynamicsWorld->addRigidBody(fallRigidBody.get());
     
         // for (int i=0 ; i<3000 ; i++) {
         //     dynamicsWorld->stepSimulation(deltaTime, 100);
@@ -183,15 +188,16 @@ namespace lp
         //     }
         // }   
 
+        
+        // https://www.youtube.com/watch?app=desktop&v=BGAwRKPlpCw&t=14s
+        // https://pybullet.org/Bullet/BulletFull/classbtCollisionShape.html
+        //"D:/Semester_3/GK1/DELME/Relic Engine Framework/Assets/backpack/backpack.obj";
+        //"C:/Programming/Personal/Solutions/ApplicationTestBuild/AppBuild/Models/Spheres/Spheres.gltf"
 
 
-        const char* temp_modelNamePath = "NewSponza_Main_glTF_002.gltf";
-
+        const char* temp_modelNamePath = "C:/Programming/Personal/Solutions/ApplicationTestBuild/AppBuild/Models/SponzaPBR-Intel/Main.1_Sponza/NewSponza_Main_glTF_002.gltf";
 
         const auto modelRef = g_engine.getResurceManager().getModel(temp_modelNamePath);
-
-        dynamicsWorld->debugDrawWorld();
-
         
         GLuint VAO_temp = 0;
         {
@@ -219,6 +225,10 @@ namespace lp
             const double deltaTime = glfwGetTime() - lastFrameTime;
             lastFrameTime = glfwGetTime();
 
+            mPlayer.update(deltaTime);
+            mRenndd.updatePlayer(mPlayer);
+            
+
             {
                 ImGui::BeginMainMenuBar();
                 if(ImGui::BeginMenu("Options"))
@@ -227,20 +237,37 @@ namespace lp
                     ImGui::Checkbox("Open Info Window", &IMGUIDoShowInfoWindow);
                     ImGui::Separator();
                     ImGui::Checkbox("Do Physics", &mDoPhysics);
-                    if(ImGui::Button("Reset"))
+                    // if(ImGui::Button("Reset"))
+                    // {
+                    //     {
+                    //         btTransform transform2 = {};
+                    //         const btVector3 pos = btVector3(0, 50, 0);
+                    //         transform2.setOrigin(pos);
+                    //         fallRigidBody->setWorldTransform(transform2);
+                    //         fallRigidBody->getMotionState()->setWorldTransform(transform2);
+                    //         fallRigidBody->clearForces();
+                    //         fallRigidBody->setLinearVelocity(btVector3(0.0f, 0.0f, 0.0f));
+                    //         fallRigidBody->setAngularVelocity(btVector3(0.0f, 0.0f, 0.0f));
+                    //         fallRigidBody->activate();
+                    //     }
+                    // }
                     {
-                        {
-                            btTransform transform2 = {};
-                            const btVector3 pos = btVector3(0, 50, 0);
-                            transform2.setOrigin(pos);
-                            fallRigidBody->setWorldTransform(transform2);
-                            fallRigidBody->getMotionState()->setWorldTransform(transform2);
-                            fallRigidBody->clearForces();
-                            fallRigidBody->setLinearVelocity(btVector3(0.0f, 0.0f, 0.0f));
-                            fallRigidBody->setAngularVelocity(btVector3(0.0f, 0.0f, 0.0f));
-                            fallRigidBody->activate();
-                        }
+                        const auto btPos = fallRigidBody->getWorldTransform().getOrigin();
+                        ImGui::Text("Pos: x:%.2f ,y:%.2f ,z:%.2f", btPos.getX(), btPos.getY(), btPos.getZ());
                     }
+                    {
+                        const auto btPos = fallRigidBody->getCenterOfMassPosition();
+                        ImGui::Text("CenterOfMassPositio: x:%.2f ,y:%.2f ,z:%.2f", btPos.getX(), btPos.getY(), btPos.getZ());
+                    }
+                    {
+                        btTransform trans;
+                        fallRigidBody->getMotionState()->getWorldTransform(trans);
+                        
+                        const auto btPos = trans.getOrigin();
+                        ImGui::Text("Pos - 2: x:%.2f ,y:%.2f ,z:%.2f", btPos.getX(), btPos.getY(), btPos.getZ()); //Interpolated position
+                    }
+                        
+                    
                     ImGui::EndMenu();
                 }
                 if(ImGui::BeginMenu("Camera"))
@@ -372,6 +399,7 @@ namespace lp
             {
                 dynamicsWorld->stepSimulation(deltaTime, 100);
                 dynamicsWorld->debugDrawWorld();
+                bulletDebugRenderer.flushLines();
             }
             
           //  std::cout << "After update() of physics\n";
@@ -384,36 +412,38 @@ namespace lp
                 glViewport(0, 0, width, height);
             }
             
-            mPlayer.update(deltaTime);
+            
             gl::DebugRendererData dtttta;
             
             dtttta.mCamProjection = mPlayer.getProjectionMatrix(wbh);
             dtttta.mCamView = mPlayer.getViewMatrix();
-
-            if(!bulletDebugRenderer.verticies.empty())
+            if(bulletDebugRenderer.getBuffer())
             {
                 dtttta.VAO = VAO_temp;
-                dtttta.drawCount = bulletDebugRenderer.drawCount;
-                glCreateBuffers(1, &dtttta.VBO);
-                glNamedBufferStorage(dtttta.VBO, bulletDebugRenderer.verticies.size() * sizeof(lp::gl::Bullet3Debug::Vertex), bulletDebugRenderer.verticies.data(), 0);
-                glVertexArrayVertexBuffer(VAO_temp, 0, dtttta.VBO, 0, 6 * sizeof(float));
+                dtttta.drawCount = bulletDebugRenderer.getDrawCount();
+                dtttta.VBO = bulletDebugRenderer.getBuffer();
+                //std::cout << "VAO: " << VAO_temp << "\n";
+                 if(mDoPhysics)
+                glVertexArrayVertexBuffer(VAO_temp, 0, bulletDebugRenderer.getBuffer(), 0, 6 * sizeof(float));
+                //std::cout << "VBO: " << bulletDebugRenderer.getBuffer() << "\n";
+                //std::cout << "drawCount: " << bulletDebugRenderer.getDrawCount() << "\n";
             }
-         //   std::cout << "After update() of bulletDebugRenderer.verticies\n";
 
             dtttta.mdl = g_engine.getResurceManager().getLoadedModel(modelRef);
             
             mRenndd.render(dtttta);
           //  std::cout << "After mRenndd.render(dtttta)\n";
 
-            glDeleteBuffers(1, &dtttta.VBO);
-
             mWindow.swapBuffers();
         }
+         dynamicsWorld->removeRigidBody(groundRigidBody.get());
+         dynamicsWorld->removeRigidBody(fallRigidBody.get());
     }
 
     void Game::destroy()
     {
         g_engine.destroy();
         mWindow.destroy();
+        throw "exit exception thrown to stop infinite stall!"; //nothing to see here, move along ...
     }
 }

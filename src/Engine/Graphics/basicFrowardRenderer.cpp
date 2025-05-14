@@ -37,6 +37,9 @@ namespace lp::gl
         glVertexArrayAttribBinding(mVertexArrayModelTextured, 1, 0);
         glVertexArrayAttribBinding(mVertexArrayModelTextured, 2, 0);
         glVertexArrayAttribBinding(mVertexArrayModelTextured, 3, 0);
+
+        glCreateBuffers(1, &mUBO_Player);
+        glNamedBufferStorage(mUBO_Player, sizeof(RendererForwardPlus_PlayerData), nullptr, GL_DYNAMIC_STORAGE_BIT);
     }
 
     void ForwardRenderer::render(const DebugRendererData& cv_data)
@@ -57,6 +60,8 @@ namespace lp::gl
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f); //sets the clear colour to black (red)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        glBindBufferBase(GL_UNIFORM_BUFFER, 0, mUBO_Player);
+
         RegularShader shader;
         shader.LoadShader(ShaderType::SimpleColor);
         shader.Use();
@@ -69,12 +74,11 @@ namespace lp::gl
         shader.SetUniform(4, glm::vec3(0.1, 1.0f, 0.0f));
         renderCube();
 
-        shader.LoadShader(ShaderType::DebugLine);
-        shader.Use();
-        shader.SetUniform(1, cv_data.mCamView);
-        shader.SetUniform(2, cv_data.mCamProjection);
+        
 
         if(cv_data.drawCount > 0 ){
+            shader.LoadShader(ShaderType::DebugLine);
+            shader.Use();
             shader.SetUniform(3, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
             glBindVertexArray(cv_data.VAO);
             glDrawArrays(GL_LINES, 0, cv_data.drawCount);
@@ -86,10 +90,7 @@ namespace lp::gl
             //std::cout << "mdl render()\n";
             shader.LoadShader(ShaderType::ModelTextured);
             shader.Use();
-            shader.SetUniform(1, cv_data.mCamView);
-            shader.SetUniform(2, cv_data.mCamProjection);
             shader.SetUniform(3, glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 0.0f, 0.0f)));
-            //shader.SetUniform(4, glm::vec3(0.5, 0.7f, 1.0f));
 
             lp::res::LoadedModel::MaterialID_t lastMaterial = 4'000'000'000u; //hopefully we will never a model with this many materials
 
@@ -114,6 +115,15 @@ namespace lp::gl
 
 
 
+    }
+
+    void ForwardRenderer::updatePlayer(const lp::Player& cr_player, bool cv_wasChanged)
+    {
+        if(cv_wasChanged == false) return; //for now
+        mPlayerData.mPosition = cr_player.getPosition();
+        mPlayerData.mProjection = cr_player.getProjectionMatrix(mOutBuff.getWidthDivHeight());
+        mPlayerData.mView = cr_player.getViewMatrix();
+        glNamedBufferSubData(mUBO_Player, 0, sizeof(RendererForwardPlus_PlayerData), &mPlayerData);
     }
 
     void ForwardRenderer::destroy()
