@@ -10,9 +10,6 @@ namespace lp
 {
     void LightSystem::update()
     {
-        if(this->mEntities.size() > 1)
-            publicEntity = *this->mEntities.begin();
-        return;
         if(this->mDirty)
         {
             if(this->mEntities.size() > mLightCount)
@@ -78,6 +75,7 @@ namespace lp
     {
         mMaxLightCount = mMaxLightCount / 2; //decrease capacity by half
         if(mLightCount > mMaxLightCount) mMaxLightCount = mLightCount + 1; //just in case
+        if(mEntities.size() > mMaxLightCount) mMaxLightCount = mEntities.size() + 2; //additional just in case
 
         if(mShaderStorageBufferLights) glDeleteBuffers(1, &mShaderStorageBufferLights);
         if(mAliveLightListBuffer) glDeleteBuffers(1, &mAliveLightListBuffer);
@@ -86,9 +84,17 @@ namespace lp
         glNamedBufferStorage(mShaderStorageBufferLights, sizeof(lp::ComponentLight::StructuredGLSL) * mMaxLightCount, nullptr, GL_DYNAMIC_STORAGE_BIT);
         glNamedBufferStorage(mAliveLightListBuffer, sizeof(GLuint) * mMaxLightCount, nullptr, GL_DYNAMIC_STORAGE_BIT);
 
+
+        mLightBufferEntityMap.clear();
+
+        for(const auto i: mEntities)
+        {
+            mLightBufferEntityMap.push_back(i);
+        }
+
         mLightBufferEntityMap.resize(mMaxLightCount, lp::ecs::const_entity_invalid); //make map smaller
 
-        assert(mLightBufferEntityMap.size() == mEntities.size());
+        assert(mLightBufferEntityMap.size() >= mEntities.size());
 
         auto& ecs = lp::g_engine.getECS();
 
@@ -136,11 +142,13 @@ namespace lp
         if(mShaderStorageBufferLights)
         {
             glCopyNamedBufferSubData(mShaderStorageBufferLights, tempBufferLights, 0, 0, sizeof(lp::ComponentLight::StructuredGLSL) * mMaxLightCount);
+        } else {
             std::cerr << "LightSystem::update(): undefined behaviour @ line" << __LINE__ << "\n";
         }
         if(mAliveLightListBuffer)
         {
             glCopyNamedBufferSubData(mAliveLightListBuffer, tempBufferAlive, 0, 0, sizeof(GLuint) * mMaxLightCount);
+        } else {
             std::cerr << "LightSystem::update(): undefined behaviour @ line" << __LINE__ << "\n";
         }
                     
