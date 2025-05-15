@@ -31,3 +31,10 @@ set(BUILD_TOOLS ON CACHE BOOL "Build additional tools" FORCE)
 if(BUILD_TOOLS)
     add_subdirectory(tools)
 endif()
+
+set(BUILD_TESTS ON CACHE BOOL "Build tests" FORCE)
+
+if(BUILD_TESTS)
+    include(CTest)
+    add_subdirectory(tests)
+endif()
