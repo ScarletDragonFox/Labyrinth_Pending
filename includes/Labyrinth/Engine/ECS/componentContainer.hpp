@@ -33,9 +33,9 @@ namespace lp::ecs
         /// @brief insert a new Entity to this storage
         /// @param cv_entity Entity in question
         /// @param component Component (reference) to add
-        inline void insert(const Entity cv_entity, T& component)
+        inline void insert(const Entity cv_entity, const T& component)
         {
-            mContainer.insert[cv_entity] = component;
+            mContainer.insert(std::pair(cv_entity, component));
         }
 
         /// @brief Remove a Component from an Entity

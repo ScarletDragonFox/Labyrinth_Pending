@@ -32,8 +32,7 @@ namespace lp::ecs
             assert(mComponentSignatures.find(typeName) == mComponentSignatures.end() && "Registering component type more than once.");
             assert(mNextComponentIDExponent != 16 && "Reached Component Limit!");
 
-            mComponentSignatures.insert({typeName, 1 << mNextComponentIDExponent});
-            //mComponentContainers.insert{typeName, std::make_shared<ComponentContainer<T>>()};
+            mComponentSignatures[typeName] = 1 << mNextComponentIDExponent;
             mComponentContainers.insert(std::pair<const char*, std::shared_ptr<ComponentContainerBasePureVirtualClass>>(typeName, std::make_shared<ComponentContainer<T>>()));
             ++mNextComponentIDExponent;
         }
@@ -45,7 +44,7 @@ namespace lp::ecs
         /// @param cv_entity Entity in question
         /// @param r_component reference to component to add
         template<typename T>
-        inline void addComponent(const Entity cv_entity, T& r_component)
+        inline void addComponent(const Entity cv_entity, const T& r_component)
         {
             getComponentContainer<T>()->insert(cv_entity, r_component);
         }
