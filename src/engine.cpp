@@ -6,17 +6,32 @@
 
 #include <Labyrinth/Engine/Resource/shaderManager.hpp>
 
+#include <soloud.h>
+#include <Labyrinth/Engine/ECS/coreECS.hpp>
+#include <Labyrinth/Engine/Event/eventManager.hpp>
+#include <Labyrinth/Engine/Resource/resourceManager.hpp>
+
+
 namespace lp
 {
+
+    Engine::Engine()
+    {
+        mSoundPtr = std::make_shared<SoLoud::Soloud>();
+        mECSPtr = std::make_shared<lp::ecs::CoreECS>();
+        mEventsPtr = std::make_shared<lp::EventManager>();
+        mResourcesPtr = std::make_shared<lp::ResourceManager>();
+    }
+
     bool Engine::initialize()
     {
-        if(mSound.init() != SoLoud::SO_NO_ERROR)
+        if(mSoundPtr->init() != SoLoud::SO_NO_ERROR)
         {
             std::cerr << "Failed to initialize SoLoud\n";
             return true;
         }
         
-        if(mResources.initialize())
+        if(mResourcesPtr->initialize())
         {
             std::cerr << "Resource Manager failed to initialize\n";
             return true;
@@ -27,7 +42,7 @@ namespace lp
 
     void Engine::destroy()
     {
-        mSound.deinit();
+        mSoundPtr->deinit();
     }
   
 

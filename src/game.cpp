@@ -78,7 +78,9 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_PUSH();
 
 LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 
-#include <memory>
+#include "Labyrinth/Engine/ECS/coreECS.hpp"
+#include "Labyrinth/Engine/Event/event.hpp"
+#include "Labyrinth/Engine/Resource/resourceManager.hpp"
 
 #include "Labyrinth/Engine/Graphics/bullet3Debug.hpp"
 
@@ -95,6 +97,7 @@ namespace lp
         
         if(lp::g_engine.initialize())
         {
+            std::cerr << "lp::Engine failed to initialize!\n";
             return true;
         }
 
@@ -187,7 +190,6 @@ namespace lp
         //         break;
         //     }
         // }   
-
         
         // https://www.youtube.com/watch?app=desktop&v=BGAwRKPlpCw&t=14s
         // https://pybullet.org/Bullet/BulletFull/classbtCollisionShape.html

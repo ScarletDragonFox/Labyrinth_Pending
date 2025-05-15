@@ -1,5 +1,6 @@
 #include "Labyrinth/Engine/Graphics/LightSystem.hpp"
 
+#include "Labyrinth/Engine/ECS/coreECS.hpp"
 #include "Labyrinth/engine.hpp"
 
 #include <iostream>
@@ -9,6 +10,9 @@ namespace lp
 {
     void LightSystem::update()
     {
+        if(this->mEntities.size() > 1)
+            publicEntity = *this->mEntities.begin();
+        return;
         if(this->mDirty)
         {
             if(this->mEntities.size() > mLightCount)
@@ -42,10 +46,12 @@ namespace lp
                 {
                     glCreateBuffers(1, &mShaderStorageBufferLights);
                     mMaxLightCount = 8; //randomly chosen default value
-                    glBufferStorage(mShaderStorageBufferLights, sizeof(lp::ComponentLight::StructuredGLSL) * mMaxLightCount, nullptr, GL_DYNAMIC_STORAGE_BIT);
+                    glNamedBufferStorage(mShaderStorageBufferLights, sizeof(lp::ComponentLight::StructuredGLSL) * mMaxLightCount, nullptr, GL_DYNAMIC_STORAGE_BIT);
 
                     glCreateBuffers(1, &mAliveLightListBuffer);
-                    glBufferStorage(mShaderStorageBufferLights, sizeof(GLuint) * mMaxLightCount, nullptr, GL_DYNAMIC_STORAGE_BIT);
+                    glNamedBufferStorage(mAliveLightListBuffer, sizeof(GLuint) * mMaxLightCount, nullptr, GL_DYNAMIC_STORAGE_BIT);
+
+                    mLightBufferEntityMap.resize(mMaxLightCount, lp::ecs::const_entity_invalid);
                 }
             }
 
@@ -61,7 +67,7 @@ namespace lp
             }
             //update the buffer too, assume that the data will fit
             glNamedBufferSubData(mAliveLightListBuffer, 0, sizeof(GLuint) * mAliveLightList.size(), mAliveLightList.data());
-
+            this->mDirty = false;
         } else 
         {
             this->updateNotDirty();
@@ -77,8 +83,8 @@ namespace lp
         if(mAliveLightListBuffer) glDeleteBuffers(1, &mAliveLightListBuffer);
         glCreateBuffers(1, &mShaderStorageBufferLights);
         glCreateBuffers(1, &mAliveLightListBuffer);
-        glBufferStorage(mShaderStorageBufferLights, sizeof(lp::ComponentLight::StructuredGLSL) * mMaxLightCount, nullptr, GL_DYNAMIC_STORAGE_BIT);
-        glBufferStorage(mAliveLightListBuffer, sizeof(GLuint) * mMaxLightCount, nullptr, GL_DYNAMIC_STORAGE_BIT);
+        glNamedBufferStorage(mShaderStorageBufferLights, sizeof(lp::ComponentLight::StructuredGLSL) * mMaxLightCount, nullptr, GL_DYNAMIC_STORAGE_BIT);
+        glNamedBufferStorage(mAliveLightListBuffer, sizeof(GLuint) * mMaxLightCount, nullptr, GL_DYNAMIC_STORAGE_BIT);
 
         mLightBufferEntityMap.resize(mMaxLightCount, lp::ecs::const_entity_invalid); //make map smaller
 
@@ -90,7 +96,7 @@ namespace lp
         for(const auto ent: this->mEntities)
         {
             mLightBufferEntityMap[i] = ent;
-            this->updateSingleLight(i * sizeof(lp::ComponentLight::StructuredGLSL), ecs.getComponent<ComponentLight>(ent));
+            this->updateSingleLight(i * sizeof(lp::ComponentLight::StructuredGLSL), ecs.getComponent<lp::ComponentLight>(ent));
             ++i;
         }
     }
@@ -125,8 +131,8 @@ namespace lp
 
         std::size_t tempMaxLightCount = mMaxLightCount * 2; //increase capacity by 2
 
-        glBufferStorage(tempBufferLights, sizeof(lp::ComponentLight::StructuredGLSL) * tempMaxLightCount, nullptr, GL_DYNAMIC_STORAGE_BIT);
-        glBufferStorage(tempBufferAlive, sizeof(GLuint) * tempMaxLightCount, nullptr, GL_DYNAMIC_STORAGE_BIT);
+        glNamedBufferStorage(tempBufferLights, sizeof(lp::ComponentLight::StructuredGLSL) * tempMaxLightCount, nullptr, GL_DYNAMIC_STORAGE_BIT);
+        glNamedBufferStorage(tempBufferAlive, sizeof(GLuint) * tempMaxLightCount, nullptr, GL_DYNAMIC_STORAGE_BIT);
         if(mShaderStorageBufferLights)
         {
             glCopyNamedBufferSubData(mShaderStorageBufferLights, tempBufferLights, 0, 0, sizeof(lp::ComponentLight::StructuredGLSL) * mMaxLightCount);
@@ -181,7 +187,7 @@ namespace lp
         auto iter = std::find(mLightBufferEntityMap.begin(), mLightBufferEntityMap.end(), lp::ecs::const_entity_invalid);
         if(iter == mLightBufferEntityMap.end()) [[unlikely]]
         {
-            std::cerr << "LightSystem::addLightSingle() used when there is no space!";
+            std::cerr << "LightSystem::addLightSingle() used when there is no space!\n";
             return;
         }
         *iter = cv_lightEnt;
@@ -194,6 +200,7 @@ namespace lp
     {
         lp::ComponentLight::StructuredGLSL dstruk;
         r_light.getGLSLStructure(dstruk);
+        r_light.clearDirty();
         //TODO: add shadow dstruk.shadowID = setting code here!
         glNamedBufferSubData(mShaderStorageBufferLights, cv_offset, sizeof(dstruk), &dstruk);
     }

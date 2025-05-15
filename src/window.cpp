@@ -9,6 +9,9 @@
 
 
 #include <Labyrinth/engine.hpp>
+#include <Labyrinth/Engine/Event/eventManager.hpp>
+
+#include <iostream>
 
 namespace
 {

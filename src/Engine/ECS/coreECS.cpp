@@ -1,6 +1,8 @@
 #include "Labyrinth/Engine/ECS/coreECS.hpp"
 #include "Labyrinth/engine.hpp"
 
+#include "Labyrinth/Engine/Event/eventManager.hpp"
+
 namespace lp::ecs
 {
     Entity CoreECS::createEntity()

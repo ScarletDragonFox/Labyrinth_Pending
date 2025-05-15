@@ -6,6 +6,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "Labyrinth/Engine/Resource/modelLoader.hpp"
+
 namespace
 {
     void renderCube();
@@ -73,8 +75,6 @@ namespace lp::gl
         shader.SetUniform(3, model);
         shader.SetUniform(4, glm::vec3(0.1, 1.0f, 0.0f));
         renderCube();
-
-        
 
         if(cv_data.drawCount > 0 ){
             shader.LoadShader(ShaderType::DebugLine);

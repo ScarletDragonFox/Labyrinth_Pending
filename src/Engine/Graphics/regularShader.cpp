@@ -1,6 +1,7 @@
 #include "Labyrinth/Engine/Graphics/regularShader.hpp"
 #include "Labyrinth/engine.hpp"
 #include "Labyrinth/Engine/Resource/shaderManager.hpp"
+#include "Labyrinth/Engine/Resource/resourceManager.hpp"
 
 namespace lp::gl
 {

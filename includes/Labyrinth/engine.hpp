@@ -1,51 +1,75 @@
 #ifndef LABYRINTH_PENDING_ENGINE_HPP
 #define LABYRINTH_PENDING_ENGINE_HPP
 
-#include <soloud.h>
-#include <Labyrinth/Engine/ECS/coreECS.hpp>
-#include <Labyrinth/Engine/Event/eventManager.hpp>
-#include <Labyrinth/Engine/Resource/resourceManager.hpp>
+#include <memory>
+
+
+
+namespace SoLoud
+{
+    /// @brief SoLoud class forward definition.
+    class Soloud;
+}
 
 namespace lp
 {
+    namespace ecs
+    {
+        /// @brief CoreECS class forward definition.
+        class CoreECS;
+    }
+    
+    /// @brief EventManager class forward definition.
+    class EventManager;
+
+    /// @brief ResourceManager class forward definition.
+    class ResourceManager;
+
     /// @brief the Engine class.
     class Engine
     {
         public:
+
+        /// @brief constructs the shared pointers
+        Engine();
+
         /// @brief  Initializes the Engine
         /// @return true if an error occurred, false otherwise
         bool initialize();
 
         /// @brief get reference to ECS
         /// @return reference to the Entity Component System
-        lp::ecs::CoreECS& getECS() { return mECS; }
+        lp::ecs::CoreECS& getECS() { return *mECSPtr.get(); }
 
         /// @brief get reference to the Event Manager
         /// @return reference to Event Manager
-        lp::EventManager& getEventManager() { return mEvents; }
+        lp::EventManager& getEventManager() { return *mEventsPtr.get(); }
 
         /// @brief get sound engine
         /// @return reference to SoLouds instance
-        SoLoud::Soloud& getSoLoud() {return mSound;}
+        SoLoud::Soloud& getSoLoud() {return *mSoundPtr.get();}
 
         /// @brief get Resource Manager
         /// @return reference to the resource manager
-        lp::ResourceManager& getResurceManager() { return mResources; }
+        lp::ResourceManager& getResurceManager() { return *mResourcesPtr.get(); }
 
         /// @brief destroy the Engine & all ts data
         void destroy();
 
         private:
         /// @brief SoLoud's sound engine
-        SoLoud::Soloud mSound;
+        std::shared_ptr<SoLoud::Soloud> mSoundPtr;
+
         /// @brief Our ECS
-        lp::ecs::CoreECS mECS;
+        std::shared_ptr<lp::ecs::CoreECS> mECSPtr;
+
         /// @brief The Event Manager
-        lp::EventManager mEvents;
+        std::shared_ptr<lp::EventManager> mEventsPtr;
+
         /// @brief The Resource Manager.
         ///
         /// Loads/Unloads & Stores all types of resources
-        lp::ResourceManager mResources;
+        std::shared_ptr<lp::ResourceManager> mResourcesPtr;
     };
     
     extern Engine g_engine;
