@@ -168,6 +168,8 @@ namespace lp::res
             }
         }
 
+        mShaderDefines["SHADER_DEF"] = "46";
+
         if(error_happened)
         {
             return true;
@@ -189,9 +191,10 @@ namespace lp::res
 
     void ShaderManager::reloadAllShaders()
     {
+        const std::string shader_defines = this->processDefines();
         for(auto&i: this->mComputeShaders)
         {
-            GLuint newProgram = this->loadShader(i.mComputePath.c_str());
+            GLuint newProgram = this->loadShader(i.mComputePath.c_str(), shader_defines);
             if(newProgram != 0)
             {
                 if(i.mProgramID != 0) glDeleteProgram(i.mProgramID);
@@ -205,7 +208,7 @@ namespace lp::res
 
         for(auto&i: this->mRegularShaders)
         {
-            GLuint newProgram = this->loadShader(i.mVertexPath.c_str(), i.mFragmentPath.c_str());
+            GLuint newProgram = this->loadShader(i.mVertexPath.c_str(), i.mFragmentPath.c_str(), shader_defines);
             if(newProgram != 0)
             {
                 if(i.mProgramID != 0) glDeleteProgram(i.mProgramID);
@@ -214,6 +217,37 @@ namespace lp::res
             {
                 std ::cerr << "mRegularShaders compile error for: " << i.mFragmentPath << "\n";
             }
+        }
+    }
+
+    void ShaderManager::reloadShader(const lp::gl::ShaderType cv_shaderT)
+    {
+        const std::string shader_defines = this->processDefines();
+        auto& shdata = this->mRegularShaders[static_cast<int>(cv_shaderT)];
+        GLuint newProgram = this->loadShader(shdata.mVertexPath.c_str(), shdata.mFragmentPath.c_str(), shader_defines);
+        if(newProgram != 0)
+        {
+            if(shdata.mProgramID != 0) glDeleteProgram(shdata.mProgramID);
+            shdata.mProgramID = newProgram;
+        } else
+        {
+            std::cerr << "mRegularShaders compile error for: " << shdata.mFragmentPath << "\n";
+        }
+    }
+
+
+    void ShaderManager::reloadShader(const lp::gl::ShaderTypeCompute cv_shaderT)
+    {
+        const std::string shader_defines = this->processDefines();
+        auto& shdata = this->mComputeShaders[static_cast<int>(cv_shaderT)];
+        GLuint newProgram = this->loadShader(shdata.mComputePath.c_str(), shader_defines);
+        if(newProgram != 0)
+        {
+            if(shdata.mProgramID != 0) glDeleteProgram(shdata.mProgramID);
+            shdata.mProgramID = newProgram;
+        } else
+        {
+            std::cerr << "mRegularShaders compile error for: " << shdata.mComputePath << "\n";
         }
     }
 
@@ -232,11 +266,16 @@ namespace lp::res
         }
     }
 
-    GLuint ShaderManager::loadShader(const char* vertexShaderPath, const char* fragmentShaderPath)
+    GLuint ShaderManager::loadShader(const char* vertexShaderPath, const char* fragmentShaderPath, const std::string_view shader_defines)
     {
-        const std::string vsCode = getCodeAndHandleIncludes(vertexShaderPath);
-        const std::string fsCode = getCodeAndHandleIncludes(fragmentShaderPath);
+        std::string vsCode = getCodeAndHandleIncludes(vertexShaderPath);
+        std::string fsCode = getCodeAndHandleIncludes(fragmentShaderPath);
         if(vsCode.length() == 0 || fsCode.length() == 0) return 0; //return 0 (error) if shader code strings empty
+
+        insertDefines(vsCode, shader_defines);
+        insertDefines(fsCode, shader_defines);
+
+        //std::cout << "\nVertex Shader: \n" << vsCode << "\n\nFragment:\n\n" << fsCode << "\n";
 
         GLuint vertexID = 0, fragmentID = 0, ProgramID = 0;
 
@@ -268,10 +307,12 @@ namespace lp::res
         return ProgramID;
     }
     
-    GLuint ShaderManager::loadShader(const char* computeShaderPath)
+    GLuint ShaderManager::loadShader(const char* computeShaderPath, const std::string_view shader_defines)
     {
-        const std::string csCode = getCodeAndHandleIncludes(computeShaderPath);
+        std::string csCode = getCodeAndHandleIncludes(computeShaderPath);
         if(csCode.length() == 0) return 0; //return 0 (error) if shader code strings empty
+
+        insertDefines(csCode, shader_defines);
 
         GLuint computeID = 0, ProgramID = 0;
 
@@ -291,5 +332,29 @@ namespace lp::res
         }
         glDeleteShader(computeID);
         return ProgramID;
+    }
+
+    std::string ShaderManager::processDefines()const
+    {
+        std::string out = "\n";
+        for(const auto&i:this->mShaderDefines)
+        {
+            out += "#define ";
+            out += i.first + " " + i.second + "\n";
+        }
+        return out;
+    }
+
+    void ShaderManager::insertDefines(std::string& r_out, const std::string_view cv_defines)const
+    {
+        const std::size_t pos = r_out.find("#version");
+        if(pos != std::string::npos)
+        {
+            const std::size_t pos2 = r_out.find_first_of('\n', pos);
+            if(pos2 != std::string::npos)
+            {
+                r_out.insert(pos2, cv_defines, 0, cv_defines.length() -1);
+            } else std::cerr << "Invalid shader! String: \"" << r_out << "\"\n";
+        } else std::cerr << "Invalid shader! String: \"" << r_out << "\"\n";
     }
 }

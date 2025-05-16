@@ -6,6 +6,7 @@
 #include <glad/gl.h>
 #include <string>
 #include <array>
+#include <unordered_map>
 
 namespace lp::res
 {
@@ -43,8 +44,23 @@ namespace lp::res
         /// If a shader failed to compile, previous version will be used
         void reloadAllShaders();
 
+        /// @brief Reloads the specified shader
+        /// @param cv_shaderT vertex/fragment shader to reload
+        void reloadShader(const lp::gl::ShaderType cv_shaderT);
+
+        /// @brief Reloads the specified shader
+        /// @param cv_shaderT compute shader to reload
+        void reloadShader(const lp::gl::ShaderTypeCompute cv_shaderT);
+
         /// @brief unloads all OpenGL shaders
         void destroy();
+
+        /// @brief public map of define -> value
+        ///
+        /// translates to: #define key value
+        ///
+        /// with key + value taken from this map
+        std::unordered_map<std::string, std::string> mShaderDefines;
 
         private:
 
@@ -71,18 +87,28 @@ namespace lp::res
         /// @brief internal function to load a shader program from a filepath
         /// @param vertexShaderPath path to vertex shader file
         /// @param fragmentShaderPath path to fragment shader file
+        /// @param shader_defines view to string result of processDefines()
         /// @return id of Shader, or 0 if error
-        GLuint loadShader(const char* vertexShaderPath, const char* fragmentShaderPath);
+        GLuint loadShader(const char* vertexShaderPath, const char* fragmentShaderPath, const std::string_view shader_defines);
 
         /// @brief internal function to load a shader program from a filepath
         /// @param computeShaderPath path to compute shader file
+        /// @param shader_defines view to string result of processDefines()
         /// @return id of Shader, or 0 if error
-        GLuint loadShader(const char* computeShaderPath);
+        GLuint loadShader(const char* computeShaderPath, const std::string_view shader_defines);
 
         /// @brief array storing vertex/fragment shader program data
         std::array<VFShData, static_cast<int>(lp::gl::ShaderType::Count)> mRegularShaders;
         /// @brief array storing compute shader program data
         std::array<CShData, static_cast<int>(lp::gl::ShaderTypeCompute::Count)> mComputeShaders;
+
+        /// @brief internal function to transform mShaderDefines -> processed string
+        std::string processDefines()const;
+
+        /// @brief internal function that insertes the output of processDefines() AFTER the #version string
+        /// @param r_out the 'code' of the shader
+        /// @param cv_defines the string to insert, the output of processDefines()
+        void insertDefines(std::string& r_out, const std::string_view cv_defines)const;
     };
 }
 
