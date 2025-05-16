@@ -45,10 +45,10 @@ namespace lp
         /// @brief unloads all resources (called at shutdwon only)
         void destroy();
 
-        /// @brief get a const reference to the shader manager
+        /// @brief get a reference to the shader manager
         /// @return reference to shader manager
         /// @warning this requires #include-ing <Labyrinth/Engine/Resource/shaderManager.hpp>, otherwise compile error
-        const lp::res::ShaderManager& getShaderManager() const { return *mShader; }
+        lp::res::ShaderManager& getShaderManager() const { return *mShader; }
 
         /// @brief get a reference to the model loader. Avoid using!
         /// @return reference to the model loader
