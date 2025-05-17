@@ -11,6 +11,8 @@ set(TOOL_SOURCE
     
     BulletShape.hpp
     BulletShape.cpp
+    RigidBodyConteiner.cpp
+    RigidBodyConteiner.hpp
 )
 
 add_executable(Tool_ModelBoundingVolumeCreator ${TOOL_SOURCE} )
