@@ -26,19 +26,29 @@ namespace lp::gl
             this->mOutBuff.resize(data.width, data.height);
         });
 
-        glCreateVertexArrays(1, &mVertexArrayModelTextured);
-        glEnableVertexArrayAttrib(mVertexArrayModelTextured, 0);
-        glEnableVertexArrayAttrib(mVertexArrayModelTextured, 1);
-        glEnableVertexArrayAttrib(mVertexArrayModelTextured, 2);
-        glEnableVertexArrayAttrib(mVertexArrayModelTextured, 3);
-        glVertexArrayAttribFormat(mVertexArrayModelTextured, 0, 3, GL_FLOAT, GL_FALSE, 0);
-        glVertexArrayAttribFormat(mVertexArrayModelTextured, 1, 2, GL_FLOAT, GL_FALSE, 3 * sizeof(float));
-        glVertexArrayAttribFormat(mVertexArrayModelTextured, 2, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float));
-        glVertexArrayAttribFormat(mVertexArrayModelTextured, 3, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float));
-        glVertexArrayAttribBinding(mVertexArrayModelTextured, 0, 0);
-        glVertexArrayAttribBinding(mVertexArrayModelTextured, 1, 0);
-        glVertexArrayAttribBinding(mVertexArrayModelTextured, 2, 0);
-        glVertexArrayAttribBinding(mVertexArrayModelTextured, 3, 0);
+        {
+            glCreateVertexArrays(1, &mVertexArrayModelTextured);
+            glEnableVertexArrayAttrib(mVertexArrayModelTextured, 0);
+            glEnableVertexArrayAttrib(mVertexArrayModelTextured, 1);
+            glEnableVertexArrayAttrib(mVertexArrayModelTextured, 2);
+            glEnableVertexArrayAttrib(mVertexArrayModelTextured, 3);
+            glVertexArrayAttribFormat(mVertexArrayModelTextured, 0, 3, GL_FLOAT, GL_FALSE, 0);
+            glVertexArrayAttribFormat(mVertexArrayModelTextured, 1, 2, GL_FLOAT, GL_FALSE, 3 * sizeof(float));
+            glVertexArrayAttribFormat(mVertexArrayModelTextured, 2, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float));
+            glVertexArrayAttribFormat(mVertexArrayModelTextured, 3, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float));
+            glVertexArrayAttribBinding(mVertexArrayModelTextured, 0, 0);
+            glVertexArrayAttribBinding(mVertexArrayModelTextured, 1, 0);
+            glVertexArrayAttribBinding(mVertexArrayModelTextured, 2, 0);
+            glVertexArrayAttribBinding(mVertexArrayModelTextured, 3, 0);
+
+            glCreateVertexArrays(1, &mVertexArrayBulletLineDebug);
+            glEnableVertexArrayAttrib(mVertexArrayBulletLineDebug, 0);
+            glEnableVertexArrayAttrib(mVertexArrayBulletLineDebug, 1);
+            glVertexArrayAttribFormat(mVertexArrayBulletLineDebug, 0, 3, GL_FLOAT, GL_FALSE, 0);
+            glVertexArrayAttribFormat(mVertexArrayBulletLineDebug, 1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float));
+            glVertexArrayAttribBinding(mVertexArrayBulletLineDebug, 0, 0);
+            glVertexArrayAttribBinding(mVertexArrayBulletLineDebug, 1, 0);
+        }
 
         glCreateBuffers(1, &mUBO_Player);
         glNamedBufferStorage(mUBO_Player, sizeof(RendererForwardPlus_PlayerData), nullptr, GL_DYNAMIC_STORAGE_BIT);
@@ -67,8 +77,6 @@ namespace lp::gl
         RegularShader shader;
         shader.LoadShader(ShaderType::SimpleColor);
         shader.Use();
-        shader.SetUniform(1, cv_data.mCamView);
-        shader.SetUniform(2, cv_data.mCamProjection);
         
         const glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0, -10, 0));;
         
@@ -79,8 +87,10 @@ namespace lp::gl
         if(cv_data.drawCount > 0 ){
             shader.LoadShader(ShaderType::DebugLine);
             shader.Use();
-            shader.SetUniform(3, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
-            glBindVertexArray(cv_data.VAO);
+            constexpr glm::mat4 modelBulletDebugDraw = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+            shader.SetUniform(3, modelBulletDebugDraw);
+            glBindVertexArray(mVertexArrayBulletLineDebug);
+            glVertexArrayVertexBuffer(mVertexArrayBulletLineDebug, 0, cv_data.VBO, 0, 6 * sizeof(float));
             glDrawArrays(GL_LINES, 0, cv_data.drawCount);
             glBindVertexArray(0);
         }

@@ -22,52 +22,17 @@
 #include <GLFW/glfw3.h>
 
 
+#include "Labyrinth/Engine/ComponentLight.hpp"
+
+#include "Labyrinth/Engine/Resource/resourceManager.hpp"
+#include "Labyrinth/Engine/Resource/shaderManager.hpp"
+
 namespace
 {
-    void opengl_message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, [[maybe_unused]]  GLsizei length, GLchar const* message, [[maybe_unused]] void const* user_param)
-    {
-        auto const src_str = [source]() {
-            switch (source)
-            {
-            case GL_DEBUG_SOURCE_API: return "API";
-            case GL_DEBUG_SOURCE_WINDOW_SYSTEM: return "WINDOW SYSTEM";
-            case GL_DEBUG_SOURCE_SHADER_COMPILER: return "SHADER COMPILER";
-            case GL_DEBUG_SOURCE_THIRD_PARTY: return "THIRD PARTY";
-            case GL_DEBUG_SOURCE_APPLICATION: return "APPLICATION";
-            case GL_DEBUG_SOURCE_OTHER: return "OTHER";
-            default: return "BAD SOURCE";
-            }
-            }();
+    void opengl_message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, [[maybe_unused]]  GLsizei length, GLchar const* message, [[maybe_unused]] void const* user_param);
 
-        auto const type_str = [type]() {
-            switch (type)
-            {
-            case GL_DEBUG_TYPE_ERROR: return "ERROR";
-            case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return "DEPRECATED_BEHAVIOR";
-            case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: return "UNDEFINED_BEHAVIOR";
-            case GL_DEBUG_TYPE_PORTABILITY: return "PORTABILITY";
-            case GL_DEBUG_TYPE_PERFORMANCE: return "PERFORMANCE";
-            case GL_DEBUG_TYPE_MARKER: return "MARKER";
-            case GL_DEBUG_TYPE_OTHER: return "OTHER";
-            default: return "BAD ERROR TYPE";
-            }
-            }();
 
-        auto const severity_str = [severity]() {
-            switch (severity)
-            {
-            case GL_DEBUG_SEVERITY_NOTIFICATION: return "NOTIFICATION";
-            case GL_DEBUG_SEVERITY_LOW: return "LOW";
-            case GL_DEBUG_SEVERITY_MEDIUM: return "MEDIUM";
-            case GL_DEBUG_SEVERITY_HIGH: return "HIGH";
-            default: return "BAD SEVERITY";
-            }
-            }();
-
-        std::cout << src_str << ", " << type_str << ", " << severity_str << ", " << id << ": " << message << "\n";
-
-    }
-
+    void int_imgui_shader_window(bool*windowOpened);
 }
 
 
@@ -110,6 +75,20 @@ namespace lp
 
         mRenndd.setup(640, 480);
 
+        auto& ecsr = g_engine.getECS();
+
+        ecsr.registerComponent<lp::ComponentLight>();
+
+        mLightSystem = ecsr.registerSystem<lp::LightSystem>(ecsr.getComponentSignature<lp::ComponentLight>());
+        mLightSystem->update();
+        for(int i = 0; i < 10; i++)
+        {
+            lp::ecs::Entity ent = ecsr.createEntity();
+            lp::ComponentLight light;
+            light.setRadius((rand() %20'000) /1000.0f);
+            ecsr.addComponent<lp::ComponentLight>(ent, light);
+        }
+        
         return false;
     }
 
@@ -190,7 +169,7 @@ namespace lp
         //         break;
         //     }
         // }   
-        
+
         // https://www.youtube.com/watch?app=desktop&v=BGAwRKPlpCw&t=14s
         // https://pybullet.org/Bullet/BulletFull/classbtCollisionShape.html
         //"D:/Semester_3/GK1/DELME/Relic Engine Framework/Assets/backpack/backpack.obj";
@@ -201,22 +180,14 @@ namespace lp
 
         const auto modelRef = g_engine.getResurceManager().getModel(temp_modelNamePath);
         
-        GLuint VAO_temp = 0;
-        {
-            glCreateVertexArrays(1, &VAO_temp);
-            glEnableVertexArrayAttrib(VAO_temp, 0);
-            glEnableVertexArrayAttrib(VAO_temp, 1);
-            glVertexArrayAttribFormat(VAO_temp, 0, 3, GL_FLOAT, GL_FALSE, 0);
-            glVertexArrayAttribFormat(VAO_temp, 1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float));
-            glVertexArrayAttribBinding(VAO_temp, 0, 0);
-            glVertexArrayAttribBinding(VAO_temp, 1, 0);
-        }
-
         //https://web.archive.org/web/20130419113144/http://bulletphysics.org/mediawiki-1.5.8/index.php/Hello_World
         //https://guibraga.medium.com/my-favorite-visual-studio-code-extensions-11573442008b
 
         bool IMGUIDoShowDemoWindow = false;
         bool IMGUIDoShowInfoWindow = true;
+
+        bool IMGUIDoShowLightSystemWindow = false;
+        bool IMGUIDoShowShaderManagerWindow = false;
 
         bool mDoPhysics = false;
         double lastFrameTime = glfwGetTime();
@@ -229,14 +200,17 @@ namespace lp
 
             mPlayer.update(deltaTime);
             mRenndd.updatePlayer(mPlayer);
-            
 
+            mLightSystem->update();
+            
             {
                 ImGui::BeginMainMenuBar();
                 if(ImGui::BeginMenu("Options"))
                 {
                     ImGui::Checkbox("Open Debug ImGui Window", &IMGUIDoShowDemoWindow);
                     ImGui::Checkbox("Open Info Window", &IMGUIDoShowInfoWindow);
+                    ImGui::Checkbox("Open Light System Window", &IMGUIDoShowLightSystemWindow);
+                    ImGui::Checkbox("Open Shader Manager Window", &IMGUIDoShowShaderManagerWindow);
                     ImGui::Separator();
                     ImGui::Checkbox("Do Physics", &mDoPhysics);
                     // if(ImGui::Button("Reset"))
@@ -307,10 +281,70 @@ namespace lp
                         const glm::vec2 playerOrient = mPlayer.getOrientation();
                         ImGui::Text("Pos: x:%.2f ,y:%.2f ,z:%.2f", playerPos.x, playerPos.y, playerPos.z);
                         ImGui::Text("Orientation: Yaw: %.2f Pitch: %.2f", playerOrient.x, playerOrient.y);
-                        ImGui::End();
+                        
                     }
+                    ImGui::End();
                 }
                 
+                if(IMGUIDoShowShaderManagerWindow) int_imgui_shader_window(&IMGUIDoShowShaderManagerWindow);
+
+                if(IMGUIDoShowLightSystemWindow)
+                {
+                    if(ImGui::Begin("Light System Window", &IMGUIDoShowLightSystemWindow))
+                    {
+                        int id = 0;
+                        ImGui::Text("mAliveLightList.size() = %u", (unsigned int)mLightSystem->mAliveLightList.size());
+                        ImGui::Text("mLightBufferEntityMap.size() = %u", (unsigned int)mLightSystem->mLightBufferEntityMap.size());
+                        ImGui::Text("mLightCount = %u", (unsigned int)mLightSystem->mLightCount);
+                        ImGui::Text("mMaxLightCount = %u", (unsigned int)mLightSystem->mMaxLightCount);
+                        if(ImGui::Button("Create New Light"))
+                        {
+                            lp::ecs::Entity ent = g_engine.getECS().createEntity();
+                            lp::ComponentLight light;
+                            light.setRadius((rand() %20'000) /1000.0f);
+                            light.setColor({(rand() %20'000) /1000.0f, (rand() %20'000) /1000.0f, (rand() %20'000) /1000.0f});
+                            g_engine.getECS().addComponent<lp::ComponentLight>(ent, light);
+                        }
+                        if(ImGui::Button("Kill top light"))
+                        {
+                            if(this->mLightSystem->mAliveLightList.size() > 1)
+                            {
+                                const lp::ecs::Entity ent = this->mLightSystem->mLightBufferEntityMap[this->mLightSystem->mAliveLightList[0]];
+                                g_engine.getECS().destroyEntity(ent);
+                            }
+                        }
+                        if(ImGui::TreeNode("mLightSystem->mAliveLightList"))
+                        {
+                            for(const auto iref: this->mLightSystem->mAliveLightList)
+                            {
+                                if(ImGui::TreeNode((std::string("light - ") + std::to_string(id++)).c_str()))
+                                {
+                                    const lp::ecs::Entity lightEnt = this->mLightSystem->mLightBufferEntityMap[iref];
+                                    if(g_engine.getECS().hasComponent<lp::ComponentLight>(lightEnt))
+                                    {
+                                        const auto& light = g_engine.getECS().getComponent<lp::ComponentLight>(lightEnt);
+                                    const glm::vec3 l_col = light.getColor();
+                                    const float l_radius = light.getRadius();
+                                    const glm::vec3 l_pos = light.getPosition();
+                                    ImGui::TextColored(ImVec4(l_col.x, l_col.y, l_col.z, 0), "Color of light");
+                                    ImGui::Text("radius: %f", l_radius);
+                                    ImGui::Text("position: x = %f, y = %f, z = %f", l_pos.x, l_pos.y, l_pos.z);
+                                    }else
+                                    {
+                                        ImGui::Text("Not a light");
+                                    }
+                                    
+                                    ImGui::TreePop();
+                                }
+                            }
+                            ImGui::TreePop();
+                        }
+                        
+                        
+                    }
+                    ImGui::End();
+                }
+
                 if(ImGui::Begin("phyy"))
                 {
                     static glm::vec3 vIctooor;
@@ -321,9 +355,8 @@ namespace lp
                         //fallRigidBody->applyCentralPushImpulse({vIctooor.x, vIctooor.y, vIctooor.z});
                         fallRigidBody->activate();
                     }
-                    ImGui::End();
                 }
-
+                ImGui::End();
                  /*
             if(ImGui::Begin("Sound"))
             {
@@ -421,12 +454,9 @@ namespace lp
             dtttta.mCamView = mPlayer.getViewMatrix();
             if(bulletDebugRenderer.getBuffer())
             {
-                dtttta.VAO = VAO_temp;
                 dtttta.drawCount = bulletDebugRenderer.getDrawCount();
                 dtttta.VBO = bulletDebugRenderer.getBuffer();
                 //std::cout << "VAO: " << VAO_temp << "\n";
-                 if(mDoPhysics)
-                glVertexArrayVertexBuffer(VAO_temp, 0, bulletDebugRenderer.getBuffer(), 0, 6 * sizeof(float));
                 //std::cout << "VBO: " << bulletDebugRenderer.getBuffer() << "\n";
                 //std::cout << "drawCount: " << bulletDebugRenderer.getDrawCount() << "\n";
             }
@@ -447,5 +477,91 @@ namespace lp
         g_engine.destroy();
         mWindow.destroy();
         throw "exit exception thrown to stop infinite stall!"; //nothing to see here, move along ...
+    }
+}
+
+namespace
+{
+    void int_imgui_shader_window(bool* windowOpened)
+    {
+        if(ImGui::Begin("Shader window", windowOpened))
+        {
+            auto& shaderMan = lp::g_engine.getResurceManager().getShaderManager();
+            if(ImGui::Button("Reload all shaders"))
+            {
+                shaderMan.reloadAllShaders();
+            }
+            ImGui::SetItemTooltip("Relads all of the shaders. May take a while!");
+            if(ImGui::TreeNode("Regular shaders"))
+            {
+                auto lamShade = [&shaderMan](lp::gl::ShaderType st, const char* tooltip)
+                {
+                    ImGui::Text("%s: %u", lp::gl::getName(st).data(), shaderMan.getShaderID(st));
+                    ImGui::SetItemTooltip(tooltip);
+                    ImGui::SameLine();
+                    std::string name = "Reload ##" + std::to_string(static_cast<unsigned int>(st) + 1);
+                    if(ImGui::Button(name.c_str()))
+                    {
+                        shaderMan.reloadShader(st);
+                    }
+                };
+                lamShade(lp::gl::ShaderType::DebugLine, "Shader used for debug bullet physics drawing");
+                lamShade(lp::gl::ShaderType::ModelTextured, "Shader right now used for drawing a textured model");
+                lamShade(lp::gl::ShaderType::SimpleColor, "Shader that draws everything with a simple colour");
+                ImGui::TreePop();
+            }
+            if(ImGui::TreeNode("Compute shaders"))
+            {
+                ImGui::Text("There are no compute shaders right now.");
+                //lp::gl::ShaderTypeCompute;
+                ImGui::TreePop();
+            }
+            
+        }
+        ImGui::End();
+    }
+
+    void opengl_message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, [[maybe_unused]]  GLsizei length, GLchar const* message, [[maybe_unused]] void const* user_param)
+    {
+        auto const src_str = [source]() {
+            switch (source)
+            {
+            case GL_DEBUG_SOURCE_API: return "API";
+            case GL_DEBUG_SOURCE_WINDOW_SYSTEM: return "WINDOW SYSTEM";
+            case GL_DEBUG_SOURCE_SHADER_COMPILER: return "SHADER COMPILER";
+            case GL_DEBUG_SOURCE_THIRD_PARTY: return "THIRD PARTY";
+            case GL_DEBUG_SOURCE_APPLICATION: return "APPLICATION";
+            case GL_DEBUG_SOURCE_OTHER: return "OTHER";
+            default: return "BAD SOURCE";
+            }
+            }();
+
+        auto const type_str = [type]() {
+            switch (type)
+            {
+            case GL_DEBUG_TYPE_ERROR: return "ERROR";
+            case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return "DEPRECATED_BEHAVIOR";
+            case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: return "UNDEFINED_BEHAVIOR";
+            case GL_DEBUG_TYPE_PORTABILITY: return "PORTABILITY";
+            case GL_DEBUG_TYPE_PERFORMANCE: return "PERFORMANCE";
+            case GL_DEBUG_TYPE_MARKER: return "MARKER";
+            case GL_DEBUG_TYPE_OTHER: return "OTHER";
+            default: return "BAD ERROR TYPE";
+            }
+            }();
+
+        auto const severity_str = [severity]() {
+            switch (severity)
+            {
+            case GL_DEBUG_SEVERITY_NOTIFICATION: return "NOTIFICATION";
+            case GL_DEBUG_SEVERITY_LOW: return "LOW";
+            case GL_DEBUG_SEVERITY_MEDIUM: return "MEDIUM";
+            case GL_DEBUG_SEVERITY_HIGH: return "HIGH";
+            default: return "BAD SEVERITY";
+            }
+            }();
+
+        std::cout << src_str << ", " << type_str << ", " << severity_str << ", " << id << ": " << message << "\n";
+
     }
 }

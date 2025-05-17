@@ -8,6 +8,7 @@
 
 namespace lp
 {
+    /// @brief System that loads lights from the ECS into an OpenGL buffer
     class LightSystem: public lp::ecs::System
     {
         public:
@@ -29,9 +30,9 @@ namespace lp
         // Currently, the buffer will grow into infinity
         // Add capacity to 
 
-        private:
         /// @brief SSBO of all lights in scene
         GLuint mShaderStorageBufferLights = 0;
+        public:
         /// @brief count of current amount of storage in buffer
         GLuint mLightCount = 0;
         /// @brief size of mShaderStorageBufferLights. 8 is default (set when constructed)
@@ -56,6 +57,7 @@ namespace lp
         /// Squashed version of mLightBufferEntityMap, basically
         std::vector<GLuint> mAliveLightList;
 
+        private:
         /// @brief SSB of alive lights in scene
         ///
         /// Stores indecies for the actual light buffer for those live lights

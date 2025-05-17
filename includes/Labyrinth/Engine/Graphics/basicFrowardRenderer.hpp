@@ -18,7 +18,6 @@ namespace lp::gl
         glm::mat4 mCamView = {};
         glm::mat4 mCamProjection = {};
         GLuint VBO = 0;
-        GLuint VAO = 0;
         GLuint drawCount = 0;
         const lp::res::LoadedModel* mdl = nullptr;
     };
@@ -52,6 +51,9 @@ namespace lp::gl
 
         /// @brief VAO used for all textured models
         GLuint mVertexArrayModelTextured = 0;
+
+        /// @brief VAO used for bullet debug drawing
+        GLuint mVertexArrayBulletLineDebug = 0;
 
         //GLsync mSyncCamera = {};
         GLuint mUBO_Player = 0;

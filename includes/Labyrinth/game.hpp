@@ -5,6 +5,9 @@
 #include "Labyrinth/player.hpp"
 #include "Labyrinth/window.hpp"
 
+#include "Labyrinth/Engine/Graphics/LightSystem.hpp"
+#include <memory>
+
 namespace lp
 {
     class Game
@@ -25,6 +28,8 @@ namespace lp
         lp::gl::ForwardRenderer mRenndd;
         lp::Player mPlayer;
         lp::Window mWindow;
+
+        std::shared_ptr<lp::LightSystem> mLightSystem;
     };
 }
 
