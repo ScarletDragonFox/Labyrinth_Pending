@@ -3,6 +3,8 @@
 #include <imgui.h>
 #include <glm/glm.hpp>
 
+#include <cstring>
+
 namespace lpt
 {
     RigidBodyContainerSingular::RigidBodyContainerSingular(std::shared_ptr<btDynamicsWorld> vWorld, lpt::BulletShape& vShape)
@@ -16,17 +18,45 @@ namespace lpt
         mBody =  std::make_shared<btRigidBody>(groundRigidBodyCI);
         mBody->setFlags(btCollisionObject::CF_KINEMATIC_OBJECT);
         vWorld->addRigidBody(mBody.get());
+
+        {
+            const char* nname =this->getNameBullet();
+            const std::size_t len = strlen(nname);
+            for(std::size_t i = 0; i < 51; i++)
+            {
+                this->mNameBuffer[i] = '\0';
+            }
+            std::strncpy(this->mNameBuffer, nname, len > 51 ? 50: len);
+        }
+
     }
 
-    const char* RigidBodyContainerSingular::getName() const
+    const char* RigidBodyContainerSingular::getNameBullet() const
     {
         if((btCollisionShape*)mShape.getRaw() == nullptr) return "ERROR!";
         return ((btCollisionShape*)mShape.getRaw())->getName();
     }
 
+    const char* RigidBodyContainerSingular::getNameInputted() const
+    {
+        return this->mNameBuffer;
+    }
+    
     void RigidBodyContainerSingular::ui()
     {
-        ImGui::Text("Name: \"%s\"", this->getName());
+        //ImGui::Text("Name: \"%s\"", this->getNameBullet());
+        ImGui::InputText("Name:", this->mNameBuffer, 50);
+        ImGui::SameLine();
+        if(ImGui::Button("Reset Name"))
+        {
+            const char* nname =this->getNameBullet();
+            const std::size_t len = strlen(nname);
+            for(std::size_t i = 0; i < 51; i++)
+            {
+                this->mNameBuffer[i] = '\0';
+            }
+            std::strncpy(this->mNameBuffer, nname, len > 51 ? 50: len);
+        }
             bool updated = false;
             btTransform tranz;
             mBodyMotionState->getWorldTransform(tranz);
@@ -76,6 +106,16 @@ namespace lpt
         mBody->setCollisionShape(static_cast<btCollisionShape*>(vShape.getRaw()));
         mBody->activate();
         mShape = std::move(vShape);
+
+        {
+            const char* nname =this->getNameBullet();
+            const std::size_t len = strlen(nname);
+            for(std::size_t i = 0; i < 51; i++)
+            {
+                this->mNameBuffer[i] = '\0';
+            }
+            std::strncpy(this->mNameBuffer, nname, len > 51 ? 50: len);
+        }
     }
     RigidBodyContainerSingular::~RigidBodyContainerSingular()
     {
@@ -103,7 +143,7 @@ namespace lpt
         std::size_t iref = 0;
         for(auto& i : mObjects)
         {
-            std::string name = i->getName();
+            std::string name = i->getNameInputted();
             name += "###" + std::to_string(iref);
             if(ImGui::TreeNode(name.c_str()))
             {

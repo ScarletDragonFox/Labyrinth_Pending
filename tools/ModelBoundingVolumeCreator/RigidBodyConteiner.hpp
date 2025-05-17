@@ -18,16 +18,20 @@ namespace lpt
         RigidBodyContainerSingular(std::shared_ptr<btDynamicsWorld> vWorld, lpt::BulletShape& vShape);
         RigidBodyContainerSingular(RigidBodyContainerSingular&) = delete;
         RigidBodyContainerSingular(RigidBodyContainerSingular&&) = default;
-        const char* getName() const;
+        const char* getNameInputted() const;
         void ui();
         void changeCollision(lpt::BulletShape& vShape);
         ~RigidBodyContainerSingular();
 
         private:
+
+        const char* getNameBullet() const;
+
         lpt::BulletShape mShape;
         std::shared_ptr<btRigidBody> mBody;
         std::shared_ptr<btDefaultMotionState> mBodyMotionState;
         std::shared_ptr<btDynamicsWorld> mWorld;
+        char mNameBuffer[51] = {};
     };
 
     class RigidBosyContainerCreationClassThing
