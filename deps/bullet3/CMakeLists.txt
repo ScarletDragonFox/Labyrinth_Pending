@@ -55,11 +55,15 @@ set(BULLET3_SOURCE_FILES
     # ./src/Bullet3OpenCL/RigidBody/b3GpuPgsContactSolver.cpp
     # ./src/Bullet3OpenCL/RigidBody/b3GpuRigidBodyPipeline.cpp
     # ./src/Bullet3OpenCL/RigidBody/b3Solver.cpp
-    ./src/Bullet3Serialize/Bullet2FileLoader/b3BulletFile.cpp
-    ./src/Bullet3Serialize/Bullet2FileLoader/b3Chunk.cpp
-    ./src/Bullet3Serialize/Bullet2FileLoader/b3DNA.cpp
-    ./src/Bullet3Serialize/Bullet2FileLoader/b3File.cpp
-    ./src/Bullet3Serialize/Bullet2FileLoader/b3Serializer.cpp
+
+
+    # ./src/Bullet3Serialize/Bullet2FileLoader/b3BulletFile.cpp
+    # ./src/Bullet3Serialize/Bullet2FileLoader/b3Chunk.cpp
+    # ./src/Bullet3Serialize/Bullet2FileLoader/b3DNA.cpp
+    # ./src/Bullet3Serialize/Bullet2FileLoader/b3File.cpp
+    # ./src/Bullet3Serialize/Bullet2FileLoader/b3Serializer.cpp
+
+
     ./src/BulletCollision/BroadphaseCollision/btAxisSweep3.cpp
     ./src/BulletCollision/BroadphaseCollision/btBroadphaseProxy.cpp
     ./src/BulletCollision/BroadphaseCollision/btCollisionAlgorithm.cpp
@@ -237,6 +241,15 @@ set(BULLET3_SOURCE_FILES
     ./src/LinearMath/TaskScheduler/btTaskScheduler.cpp
     ./src/LinearMath/TaskScheduler/btThreadSupportPosix.cpp
     ./src/LinearMath/TaskScheduler/btThreadSupportWin32.cpp
+
+    
+    ./include/bullet/Extras/Serialize/BulletFileLoader/bChunk.cpp
+    ./include/bullet/Extras/Serialize/BulletFileLoader/bDNA.cpp
+    ./include/bullet/Extras/Serialize/BulletFileLoader/bFile.cpp
+    ./include/bullet/Extras/Serialize/BulletFileLoader/btBulletFile.cpp
+    ./include/bullet/Extras/Serialize/BulletWorldImporter/btBulletWorldImporter.cpp
+    ./include/bullet/Extras/Serialize/BulletWorldImporter/btMultiBodyWorldImporter.cpp
+    ./include/bullet/Extras/Serialize/BulletWorldImporter/btWorldImporter.cpp
 )
 
 # in msys: (cd src && find . -name '*.h' -print | tar --create --files-from -) | (cd EXISTING_FOLDER_TO_WITCH_ALL_FILES_WILL_GO && tar xvfp -)
