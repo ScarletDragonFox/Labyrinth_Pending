@@ -172,6 +172,10 @@ namespace lpt
             return tet;
         };
 
+
+        /// @brief assign an existing Collision Shape, replacing the current one (if there was one)
+        void assign(btCollisionShape* collShape);
+
         /// @brief deleted copy constructor
         BulletShape(BulletShape&) = delete;
 

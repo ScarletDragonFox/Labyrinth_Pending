@@ -16,6 +16,7 @@ namespace lpt
     {
         public:
         RigidBodyContainerSingular(std::shared_ptr<btDynamicsWorld> vWorld, lpt::BulletShape& vShape);
+        RigidBodyContainerSingular(std::shared_ptr<btDynamicsWorld> vWorld, btRigidBody* body);
         RigidBodyContainerSingular(RigidBodyContainerSingular&) = delete;
         RigidBodyContainerSingular(RigidBodyContainerSingular&&) = default;
         const char* getNameInputted() const;
@@ -38,6 +39,10 @@ namespace lpt
     {
         public:
         RigidBosyContainerCreationClassThing(std::shared_ptr<btDynamicsWorld> vWorld);
+
+        /// @brief kills all 'child' shapes 
+        void killAllChildren();
+        void addNewChild(btRigidBody* body);
         void drawUI();
         private:
         void drawModalPopup();

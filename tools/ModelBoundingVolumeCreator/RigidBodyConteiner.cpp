@@ -5,13 +5,15 @@
 
 #include <cstring>
 
+#include <iostream>
+
 namespace lpt
 {
     RigidBodyContainerSingular::RigidBodyContainerSingular(std::shared_ptr<btDynamicsWorld> vWorld, lpt::BulletShape& vShape)
     {
         mWorld = vWorld;
         mBodyMotionState = std::make_shared<btDefaultMotionState>();
-        
+
         mShape = std::move(vShape);
 
         btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, mBodyMotionState.get(), (btCollisionShape*)mShape.getRaw(), btVector3(0,0,0));
@@ -29,6 +31,32 @@ namespace lpt
             std::strncpy(this->mNameBuffer, nname, len > 51 ? 50: len);
         }
 
+    }
+
+    RigidBodyContainerSingular::RigidBodyContainerSingular(std::shared_ptr<btDynamicsWorld> vWorld, btRigidBody* body)
+    {
+        mWorld = vWorld;
+        mBodyMotionState = std::make_shared<btDefaultMotionState>();//*body->getMotionState(
+        
+        if(body)
+        {
+            btTransform& transportTransform = body->getWorldTransform();
+            mBodyMotionState->setWorldTransform(transportTransform);
+        } else std::cerr << "ERROR: body\n";
+
+        mBody = std::shared_ptr<btRigidBody>(body);
+        mBody->setFlags(btCollisionObject::CF_KINEMATIC_OBJECT);
+        this->mShape.assign(body->getCollisionShape());
+
+        {
+            const char* nname =this->getNameBullet();
+            const std::size_t len = strlen(nname);
+            for(std::size_t i = 0; i < 51; i++)
+            {
+                this->mNameBuffer[i] = '\0';
+            }
+            std::strncpy(this->mNameBuffer, nname, len > 51 ? 50: len);
+        }
     }
 
     const char* RigidBodyContainerSingular::getNameBullet() const
@@ -128,8 +156,24 @@ namespace lpt
         mWorld = vWorld;
     }
 
+    void RigidBosyContainerCreationClassThing::killAllChildren()
+    {
+        this->mObjects.clear();
+    }
+
+    void RigidBosyContainerCreationClassThing::addNewChild(btRigidBody* body)
+    {
+        this->mObjects.push_back(std::make_unique<RigidBodyContainerSingular>(this->mWorld, body));
+    }
+
     void RigidBosyContainerCreationClassThing::drawUI()
     {
+        if(ImGui::TreeNode("World"))
+        {
+            ImGui::Text("Collision Objects: %d", this->mWorld->getNumCollisionObjects());
+            ImGui::Text("Constraints: %d", this->mWorld->getNumConstraints());
+            ImGui::TreePop();
+        }
         if(ImGui::Button("Create new"))
         {
             mModalLastSelected = lpt::BulletShapeType::SphereShape;

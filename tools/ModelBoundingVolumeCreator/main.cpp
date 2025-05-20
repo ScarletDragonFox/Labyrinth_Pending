@@ -31,6 +31,8 @@ namespace
 
 #include "RigidBodyConteiner.hpp"
 
+#include <bullet/Extras/Serialize/BulletWorldImporter/btBulletWorldImporter.h>
+
 struct RendererForwardPlus_PlayerData
 {
     glm::mat4 mView = {};
@@ -149,15 +151,78 @@ int main()
             ImGui::BeginMainMenuBar();
             if(ImGui::BeginMenu("File"))
             {
-                ImGui::BeginDisabled();
                 if(ImGui::Button("Save"))
                 {
+                    btDefaultSerializer* serializer = new btDefaultSerializer();
+                    serializer->serializeName("TEST_NAME");
+                    const auto& coa = dynamicsWorld->getCollisionObjectArray();
+                    for(int i = 0; i < coa.size(); ++i)
+                    {
+                        std::cout << "Saving a " << coa.at(i)->getCollisionShape()->getName() << "\n";
+                        //coa.at(i)->serializeSingleObject(serializer);
+                    }
+                    //coa.at(0)->setUserIndex(0);
+                    dynamicsWorld->serialize(serializer);
+                    
+                    serializer->serializeName("TEST_NAME -- 2");
+                    FILE* file = fopen("bullet_res.bullet", "wb");
+                    fwrite(serializer->getBufferPointer(),serializer->getCurrentBufferSize(),1, file);
+                    fclose(file);
+                    delete serializer;
                 }
                 ImGui::SetItemTooltip("Save the current project");
                 if(ImGui::Button("Load"))
                 {
+                    RBCCCT.killAllChildren();
+                    
+                    btBulletWorldImporter* fileLoader = new btBulletWorldImporter(dynamicsWorld.get());
+                    // fileLoader->setVerboseMode(15); //prints info about file to stdout
+                    fileLoader->loadFile("bullet_res.bullet");
+                    std::cout << "Loaded " <<  fileLoader->getNumCollisionShapes() << " Collision Shapes\n";
+                    std::cout << "Loaded " <<  fileLoader->getNumRigidBodies() << " Rigid Bodies\n";
+                    for(int i = 0; i < fileLoader->getNumRigidBodies(); ++i)
+                    {
+                        std::cout << "\tThe " << i << "th rigid body is " << fileLoader->getRigidBodyByIndex(i)->getCollisionShape()->getName() <<" \n";
+                        btRigidBody* ptrrr =  dynamic_cast<btRigidBody*>(fileLoader->getRigidBodyByIndex(i));
+                        if(ptrrr == nullptr)
+                        {
+                            std::cout << " dynamic_cast<btRigidBody*> == nullptr!\n";
+                        } else{
+                            RBCCCT.addNewChild(ptrrr);
+                        }
+                        
+                    }
+                    
+                    //It loads
+                    // perfectly! (scale, position & all!!)
+                    // so now we just somehow figure out WHAT we just loaded??
+                    // maybe add a "New" button to delete all previous Shapes
+                    // TODO: User data like the indices/pointer etc... DOES NOT GET SERIALIZED:
+                    // Option 1: somehow put that functionality INTO bullet
+                    // Option 2: don't bother and use the fact that they are serialized in the order they were added
+                    //  - and we CAN serialize singlular objects
+                    //  - we do not have ANY id'ing options in bullet
+                    //  - but: Do we need one?
+                    //  - theoretically, all of this is just to create ONE Compound Shape (upon load? something about children of a compound being duplicated also as separate shapes?)
+                    //  - so no, we do not need to be able to know what object is what
+                    //  - we will, however, have a problem with converting the bullet file into a format understood by this tool
+                    //  - So the project Save/Load will save entire bullet file + json data (id/order -> name+stuff)
+                    //  - And the Export/Import will should use the same data format as the game itself
+                    //  - make a window to change params of resulting file -> game
+                    //  - and do the rendering!!!
+                    // https://github.com/bulletphysics/bullet3/blob/master/examples/Importers/ImportBullet/SerializeSetup.cpp
+                    // https://pybullet.org/Bullet/BulletFull/classbtBulletWorldImporter.html#details
+                    // https://web.archive.org/web/20170708145601/http://bulletphysics.org/mediawiki-1.5.8/index.php/Bullet_binary_serialization#Known_Limitations_or_Bugs
+                    // https://web.archive.org/web/20170607040920/http://bulletphysics.org/mediawiki-1.5.8/index.php/Canonical_Game_Loop
+                    // https://web.archive.org/web/20170707011812/http://www.bulletphysics.org/mediawiki-1.5.8/index.php/Collision_Filtering <- free cam by setting filter to unused value??
+                    // https://web.archive.org/web/20170602122143/http://www.bulletphysics.org/mediawiki-1.5.8/index.php/Collision_Callbacks_and_Triggers <- important!!!
+
+                    //https://web.archive.org/web/20170713085058/http://bulletphysics.org/mediawiki-1.5.8/index.php/Installation <- cmake params for main bullet CMakeLists <- read & think!!!
+                    //https://web.archive.org/web/20170705111641/http://www.bulletphysics.org/mediawiki-1.5.8/index.php/Creating_a_project_from_scratch <- compilation of bullet
                 }
+                
                 ImGui::SetItemTooltip("Load the project from a file");
+                ImGui::BeginDisabled();
                 if(ImGui::Button("Import"))
                 {
                 }
@@ -173,6 +238,32 @@ int main()
             {
                 ImGui::Checkbox("Demo Window", &IMGUI_ShowDemoWindow);
                 ImGui::Checkbox("RigidBody Container ? Window", &IMGUI_ShowRigidBosyContainerWindow);
+                ImGui::EndMenu();
+            }
+            if(ImGui::BeginMenu("Model"))
+            {
+                static char model_text_path[256] = {};
+                ImGui::InputTextWithHint("model path", "File path to the model", model_text_path, 255);
+                if(ImGui::Button("Load model"))
+                {
+                    //load the model in here
+                    // put the model loader into a new file
+                    // make a new shader so we don't load the textures
+                    // like have it be one color, but change lighting on normals + camera dir?
+                    // the point is storing + displaying the model as close to as-is as possible
+                    // at some point in the future make a proper loader ui
+                    // with ALL the settings (assimp + stuff)
+                    // have it be only on this thread
+                    // but maybe put in separate thread in the future
+                    // that said just use the provided model load function for now
+                    // THEN create bullet file saving + loading
+                    //  - figure out the order / how to tell which body is which
+                    //  - so we can load them in the right order
+                    //  - bullet DOES store user data ...
+                    //  - but does that get serialized?
+                    //  - Last resort is make serialization myself
+                }
+                ImGui::SetItemTooltip("Load a new model, unloading the previous one");
                 ImGui::EndMenu();
             }
             ImGui::EndMainMenuBar();
