@@ -93,15 +93,15 @@ int main()
     {
         std::unique_ptr<btDefaultMotionState> groundMotionState = std::make_unique<btDefaultMotionState>();
  
-        btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, groundMotionState.get(), vPhysicsShape, btVector3(0,0,0));
+        btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0.001, groundMotionState.get(), vPhysicsShape, btVector3(0,0,0));
      
         vPhysicsBody =  std::make_unique<btRigidBody>(groundRigidBodyCI);
     }
     
     vPhysicsBody->setCollisionShape(vPhysicsShape); //use this???
-
-    vPhysicsBody->setMassProps(0.0, btVector3(0.0, 0.0, 0.0));
-
+    btMotionState* vvvsefsfd = new  btDefaultMotionState();
+    vPhysicsBody->setMotionState(vvvsefsfd);
+    vPhysicsBody->setCollisionFlags(vPhysicsBody->getCollisionFlags() | btCollisionObject::CF_DISABLE_VISUALIZE_OBJECT); 
     dynamicsWorld->addRigidBody(vPhysicsBody.get());
 
 
@@ -124,6 +124,7 @@ int main()
     glCreateBuffers(1, &UBOplayerDataBuffer);
     glNamedBufferStorage(UBOplayerDataBuffer, sizeof(RendererForwardPlus_PlayerData), nullptr, GL_DYNAMIC_STORAGE_BIT); 
 
+    bool PLAYER_CollisionEnabled = true;
     bool IMGUI_ShowDemoWindow = false;
     bool IMGUI_ShowRigidBosyContainerWindow = false;
     double lastFrameTime = glfwGetTime();
@@ -134,6 +135,14 @@ int main()
         const double deltaTime = glfwGetTime() - lastFrameTime;
         lastFrameTime = glfwGetTime();
         mPlayer.update(deltaTime);
+        {
+            vPhysicsBody->clearForces();
+            const glm::vec3 playerPos = mPlayer.getPosition();
+            vPhysicsBody->getWorldTransform().setOrigin(btVector3(playerPos.x, playerPos.y, playerPos.z));
+            vPhysicsBody->setLinearVelocity(btVector3(0, 0, 0));
+            vPhysicsBody->setTurnVelocity(btVector3(0, 0, 0));
+            vPhysicsBody->activate();
+        }
         {
             playerData.mPosition = mPlayer.getPosition();
             playerData.mView = mPlayer.getViewMatrix();
@@ -155,6 +164,9 @@ int main()
                 {
                     btDefaultSerializer* serializer = new btDefaultSerializer();
                     serializer->serializeName("TEST_NAME");
+
+                    if(PLAYER_CollisionEnabled) dynamicsWorld->removeCollisionObject(vPhysicsBody.get());
+
                     const auto& coa = dynamicsWorld->getCollisionObjectArray();
                     for(int i = 0; i < coa.size(); ++i)
                     {
@@ -169,6 +181,8 @@ int main()
                     fwrite(serializer->getBufferPointer(),serializer->getCurrentBufferSize(),1, file);
                     fclose(file);
                     delete serializer;
+
+                    if(PLAYER_CollisionEnabled) dynamicsWorld->addRigidBody(vPhysicsBody.get());
                 }
                 ImGui::SetItemTooltip("Save the current project");
                 if(ImGui::Button("Load"))
@@ -184,6 +198,7 @@ int main()
                     {
                         std::cout << "\tThe " << i << "th rigid body is " << fileLoader->getRigidBodyByIndex(i)->getCollisionShape()->getName() <<" \n";
                         btRigidBody* ptrrr =  dynamic_cast<btRigidBody*>(fileLoader->getRigidBodyByIndex(i));
+                        
                         if(ptrrr == nullptr)
                         {
                             std::cout << " dynamic_cast<btRigidBody*> == nullptr!\n";
@@ -266,6 +281,35 @@ int main()
                 ImGui::SetItemTooltip("Load a new model, unloading the previous one");
                 ImGui::EndMenu();
             }
+            if(ImGui::BeginMenu("Camera"))
+            {
+                float speed = mPlayer.getSpeedRef();
+                if(ImGui::SliderFloat("Speed", &speed, 0.001, 100.0))
+                {
+                    mPlayer.getSpeedRef() = speed;
+                }
+                ImGui::SetItemTooltip("The players' camera speed");
+
+                int flag = vPhysicsBody->getCollisionFlags();
+                if(ImGui::CheckboxFlags("Stop visualizing the Player Collider", &flag, btCollisionObject::CF_DISABLE_VISUALIZE_OBJECT))
+                {
+                    vPhysicsBody->setCollisionFlags(flag);
+                }
+                ImGui::SetItemTooltip("Stops the players' camera btCollisionShape from being visible in the Debug Drawer");
+
+                if(ImGui::Checkbox("Enable collision", &PLAYER_CollisionEnabled))
+                {
+                    if(PLAYER_CollisionEnabled)
+                    {
+                        dynamicsWorld->addRigidBody(vPhysicsBody.get());
+                    } else
+                    {
+                        dynamicsWorld->removeRigidBody(vPhysicsBody.get());
+                    }
+                }
+                ImGui::SetItemTooltip("Enable collision for the players' camera");
+                ImGui::EndMenu();
+            }
             ImGui::EndMainMenuBar();
         }
         
@@ -334,6 +378,11 @@ int main()
 
         dynamicsWorld->debugDrawWorld();
         dynamicsWorld->stepSimulation(deltaTime);
+
+        {
+            const btVector3 vec = vPhysicsBody->getWorldTransform().getOrigin();
+            mPlayer.setPosition({vec.getX(), vec.getY(), vec.getZ()});
+        }
 
         glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); //set clipping plane to [0,1], instead of the default [-1,1] 
         glDepthFunc(GL_GREATER); //these 3 reverse the depth buffer
