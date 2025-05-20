@@ -36,6 +36,8 @@ namespace lpt
     concept ConceptbtCollisionShapeDerived = std::is_base_of<btCollisionShape, T>::value;
 
     /// @brief enum of all btCollisionShape-derived classes that we support for @ref BulletShape
+    ///
+    /// @note look at BroadphaseNativeTypes from BulletCollision\BroadphaseCollision\btBroadphaseProxy.h
     enum class BulletShapeType
     {
         CompoundShape,
