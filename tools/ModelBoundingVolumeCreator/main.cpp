@@ -22,6 +22,10 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 
 #include "BulletShape.hpp"
 
+#include "Labyrinth/Engine/Resource/resourceManager.hpp"
+
+#include "MeshContainer.hpp"
+
 namespace
 {
     void opengl_message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, [[maybe_unused]]  GLsizei length, GLchar const* message, [[maybe_unused]] void const* user_param);
@@ -124,9 +128,30 @@ int main()
     glCreateBuffers(1, &UBOplayerDataBuffer);
     glNamedBufferStorage(UBOplayerDataBuffer, sizeof(RendererForwardPlus_PlayerData), nullptr, GL_DYNAMIC_STORAGE_BIT); 
 
+    lp::res::ModelID_t graphics_model = lp::res::const_id_model_invalid;
+
+    GLuint mVertexArrayModelTextured = 0;
+
+            glCreateVertexArrays(1, &mVertexArrayModelTextured);
+            glEnableVertexArrayAttrib(mVertexArrayModelTextured, 0);
+            glEnableVertexArrayAttrib(mVertexArrayModelTextured, 1);
+            glEnableVertexArrayAttrib(mVertexArrayModelTextured, 2);
+            glEnableVertexArrayAttrib(mVertexArrayModelTextured, 3);
+            glVertexArrayAttribFormat(mVertexArrayModelTextured, 0, 3, GL_FLOAT, GL_FALSE, 0);
+            glVertexArrayAttribFormat(mVertexArrayModelTextured, 1, 2, GL_FLOAT, GL_FALSE, 3 * sizeof(float));
+            glVertexArrayAttribFormat(mVertexArrayModelTextured, 2, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float));
+            glVertexArrayAttribFormat(mVertexArrayModelTextured, 3, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float));
+            glVertexArrayAttribBinding(mVertexArrayModelTextured, 0, 0);
+            glVertexArrayAttribBinding(mVertexArrayModelTextured, 1, 0);
+            glVertexArrayAttribBinding(mVertexArrayModelTextured, 2, 0);
+            glVertexArrayAttribBinding(mVertexArrayModelTextured, 3, 0);
+
+    lpt::MeshContainer meshContl;
+
     bool PLAYER_CollisionEnabled = true;
     bool IMGUI_ShowDemoWindow = false;
     bool IMGUI_ShowRigidBosyContainerWindow = false;
+    bool IMGUI_ShowMeshContainerWindow = true;
     double lastFrameTime = glfwGetTime();
     while(!window.shouldClose())
     {
@@ -135,6 +160,9 @@ int main()
         const double deltaTime = glfwGetTime() - lastFrameTime;
         lastFrameTime = glfwGetTime();
         mPlayer.update(deltaTime);
+
+        lp::g_engine.getResurceManager().getModelLoaderRef().update(1.0/60.0);
+
         {
             vPhysicsBody->clearForces();
             const glm::vec3 playerPos = mPlayer.getPosition();
@@ -253,6 +281,7 @@ int main()
             {
                 ImGui::Checkbox("Demo Window", &IMGUI_ShowDemoWindow);
                 ImGui::Checkbox("RigidBody Container ? Window", &IMGUI_ShowRigidBosyContainerWindow);
+                ImGui::Checkbox("Mesh Container Window", &IMGUI_ShowMeshContainerWindow);
                 ImGui::EndMenu();
             }
             if(ImGui::BeginMenu("Model"))
@@ -261,6 +290,7 @@ int main()
                 ImGui::InputTextWithHint("model path", "File path to the model", model_text_path, 255);
                 if(ImGui::Button("Load model"))
                 {
+                    graphics_model = lp::g_engine.getResurceManager().getModel(model_text_path);
                     //load the model in here
                     // put the model loader into a new file
                     // make a new shader so we don't load the textures
@@ -349,7 +379,7 @@ int main()
             }
             ImGui::End();
         }
-        
+        if(IMGUI_ShowMeshContainerWindow) meshContl.ui(&IMGUI_ShowMeshContainerWindow);
 
         // @see https://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-a-physics-library/
         //if imgui doesn't want the mouse AND left mouse button was pressed
@@ -388,6 +418,15 @@ int main()
         glDepthFunc(GL_GREATER); //these 3 reverse the depth buffer
         glClearDepth(0); //clear depth to 0
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f); //sets the clear colour to black (red)
+        
+        //https://eliasdaler.wordpress.com/2016/01/07/using-lua-with-c-in-practice-part4/
+        //https://github.com/NoahStolk/simple-level-editor
+        //https://noelberry.ca/posts/making_games_in_2025/
+        //https://developer.valvesoftware.com/wiki/Valve_Hammer_Editor#Extensions
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK); //cull back faces
+        
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, UBOplayerDataBuffer);
@@ -404,7 +443,35 @@ int main()
             glDrawArrays(GL_LINES, 0, bulletDebugRenderer.getDrawCount());
             glBindVertexArray(0);
         }
-       
+
+        if(graphics_model != lp::res::const_id_model_invalid)
+        {
+            auto* modelLoaded = lp::g_engine.getResurceManager().getLoadedModel(graphics_model);
+            if(modelLoaded != nullptr)
+            {
+                lp::gl::RegularShader shader;
+                shader.LoadShader(lp::gl::ShaderType::ModelTextured);
+                shader.Use();
+                shader.SetUniform(3, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f)));
+
+                lp::res::LoadedModel::MaterialID_t lastMaterial = 4'000'000'000u; //hopefully we will never a model with this many materials
+
+                glBindVertexArray(mVertexArrayModelTextured);
+                for(const auto &i : modelLoaded->mMeshes)
+                {
+                    if(lastMaterial != i.mMaterialID)
+                    {
+                        modelLoaded->mMaterials[i.mMaterialID].mColor.Bind(0);
+                    }
+                    //std::cout << "VAO: " << mVertexArrayModelTextured << ", VBO: " << i.mVBO << ", EBO: " << i.mEBO << ", DrawCount: " << i.mDrawCount << "\n";
+                    glVertexArrayVertexBuffer(mVertexArrayModelTextured, 0, i.mVBO, 0, sizeof(lp::res::ModelLoader::LoadingModel::Vertex));
+                    glVertexArrayElementBuffer(mVertexArrayModelTextured, i.mEBO);
+                    glDrawElements(GL_TRIANGLES, i.mDrawCount, GL_UNSIGNED_INT, nullptr);
+                }
+                glBindVertexArray(0);
+                lp::gl::Texture::Unbind(0); //unbind color texture
+            }
+        }
         window.swapBuffers();
     }
 
