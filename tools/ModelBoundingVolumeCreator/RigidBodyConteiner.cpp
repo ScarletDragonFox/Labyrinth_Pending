@@ -101,6 +101,9 @@ namespace lpt
                 const btVector3 shIN = shapePtr->getLocalScaling();
                 glm::vec3 scale = {shIN.getX(), shIN.getY(), shIN.getZ()};
                 if(ImGui::SliderFloat3("scale", &scale.x, 0.01, 10.0)){
+                    scale.x = scale.x == 0.0 ? 0.0001f : scale.x;
+                    scale.y = scale.y == 0.0 ? 0.0001f : scale.y;
+                    scale.z = scale.z == 0.0 ? 0.0001f : scale.z;
                     shapePtr->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
                 }
             }
