@@ -1,8 +1,12 @@
 #ifndef LABYRINTH_PENDING_ENGINE_GRAPHICS_TEXTURES_HPP
 #define LABYRINTH_PENDING_ENGINE_GRAPHICS_TEXTURES_HPP
 
+#include "Labyrinth/Helpers/compilerErrors.hpp"
+
+LP_PRAGMA_DISABLE_ALL_WARNINGS_PUSH();
 #include <glad/gl.h>
 #include <glm/glm.hpp>
+LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 
 namespace lp::gl
 {

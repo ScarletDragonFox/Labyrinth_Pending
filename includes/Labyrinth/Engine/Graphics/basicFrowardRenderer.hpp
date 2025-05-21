@@ -1,7 +1,12 @@
 #ifndef LABYRINTH_PENDING_ENGINE_GRAPHICS_BASICFORWARDRENDERER_HPP
 #define LABYRINTH_PENDING_ENGINE_GRAPHICS_BASICFORWARDRENDERER_HPP
 #include "framebuffer.hpp"
+
+#include "Labyrinth/Helpers/compilerErrors.hpp"
+LP_PRAGMA_DISABLE_ALL_WARNINGS_PUSH();
 #include <glm/glm.hpp>
+LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
+
 #include <glad/gl.h>
 
 #include "Labyrinth/Engine/Resource/loadedModel.hpp"

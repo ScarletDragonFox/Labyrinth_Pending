@@ -4,7 +4,10 @@
 #include "Labyrinth/Engine/Graphics/types.hpp"
 
 #include <glad/gl.h>
+#include "Labyrinth/Helpers/compilerErrors.hpp"
+LP_PRAGMA_DISABLE_ALL_WARNINGS_PUSH();
 #include <glm/glm.hpp>
+LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 
 namespace lp::gl
 {
