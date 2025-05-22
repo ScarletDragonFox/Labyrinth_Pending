@@ -11,8 +11,8 @@ set(CDF_SOURCES #list of all source files in the src/ directory
 
     Engine/Resource/resourceManager.cpp
     Engine/Resource/shaderManager.cpp
-
     Engine/Resource/modelLoader.cpp
+    Engine/Resource/modelLifetimeSystem.cpp
 
     Engine/Graphics/textures.cpp
     Engine/Graphics/regularShader.cpp

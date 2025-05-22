@@ -17,7 +17,9 @@
 
 #include "Labyrinth/Engine/Graphics/textures.hpp"
 
-#include "Labyrinth/Engine/Resource/loadedModel.hpp"
+#include "Labyrinth/Engine/Resource/loadedModel.hpp" //defines lp::res::Model_t
+
+#include "Labyrinth/Engine/Resource/modelLifetimeSystem.hpp"
 
 /// @brief forward declaration of aiMesh
 struct aiMesh;
@@ -34,14 +36,6 @@ namespace lp::res
         // glm::vec3 mBitangent = {};
     };
 
-    /// @brief id type used for models
-    using ModelID_t = std::uint32_t;
-
-    /// @brief invalid ModelID_t
-    constexpr ModelID_t const_id_model_invalid = 0;
-
-    //TODO: strings need to be hashed every time
-    // use a typdef'd int for ids
     //TODO: find way to delete stray threads of std::async on destructor
 
     /// @brief Model loader.
@@ -179,6 +173,9 @@ namespace lp::res
 
         /// @brief id of last loaded model
         lp::res::ModelID_t mLastModelID = lp::res::const_id_model_invalid;
+
+        /// @brief pointer loaded by g_engine.getECS()
+        std::shared_ptr<lp::res::SystemModelLifetime> mSystemModelLifetime;
     };
 }
 

@@ -15,6 +15,9 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_PUSH()
 
 LP_PRAGMA_DISABLE_ALL_WARNINGS_POP()
 
+#include "Labyrinth/engine.hpp"
+#include "Labyrinth/Engine/ECS/coreECS.hpp"
+
 namespace
 {
     /// @brief internal function to load, process & load the node hierarchy + its meshes
@@ -33,6 +36,10 @@ namespace lp::res
 {
     void ModelLoader::initialize()
     {
+        auto& ecs = lp::g_engine.getECS();
+        ecs.registerComponent<lp::ecs::ComponentModel>(); //TODO: put AT LEAST this in main
+        const lp::ecs::Signature sysSign = ecs.getComponentSignature<lp::ecs::ComponentModel>();
+        mSystemModelLifetime = ecs.registerSystem<lp::res::SystemModelLifetime>(sysSign); //TODO: this should be in main too, but we don't have a 'getSystem() function'
         //TODO: below is an example of logging
         // - multithreading????
         //https://github.com/assimp/assimp/blob/master/samples/SimpleTexturedOpenGL/SimpleTexturedOpenGL/src/model_loading.cpp
@@ -55,6 +62,7 @@ namespace lp::res
                 LambdaReturnStructure retStru = it->get(); 
                 mModels[retStru.id] = retStru.mPtr;
                 it = mLoaders.erase(it);
+                mSystemModelLifetime->modelLoaded(retStru.id, retStru.mPtr); //update/notify ComponentModels that have this id that their model has loaded 
             } else {
                 ++it;
             }
@@ -111,11 +119,11 @@ namespace lp::res
         {
             return true;
         }
+        mSystemModelLifetime->modelUnloaded(cv_id); //update/notify ComponentModels that have this id that their model has been unloaded (which we should avoid doing. EVER)
         mModels.erase(cv_id);
         this->mModelNames.erase(cv_id);
         return false;
     }
-
 
     std::shared_ptr<LoadedModel> ModelLoader::getModelRef(const ModelID_t cv_id)
     {

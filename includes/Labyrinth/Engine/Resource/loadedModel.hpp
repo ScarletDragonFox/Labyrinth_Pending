@@ -7,6 +7,12 @@
 
 namespace lp::res
 {
+    /// @brief id type used for models
+    using ModelID_t = std::uint32_t;
+
+    /// @brief invalid ModelID_t
+    constexpr ModelID_t const_id_model_invalid = 0;
+
     /// @brief represents a loaded model
     struct LoadedModel
     {
