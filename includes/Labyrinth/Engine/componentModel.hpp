@@ -1,12 +1,12 @@
-#ifndef LABYRINTH_PENDING_ENGINE_ECS_COMPONENTMODEL_HPP
-#define LABYRINTH_PENDING_ENGINE_ECS_COMPONENTMODEL_HPP
+#ifndef LABYRINTH_PENDING_ENGINE_COMPONENTMODEL_HPP
+#define LABYRINTH_PENDING_ENGINE_COMPONENTMODEL_HPP
 #include <cstdint>
 #include <glm/vec3.hpp>
 #include <memory>
 
 #include "Labyrinth/Engine/Resource/loadedModel.hpp"
 
-namespace lp::ecs
+namespace lp
 {
     /// @brief Component that stores a model.
     struct ComponentModel
@@ -24,4 +24,4 @@ namespace lp::ecs
 
 }
 
-#endif //LABYRINTH_PENDING_ENGINE_ECS_COMPONENTMODEL_HPP
+#endif //LABYRINTH_PENDING_ENGINE_COMPONENTMODEL_HPP

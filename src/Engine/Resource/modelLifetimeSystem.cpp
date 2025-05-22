@@ -11,7 +11,7 @@ namespace lp::res
         
         for(const auto& mdl:this->mEntities)
         {
-            auto& comp = ecs.getComponent<lp::ecs::ComponentModel>(mdl);
+            auto& comp = ecs.getComponent<lp::ComponentModel>(mdl);
             if(comp.mID == cv_id)
             {
                 comp.mModel = v_ptr;
@@ -25,7 +25,7 @@ namespace lp::res
         auto& ecs = lp::g_engine.getECS();
         for(const auto& mdl:this->mEntities)
         {
-            auto& comp = ecs.getComponent<lp::ecs::ComponentModel>(mdl);
+            auto& comp = ecs.getComponent<lp::ComponentModel>(mdl);
             if(comp.mID == cv_id)
             {
                 comp.mModel = nullptr;

@@ -1,7 +1,7 @@
 #ifndef LABYRINTH_PENDING_ENGINE_RESOURCE_MODELLIFETIMESYSTEM_HPP
 #define LABYRINTH_PENDING_ENGINE_RESOURCE_MODELLIFETIMESYSTEM_HPP
 
-#include "Labyrinth/Engine/ECS/componentModel.hpp"
+#include "Labyrinth/Engine/componentModel.hpp"
 #include "Labyrinth/Engine/ECS/baseSystem.hpp"
 
 namespace lp::res

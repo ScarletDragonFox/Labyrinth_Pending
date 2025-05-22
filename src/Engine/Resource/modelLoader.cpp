@@ -37,8 +37,8 @@ namespace lp::res
     void ModelLoader::initialize()
     {
         auto& ecs = lp::g_engine.getECS();
-        ecs.registerComponent<lp::ecs::ComponentModel>(); //TODO: put AT LEAST this in main
-        const lp::ecs::Signature sysSign = ecs.getComponentSignature<lp::ecs::ComponentModel>();
+        ecs.registerComponent<lp::ComponentModel>(); //TODO: put AT LEAST this in main
+        const lp::ecs::Signature sysSign = ecs.getComponentSignature<lp::ComponentModel>();
         mSystemModelLifetime = ecs.registerSystem<lp::res::SystemModelLifetime>(sysSign); //TODO: this should be in main too, but we don't have a 'getSystem() function'
         //TODO: below is an example of logging
         // - multithreading????
