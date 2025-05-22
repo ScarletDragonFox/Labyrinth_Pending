@@ -23,11 +23,6 @@ namespace
     /// @param output output mesh vector
     void int_processNodeRecursiveFlatten(aiNode* node, const aiScene* scene, std::vector<aiMesh*>& output);
 
-    /// @brief process & convert a aiMesh to LoadingModel::TaskMeshData
-    /// @param mesh assimp aiMesh to convert
-    /// @param output where to put the results
-    void int_processMesh(aiMesh* mesh, lp::res::ModelLoader::LoadingModel::TaskMeshData& v_output);
-
     constexpr inline glm::vec3 int_convert_Assimp(aiVector3f& vec)
     {
         return {vec.x, vec.y, vec.z};
@@ -67,7 +62,7 @@ namespace lp::res
 
         while(true)
         {
-            LoadingModel::TaskTextureData data;
+            ModelLoader::TaskTextureData data;
             {
                 std::scoped_lock<std::mutex> LOK(this->mTasksTextureLoadMutex);
                 if(mTasksTextureLoad.empty()) break;
@@ -85,7 +80,7 @@ namespace lp::res
 
         while(true)
         {
-            LoadingModel::TaskMeshData data;
+            ModelLoader::TaskMeshData data;
             {
                 std::scoped_lock<std::mutex> LOK(this->mTasksMeshLoadMutex);
                 if(mTasksMeshLoad.empty()) break;
@@ -163,7 +158,7 @@ namespace lp::res
             for (unsigned int i = 0; i < scene->mNumMaterials; i++)
             {
                 aiMaterial* material = scene->mMaterials[i];
-                LoadingModel::TaskTextureData data;
+                ModelLoader::TaskTextureData data;
 
                 data.mTex = &(outputModel.mMaterials[i].mColor);
                 data.mLatchPtr = vLatchTextures;
@@ -241,7 +236,7 @@ namespace lp::res
 
             for(std::size_t i = 0; i < assimp_meshes.size(); i++)
             {
-                lp::res::ModelLoader::LoadingModel::TaskMeshData data;
+                lp::res::ModelLoader::TaskMeshData data;
                 data.mLatchPtr = vLatchMeshes;
                 data.mMesh = &(outputModel.mMeshes[i]);
                 //std::cerr << "processing mesh #" << i << " name = \"" <<assimp_meshes[i]->mName.C_Str() << "\"\n";
@@ -277,7 +272,7 @@ namespace lp::res
         mLoaders.push_back(std::async(loader_lambda, cv_name));
     }
 
-    bool ModelLoader::loadTexture(LoadingModel::TaskTextureData& data, const char* path, const std::filesystem::path directory)
+    bool ModelLoader::loadTexture(ModelLoader::TaskTextureData& data, const char* path, const std::filesystem::path directory)
     {
         const std::filesystem::path ppaatthh = directory/path; // append filename to directory
         data.mFile = std::filesystem::directory_entry(ppaatthh);
@@ -317,7 +312,7 @@ namespace lp::res
     }
 
 
-    void ModelLoader::taskMesh(LoadingModel::TaskMeshData& data)
+    void ModelLoader::taskMesh(ModelLoader::TaskMeshData& data)
     {
         GLuint VBO = 0;
         GLuint EBO = 0;
@@ -325,7 +320,7 @@ namespace lp::res
         glCreateBuffers(1, &VBO);
         glCreateBuffers(1, &EBO);
 
-        glNamedBufferStorage(VBO, sizeof(ModelLoader::LoadingModel::Vertex) * data.mVerticies.size(), data.mVerticies.data(), 0);
+        glNamedBufferStorage(VBO, sizeof(VertexFull) * data.mVerticies.size(), data.mVerticies.data(), 0);
         glNamedBufferStorage(EBO, sizeof(unsigned int) * data.mIndicies.size(), data.mIndicies.data(), 0);
 
         data.mMesh->mEBO = EBO;
@@ -333,33 +328,15 @@ namespace lp::res
 
         data.mLatchPtr->count_down();
     }
-    void ModelLoader::taskTexture(LoadingModel::TaskTextureData& data)
+
+    void ModelLoader::taskTexture(ModelLoader::TaskTextureData& data)
     {
         data.mTex->create(data.mTexFormat, data.mTexSize, data.mTextureData, data.mMipmapCount, data.noMipmaps);
         stbi_image_free(data.mTextureData);
         data.mLatchPtr->count_down();
     }
 
-}
-
-namespace
-{
-    void int_processNodeRecursiveFlatten(aiNode* node, const aiScene* scene, std::vector<aiMesh*>& output)
-    {
-        //reserve size in vector for new mesh pointers for output
-        output.reserve(output.size() + node->mNumMeshes);
-
-        for (unsigned int i = 0; i < node->mNumMeshes; i++)
-        {
-            output.push_back(scene->mMeshes[node->mMeshes[i]]);
-        }
-        for (unsigned int i = 0; i < node->mNumChildren; i++)
-        {
-            int_processNodeRecursiveFlatten(node->mChildren[i], scene, output);
-        }
-    }
-
-    void int_processMesh(aiMesh* mesh, lp::res::ModelLoader::LoadingModel::TaskMeshData& v_output)
+    void ModelLoader::int_processMesh(aiMesh* mesh, lp::res::ModelLoader::TaskMeshData& v_output)
     {
         v_output.mVerticies.reserve(mesh->mNumVertices);
         v_output.mIndicies.reserve(std::size_t(mesh->mNumFaces) * 3); //TODO: why is this called verticies??? It works, but ...
@@ -373,7 +350,7 @@ namespace
         for (unsigned int i = 0; i < mesh->mNumVertices; i++)
         {
             
-            lp::res::ModelLoader::LoadingModel::Vertex vertex;
+            lp::res::VertexFull vertex;
             //create function to convert assimp -> glm
             vertex.mPosition = int_convert_Assimp(mesh->mVertices[i]);
             if (mesh->HasNormals())
@@ -409,5 +386,23 @@ namespace
                 v_output.mIndicies.push_back(face.mIndices[2]);
 
             }
+    }
+}
+
+namespace
+{
+    void int_processNodeRecursiveFlatten(aiNode* node, const aiScene* scene, std::vector<aiMesh*>& output)
+    {
+        //reserve size in vector for new mesh pointers for output
+        output.reserve(output.size() + node->mNumMeshes);
+
+        for (unsigned int i = 0; i < node->mNumMeshes; i++)
+        {
+            output.push_back(scene->mMeshes[node->mMeshes[i]]);
+        }
+        for (unsigned int i = 0; i < node->mNumChildren; i++)
+        {
+            int_processNodeRecursiveFlatten(node->mChildren[i], scene, output);
+        }
     }
 }

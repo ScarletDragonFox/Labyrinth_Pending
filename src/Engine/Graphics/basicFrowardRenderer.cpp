@@ -112,7 +112,7 @@ namespace lp::gl
                     cv_data.mdl->mMaterials[i.mMaterialID].mColor.Bind(0);
                 }
                 //std::cout << "VAO: " << mVertexArrayModelTextured << ", VBO: " << i.mVBO << ", EBO: " << i.mEBO << ", DrawCount: " << i.mDrawCount << "\n";
-                glVertexArrayVertexBuffer(mVertexArrayModelTextured, 0, i.mVBO, 0, sizeof(lp::res::ModelLoader::LoadingModel::Vertex));
+                glVertexArrayVertexBuffer(mVertexArrayModelTextured, 0, i.mVBO, 0, sizeof(lp::res::VertexFull));
                 glVertexArrayElementBuffer(mVertexArrayModelTextured, i.mEBO);
                 glDrawElements(GL_TRIANGLES, i.mDrawCount, GL_UNSIGNED_INT, nullptr);
             }
