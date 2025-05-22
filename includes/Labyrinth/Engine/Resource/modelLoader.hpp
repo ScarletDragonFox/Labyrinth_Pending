@@ -34,6 +34,12 @@ namespace lp::res
         // glm::vec3 mBitangent = {};
     };
 
+    /// @brief id type used for models
+    using ModelID_t = std::uint32_t;
+
+    /// @brief invalid ModelID_t
+    constexpr ModelID_t const_id_model_invalid = 0;
+
     //TODO: strings need to be hashed every time
     // use a typdef'd int for ids
     //TODO: find way to delete stray threads of std::async on destructor
@@ -55,18 +61,29 @@ namespace lp::res
         void update(const double cv_maxTime);
 
         /// @brief Return a previously loaded model via const pointer, or nullptr if not loaded
-        /// @param cv_name 'name' ("path") of the model to get
+        /// @param cv_id id of the model to load
         /// @return const pointer if loaded, nullptr if not loaded
-        LoadedModel const* getLoadedModel(const std::string_view cv_name)const;
+        LoadedModel const* getLoadedModel(const ModelID_t cv_id)const;
+
+        /// @brief get a shared_ptr to the model
+        /// @param cv_id id of the model to load
+        /// @return ptr or nullptr if not loaded
+        std::shared_ptr<LoadedModel> getModelRef(const ModelID_t cv_id);
 
         /// @brief schedule to load a model
         /// @param cv_name name/path of the model to load
-        void scheduleLoad(const std::string_view cv_name);
+        /// @return id of the model
+        ModelID_t scheduleLoad(const std::string_view cv_name);
+
+        /// @brief checks if the given id is valid
+        /// @param cv_id id to check
+        /// @return true if the model with that id is loaded, false otherwise
+        bool isValid(const ModelID_t cv_id) const;
 
         /// @brief unloads a model from memory
-        /// @param cv_name name/path of model
+        /// @param cv_name id of the model
         /// @return true if error, false if succeded
-        bool unload(const std::string_view cv_name);
+        bool unload(const ModelID_t cv_id);
 
         private:
 
@@ -110,6 +127,13 @@ namespace lp::res
             std::shared_ptr<std::latch> mLatchPtr;
         };
 
+        /// @brief temp structure soo the future returns both a ptr & an id
+        struct LambdaReturnStructure
+        {
+            std::shared_ptr<lp::res::LoadedModel> mPtr;
+            lp::res::ModelID_t id = lp::res::const_id_model_invalid;
+        };
+
         /// @brief loads a single mesh into OpenGL
         /// @param data input/output data
         void taskMesh(TaskMeshData& data);
@@ -145,10 +169,16 @@ namespace lp::res
         std::mutex mTasksTextureLoadMutex;
 
         /// @brief storage for all loaded models
-        std::unordered_map<std::string, std::unique_ptr<LoadedModel>> mModels;
+        std::unordered_map<ModelID_t, std::shared_ptr<LoadedModel>> mModels;
+
+        /// @brief Map of Model ID -> filename/path
+        std::unordered_map<ModelID_t, std::string> mModelNames;
 
         /// @brief storage for all loading models
-        std::list<std::future<std::unique_ptr<LoadedModel>>> mLoaders;
+        std::list<std::future<LambdaReturnStructure>> mLoaders;
+
+        /// @brief id of last loaded model
+        lp::res::ModelID_t mLastModelID = lp::res::const_id_model_invalid;
     };
 }
 

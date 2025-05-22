@@ -178,7 +178,7 @@ namespace lp
 
         const char* temp_modelNamePath = "C:/Programming/Personal/Solutions/ApplicationTestBuild/AppBuild/Models/SponzaPBR-Intel/Main.1_Sponza/NewSponza_Main_glTF_002.gltf";
 
-        const auto modelRef = g_engine.getResurceManager().getModel(temp_modelNamePath);
+        const auto modelRef = g_engine.getResurceManager().loadModel(temp_modelNamePath);
         
         //https://web.archive.org/web/20130419113144/http://bulletphysics.org/mediawiki-1.5.8/index.php/Hello_World
         //https://guibraga.medium.com/my-favorite-visual-studio-code-extensions-11573442008b

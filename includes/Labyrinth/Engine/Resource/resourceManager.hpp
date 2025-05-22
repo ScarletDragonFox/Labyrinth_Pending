@@ -16,13 +16,6 @@ namespace lp
     {
         /// @brief forward declaration of ShaderManager class
         class ShaderManager;
-
-        /// @brief id type used for models
-        using ModelID_t = std::uint32_t;
-
-        /// @brief invalid ModelID_t
-        constexpr ModelID_t const_id_model_invalid = 0;
-
     };
 
     /// @brief Component that stores 'Models'
@@ -54,17 +47,10 @@ namespace lp
         /// @return reference to the model loader
         lp::res::ModelLoader& getModelLoaderRef() { return mModel; }
 
-        /// @brief get model id from model path
-        ///
-        /// Tries to load the model unless cv_DoNotLoad = true
-        ///
-        /// Always returns a ModelID_t, even if model was invalid or was unloaded!
-        ///
-        /// @see isValidModel()
-        /// @param cv_path path to model
-        /// @param cv_DoNotLoad if true, returns const_id_model_invalid instead of trying to load the model
-        /// @return const_id_model_invalid (if see cv_DoNotLoad), or future/current id of model
-        lp::res::ModelID_t getModel(const std::string_view cv_path, const bool cv_DoNotLoad = false);
+        /// @brief Load a model
+        /// @param cv_path path to the model
+        /// @return id (may be invalid check with isValidModel()!)
+        lp::res::ModelID_t loadModel(const std::string_view cv_path);
 
         /// @brief Return a previously loaded model via const pointer, or nullptr if not loaded
         /// @param cv_id id of the model to get
@@ -82,11 +68,6 @@ namespace lp
         std::unique_ptr<lp::res::ShaderManager> mShader;
         /// @brief model loader & container of loaded/loading models with strings to access
         lp::res::ModelLoader mModel;
-        /// @brief map of ID -> model name (which can be used in the ModelLoader to get the model)
-        std::unordered_map<lp::res::ModelID_t, std::string> mModelIDtoModelMap;
-
-        /// @brief id of last loaded model
-        lp::res::ModelID_t mLastModelID = lp::res::const_id_model_invalid;
     };
 }
 

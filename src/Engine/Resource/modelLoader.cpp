@@ -52,8 +52,8 @@ namespace lp::res
             using namespace std::chrono_literals;
             if((*it).valid() && (*it).wait_for(1ns) == std::future_status::ready)
             {
-                std::unique_ptr<LoadedModel> mdl = it->get();
-                mModels[mdl->mFile.string()] = std::move(mdl);
+                LambdaReturnStructure retStru = it->get(); 
+                mModels[retStru.id] = retStru.mPtr;
                 it = mLoaders.erase(it);
             } else {
                 ++it;
@@ -95,43 +95,69 @@ namespace lp::res
 
     }
 
-    LoadedModel const* ModelLoader::getLoadedModel(const std::string_view cv_name)const
+    LoadedModel const* ModelLoader::getLoadedModel(const ModelID_t cv_id)const
     {
-        const std::string copy = std::string(cv_name);
-        if(mModels.contains(copy)) //unfortunately, we need a copy here :(
+        if(mModels.contains(cv_id))
         {
-            return mModels.at(copy).get();
+            return mModels.at(cv_id).get();
         } else{
             return nullptr;
         }
     }
 
-    bool ModelLoader::unload(const std::string_view cv_name)
+    bool ModelLoader::unload(const ModelID_t cv_id)
     {
-        const std::string copy = std::string(cv_name);
-        if(!mModels.contains(copy))
+        if(!mModels.contains(cv_id))
         {
             return true;
         }
-        mModels.erase(copy);
+        mModels.erase(cv_id);
+        this->mModelNames.erase(cv_id);
         return false;
     }
 
-    void ModelLoader::scheduleLoad(const std::string_view cv_name)
-    {
-        if(mModels.contains(std::string(cv_name))) return; //early return on model already being loaded
 
-        const auto loader_lambda = [this](const std::string_view cv_filename) -> std::unique_ptr<LoadedModel>
+    std::shared_ptr<LoadedModel> ModelLoader::getModelRef(const ModelID_t cv_id)
+    {
+        if(mModels.contains(cv_id))
         {
+            return mModels.at(cv_id);
+        } else{
+            return nullptr;
+        }
+    }
+
+    bool ModelLoader::isValid(const ModelID_t cv_id) const
+    {
+        if(cv_id == lp::res::const_id_model_invalid) return false;
+        if(this->mModels.contains(cv_id)) return true;
+        return false;
+    }
+
+    ModelID_t ModelLoader::scheduleLoad(const std::string_view cv_name)
+    {
+        for(const auto& model: this->mModelNames)
+        {
+            if(model.second == cv_name) return model.first; //early return on model already being loaded
+        }
+
+        ++mLastModelID; //update mLastModelID
+
+        const auto loader_lambda = [this](const std::string_view cv_filename) -> LambdaReturnStructure
+        {
+            LambdaReturnStructure resturnStruct;
+            resturnStruct.id = this->mLastModelID;
+            resturnStruct.mPtr = nullptr;
+
             const std::filesystem::path c_path(cv_filename);
             if(!std::filesystem::is_regular_file(c_path))
             {
-                return nullptr;
+                return resturnStruct;
             }
             const std::string directory = c_path.parent_path().string();
 
 
-            std::unique_ptr<LoadedModel> resultModelActualStorage = std::make_unique<LoadedModel>();
+            std::shared_ptr<LoadedModel> resultModelActualStorage = std::make_shared<LoadedModel>();
 
             LoadedModel& outputModel = *resultModelActualStorage;
             outputModel.mFile = c_path;
@@ -145,7 +171,7 @@ namespace lp::res
             if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
             {
                 std::cerr << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
-                return nullptr;
+                return resturnStruct;
             }
 
             std::shared_ptr<std::latch> vLatchTextures = std::make_shared<std::latch>(static_cast<std::ptrdiff_t>(scene->mNumMaterials));
@@ -266,10 +292,14 @@ namespace lp::res
 
             //std::cerr << "Model \"" << c_path.filename().string() << "\" has finished loading!\n";
 
-            return resultModelActualStorage;
+            resturnStruct.mPtr = resultModelActualStorage;
+
+            return resturnStruct;
         };
 
         mLoaders.push_back(std::async(loader_lambda, cv_name));
+
+        return mLastModelID; //return mLastModelID - now containing this model's id
     }
 
     bool ModelLoader::loadTexture(ModelLoader::TaskTextureData& data, const char* path, const std::filesystem::path directory)

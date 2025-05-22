@@ -290,7 +290,7 @@ int main()
                 ImGui::InputTextWithHint("model path", "File path to the model", model_text_path, 255);
                 if(ImGui::Button("Load model"))
                 {
-                    graphics_model = lp::g_engine.getResurceManager().getModel(model_text_path);
+                    graphics_model = lp::g_engine.getResurceManager().loadModel(model_text_path);
                     //load the model in here
                     // put the model loader into a new file
                     // make a new shader so we don't load the textures
