@@ -23,6 +23,7 @@ set(CDF_SOURCES #list of all source files in the src/ directory
     Engine/Graphics/LightSystem.cpp
 
     Engine/ComponentPosition.cpp
+    Engine/ComponentPhysics.cpp
 
     game.cpp
     engine.cpp
