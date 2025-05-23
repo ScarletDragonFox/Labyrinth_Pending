@@ -141,6 +141,15 @@ namespace lp::ecs
             return mSystem.registerSystem<T>(cv_systemSignature); //automatic signature!!!!!
         }
 
+        /// @brief get an existing system
+        /// @tparam T class type derived from System
+        /// @return shared pointer to system OR nullptr+assert if not found
+        template<typename T>
+        inline std::shared_ptr<T> getSystem()
+        {
+            return mSystem.getSystem<T>();
+        }
+
         /// @brief get the Signature that stores all Components that will send out an Event upon their creation/destruction
         /// @return Signature
         inline Signature getComponentEventListenablesSignature() const { return mEventListenableSign; }

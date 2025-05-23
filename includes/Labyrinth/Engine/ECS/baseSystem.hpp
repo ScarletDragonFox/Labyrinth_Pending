@@ -13,6 +13,11 @@ namespace lp::ecs
     /// alongside a dirty flag for when the Entities changed (added, removed, doesn't trigger for Component changes)
     class System
     {
+        public:
+        
+        /// @brief virtual destructor
+        virtual ~System() = default;
+
         protected:
         /// @brief set of all Entities for this System
         ///

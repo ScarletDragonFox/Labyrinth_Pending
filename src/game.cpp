@@ -23,6 +23,7 @@
 
 
 #include "Labyrinth/Engine/ComponentLight.hpp"
+#include "Labyrinth/Engine/ComponentPosition.hpp"
 
 #include "Labyrinth/Engine/Resource/resourceManager.hpp"
 #include "Labyrinth/Engine/Resource/shaderManager.hpp"
@@ -78,7 +79,7 @@ namespace lp
         auto& ecsr = g_engine.getECS();
 
         ecsr.registerComponent<lp::ComponentLight>();
-
+        ecsr.registerComponent<lp::ComponentPosition>();
         mLightSystem = ecsr.registerSystem<lp::LightSystem>(ecsr.getComponentSignature<lp::ComponentLight>());
         mLightSystem->update();
         for(int i = 0; i < 10; i++)

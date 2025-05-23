@@ -38,6 +38,23 @@ namespace lp::ecs
             return system;
         }   
 
+        /// @brief get an existing system
+        /// @tparam T class type derived from System
+        /// @return shared pointer to system OR nullptr+assert if not found
+        template<typename T>
+        inline std::shared_ptr<T> getSystem()
+        {
+            const char* systemName = typeid(T).name();
+            auto sys = mSystems.find(systemName);
+            if(sys == mSystems.end())
+            {
+                assert(mSystems.find(systemName) != mSystems.end() && "Getting a system that wasn't registered!");
+                return nullptr; //here just in case
+            }
+
+            return std::dynamic_pointer_cast<T>(sys->second);
+        }
+
         /// @brief get the signature of a component
         /// @tparam T type of component
         /// @return signature of the component (or assert)
