@@ -57,6 +57,10 @@ namespace lp::ecs
         /// @warning Can be resource-intesive! uses std::find!
         bool isAliveEntity(const Entity cv_entity)const;
         
+        /// @brief get reference-to-const map of Alive Entity -> its Signature
+        /// @return reference-to-const
+        const std::unordered_map<Entity, Signature>& getDebugEntityMap() const { return mSignatures; }
+
         private:
         Entity mMaxID = 0; ///maximum currently used Entity id
         std::uint32_t mEntitiesCreatedTotal = 0; //number of total created Entities

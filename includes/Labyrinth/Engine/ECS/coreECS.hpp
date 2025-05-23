@@ -150,6 +150,11 @@ namespace lp::ecs
             return mSystem.getSystem<T>();
         }
 
+
+        /// @brief get reference-to-const map of Alive Entity -> its Signature
+        /// @return reference-to-const
+        const std::unordered_map<Entity, Signature>& getDebugEntityMap() const { return mEntity.getDebugEntityMap(); }
+
         /// @brief get the Signature that stores all Components that will send out an Event upon their creation/destruction
         /// @return Signature
         inline Signature getComponentEventListenablesSignature() const { return mEventListenableSign; }
