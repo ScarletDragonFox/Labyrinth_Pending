@@ -20,6 +20,7 @@ set(CDF_SOURCES #list of all source files in the src/ directory
     Engine/Graphics/framebuffer.cpp
     Engine/Graphics/basicFrowardRenderer.cpp
 
+    Engine/Graphics/graphicsPrepareSystem.cpp
     Engine/Graphics/LightSystem.cpp
 
     Engine/ComponentPosition.cpp

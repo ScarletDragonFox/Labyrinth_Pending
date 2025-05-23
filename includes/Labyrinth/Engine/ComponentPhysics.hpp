@@ -57,11 +57,11 @@ namespace lp
         /// But the address of all Bullet-physics-world-aware classes must stay the same!
         ///
         /// The only other way to solve this is to have some kind of static allocation pool to store that in
-        std::unique_ptr<btRigidBody> mRigidBody;
+        std::shared_ptr<btRigidBody> mRigidBody;
         /// @brief the body's motion state
         ///
         /// Stores its position & orientation
-        std::unique_ptr<btDefaultMotionState> mState;
+        std::shared_ptr<btDefaultMotionState> mState;
 
         //we might need to have these NOT be unique_ptr.
         // those don't like to be moved
