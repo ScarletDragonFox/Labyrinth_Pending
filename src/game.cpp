@@ -35,6 +35,8 @@ namespace
 
 
     void int_imgui_shader_window(bool*windowOpened);
+
+    void int_imgui_all_entities_window(bool* windowOpen);
 }
 
 
@@ -50,6 +52,9 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 #include "Labyrinth/Engine/Resource/resourceManager.hpp"
 
 #include "Labyrinth/Engine/Graphics/bullet3Debug.hpp"
+
+#include "Labyrinth/Engine/Graphics/graphicsPrepareSystem.hpp"
+
 
 namespace lp
 {
@@ -183,6 +188,18 @@ namespace lp
 
         const auto modelRef = g_engine.getResurceManager().loadModel(temp_modelNamePath);
         
+        lp::gl::GraphicsPrepareSystem GlobalPositioningSystem;
+
+        {
+            lp::ecs::Entity EE = g_engine.getECS().createEntity();
+            lp::ComponentPosition CPos;
+            CPos.setPosition({-100, 100, 0});
+            lp::ComponentModel CModl;
+            CModl.mID = modelRef;
+            g_engine.getECS().addComponent(EE, CPos);
+            g_engine.getECS().addComponent(EE, CModl);
+        }
+
         //https://web.archive.org/web/20130419113144/http://bulletphysics.org/mediawiki-1.5.8/index.php/Hello_World
         //https://guibraga.medium.com/my-favorite-visual-studio-code-extensions-11573442008b
 
@@ -191,6 +208,10 @@ namespace lp
 
         bool IMGUIDoShowLightSystemWindow = false;
         bool IMGUIDoShowShaderManagerWindow = false;
+
+        bool IMGUIDoShowDebugAllEntitiesWindow = false;
+
+        
 
         bool mDoPhysics = false;
         double lastFrameTime = glfwGetTime();
@@ -206,6 +227,9 @@ namespace lp
 
             mLightSystem->update();
             
+            lp::gl::ProcessedScene pScene;
+            GlobalPositioningSystem.process(pScene);
+
             {
                 ImGui::BeginMainMenuBar();
                 if(ImGui::BeginMenu("Options"))
@@ -214,6 +238,7 @@ namespace lp
                     ImGui::Checkbox("Open Info Window", &IMGUIDoShowInfoWindow);
                     ImGui::Checkbox("Open Light System Window", &IMGUIDoShowLightSystemWindow);
                     ImGui::Checkbox("Open Shader Manager Window", &IMGUIDoShowShaderManagerWindow);
+                    ImGui::Checkbox("Open All Entities Window", &IMGUIDoShowDebugAllEntitiesWindow);
                     ImGui::Separator();
                     ImGui::Checkbox("Do Physics", &mDoPhysics);
                     // if(ImGui::Button("Reset"))
@@ -290,6 +315,8 @@ namespace lp
                 }
                 
                 if(IMGUIDoShowShaderManagerWindow) int_imgui_shader_window(&IMGUIDoShowShaderManagerWindow);
+
+                if(IMGUIDoShowDebugAllEntitiesWindow) int_imgui_all_entities_window(&IMGUIDoShowDebugAllEntitiesWindow);
 
                 if(IMGUIDoShowLightSystemWindow)
                 {
@@ -464,9 +491,9 @@ namespace lp
                 //std::cout << "drawCount: " << bulletDebugRenderer.getDrawCount() << "\n";
             }
 
-            dtttta.mdl = g_engine.getResurceManager().getLoadedModel(modelRef);
+          //  dtttta.mdl = g_engine.getResurceManager().getLoadedModel(modelRef);
             
-            mRenndd.render(dtttta);
+            mRenndd.render(dtttta, pScene);
           //  std::cout << "After mRenndd.render(dtttta)\n";
 
             mWindow.swapBuffers();
@@ -485,6 +512,108 @@ namespace lp
 
 namespace
 {
+    void int_imgui_all_entities_window(bool* windowOpen)
+    {
+        auto& Recs = lp::g_engine.getECS();
+        static const lp::ecs::Signature c_sign_light = Recs.getComponentSignature<lp::ComponentLight>();
+        static const lp::ecs::Signature c_sign_model = Recs.getComponentSignature<lp::ComponentModel>();
+        static const lp::ecs::Signature c_sign_physics = Recs.getComponentSignature<lp::ComponentPhysics>();
+        static const lp::ecs::Signature c_sign_position = Recs.getComponentSignature<lp::ComponentPosition>();
+
+        static std::pair<lp::ecs::Entity, lp::ecs::Signature> pair{lp::ecs::const_entity_invalid, 0};
+
+        if(ImGui::Begin("Debug All Entities View", windowOpen))
+        {
+            const auto& allEntities = Recs.getDebugEntityMap();
+            if (ImGui::BeginTable("table3", 5, ImGuiTableFlags_Borders))
+            {
+                ImGui::TableSetupColumn("Entity ID");
+                ImGui::TableSetupColumn("Light C.");
+                ImGui::TableSetupColumn("Model C.");
+                ImGui::TableSetupColumn("Physics/Position C.");
+                ImGui::TableSetupColumn("Inspect");
+                ImGui::TableHeadersRow();
+                for(const auto& ent:allEntities)
+                {
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::Text("%u", ent.first);
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::Text("%s", (ent.second & c_sign_light ? "X": " "));
+                    ImGui::TableSetColumnIndex(2);
+                    ImGui::Text("%s", (ent.second & c_sign_model ? "X": " "));
+                    ImGui::TableSetColumnIndex(3);
+                    ImGui::Text("%s", ((ent.second & c_sign_physics || ent.second & c_sign_position) ? "X": " "));
+                    ImGui::TableSetColumnIndex(4);
+                    ImGui::PushID(ent.first);
+                    if(ImGui::Button("Select"))
+                    {
+                        pair = ent;
+                    }
+                    ImGui::PopID();
+                }
+                 
+                ImGui::EndTable();
+            }
+            if(Recs.isAlive(pair.first))
+            {
+                if(pair.second & c_sign_light)
+                {
+                    if(ImGui::TreeNode("Light"))
+                    {
+                        const auto& light = Recs.getComponent<lp::ComponentLight>(pair.first);
+                        float colour[3] = {light.getColor().r, light.getColor().g, light.getColor().b};
+                        ImGui::ColorEdit3("colour", colour, ImGuiColorEditFlags_NoInputs);
+                        ImGui::Text("Position: x = %f, y = %f, z = %f", light.getPosition().x, light.getPosition().y, light.getPosition().z);
+                        ImGui::Text("Radius: %f", light.getRadius());
+                        ImGui::TreePop();
+                    }
+                }
+                if(pair.second & c_sign_model)
+                {
+                    if(ImGui::TreeNode("Model"))
+                    {
+                        const auto& model = Recs.getComponent<lp::ComponentModel>(pair.first);
+                        ImGui::Text("ModelID_t = %u", model.mID);
+                        if(model.mModel != nullptr)
+                        {
+                            ImGui::Text("Filename = %s", model.mModel->mFile.filename().generic_string().c_str());
+                            ImGui::Text("Mesh Count = %llu", (unsigned long long)model.mModel->mMeshes.size());
+                            ImGui::Text("Material Count = %llu", (unsigned long long)model.mModel->mMaterials.size());
+                        } else
+                        {
+                            ImGui::Text("Mesh not yet loaded!");
+                        }
+                        
+                        ImGui::TreePop();
+                    }
+                }
+                if(pair.second & c_sign_physics)
+                {
+                    if(ImGui::TreeNode("Physics"))
+                    {
+                        ImGui::Text("Sample Text");
+                        ImGui::TreePop();
+                    }
+                }
+                if(pair.second & c_sign_position)
+                {
+                    if(ImGui::TreeNode("Physics"))
+                    {
+                        const auto& model = Recs.getComponent<lp::ComponentPosition>(pair.first);
+                        ImGui::Text("Position: x = %f, y = %f, z = %f", model.getPosition().x, model.getPosition().y, model.getPosition().z);
+                        ImGui::Text("Scale: x = %f, y = %f, z = %f", model.getScale().x, model.getScale().y, model.getScale().z);
+                        ImGui::Text("Position: x = %f, y = %f, z = %f, w = %f", model.getRotation().x, model.getRotation().y, model.getRotation().z, model.getRotation().w);
+                        ImGui::Text("Sample Text");
+                        ImGui::TreePop();
+                    }
+                }
+            }
+        }
+        ImGui::End();
+    }
+
+
     void int_imgui_shader_window(bool* windowOpened)
     {
         if(ImGui::Begin("Shader window", windowOpened))

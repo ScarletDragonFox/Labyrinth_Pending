@@ -13,6 +13,8 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 
 #include "Labyrinth/player.hpp"
 
+#include <Labyrinth/Engine/Graphics/processedScene.hpp>
+
 ///UBO Bindings:
 // 0 - DebugRendererData / mUBO_Player
 
@@ -38,7 +40,7 @@ namespace lp::gl
         };
         public:
         void setup(const unsigned int cv_width, unsigned int cv_height);
-        void render(const DebugRendererData& cv_data);
+        void render(const DebugRendererData& cv_data, const lp::gl::ProcessedScene& cv_pscene);
 
         /// @brief update the RendererForwardPlus_PlayerData and the UBO storing it.
         ///

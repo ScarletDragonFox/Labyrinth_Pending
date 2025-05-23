@@ -54,7 +54,7 @@ namespace lp::gl
         glNamedBufferStorage(mUBO_Player, sizeof(RendererForwardPlus_PlayerData), nullptr, GL_DYNAMIC_STORAGE_BIT);
     }
 
-    void ForwardRenderer::render(const DebugRendererData& cv_data)
+    void ForwardRenderer::render(const DebugRendererData& cv_data, const lp::gl::ProcessedScene& cv_pscene)
     {
         glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); //set clipping plane to [0,1], instead of the default [-1,1] 
         glDepthFunc(GL_GREATER); //these 3 reverse the depth buffer
@@ -94,7 +94,35 @@ namespace lp::gl
             glDrawArrays(GL_LINES, 0, cv_data.drawCount);
             glBindVertexArray(0);
         }
-    
+        
+        if(cv_pscene.mModelMap.size() >= 1){
+            shader.LoadShader(ShaderType::ModelTextured);
+            shader.Use();
+            glBindVertexArray(mVertexArrayModelTextured);
+            for(const auto& mdl: cv_pscene.mModelMap)
+            {
+                lp::res::LoadedModel::MaterialID_t lastMaterial = 4'000'000'000u; //hopefully we will never a model with this many materials
+                for(const auto& mesh: mdl.second.mPtr->mMeshes)
+                {
+                    //if(lastMaterial != mesh.mMaterialID)
+                    {
+                        mdl.second.mPtr->mMaterials[mesh.mMaterialID].mColor.Bind(0);
+                        lastMaterial = mesh.mMaterialID;
+                    }
+                    glVertexArrayVertexBuffer(mVertexArrayModelTextured, 0, mesh.mVBO, 0, sizeof(lp::res::VertexFull));
+                    glVertexArrayElementBuffer(mVertexArrayModelTextured, mesh.mEBO);
+
+                    for(const auto& mat:mdl.second.mMatricies)
+                    {
+                        shader.SetUniform(3, mat);
+                        glDrawElements(GL_TRIANGLES, mesh.mDrawCount, GL_UNSIGNED_INT, nullptr);
+                    }
+                }
+            }
+            glBindVertexArray(0);
+            lp::gl::Texture::Unbind(0);
+        }
+
         if(cv_data.mdl != nullptr)
         {
             //std::cout << "mdl render()\n";

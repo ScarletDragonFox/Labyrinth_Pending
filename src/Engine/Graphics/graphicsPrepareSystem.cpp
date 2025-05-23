@@ -38,18 +38,23 @@ namespace lp::gl
         for(const auto& ent: modelsPhysics)
         {
             auto& mdl = ecsR.getComponent<lp::ComponentModel>(ent);
-            const auto& phy = ecsR.getComponent<lp::ComponentPhysics>(ent);
-
-            glm::mat4 modelMat = glm::translate(glm::mat4(1.0), phy.getPosition());
-            modelMat = modelMat * glm::mat4_cast(phy.getRotation());
-            this->addModel(output, mdl.mID, mdl.mModel, modelMat);
+            if(mdl.mModel != nullptr)
+            {
+                const auto& phy = ecsR.getComponent<lp::ComponentPhysics>(ent);
+                glm::mat4 modelMat = glm::translate(glm::mat4(1.0), phy.getPosition());
+                modelMat = modelMat * glm::mat4_cast(phy.getRotation());
+                this->addModel(output, mdl.mID, mdl.mModel, modelMat);
+            }
         }
 
         for(const auto& ent: modelsPositions)
         {
             auto& mdl = ecsR.getComponent<lp::ComponentModel>(ent);
-            const auto& psoy = ecsR.getComponent<lp::ComponentPosition>(ent);
-            this->addModel(output, mdl.mID, mdl.mModel, psoy.getModelMatrix());
+            if(mdl.mModel != nullptr)
+            {
+                const auto& psoy = ecsR.getComponent<lp::ComponentPosition>(ent);
+                this->addModel(output, mdl.mID, mdl.mModel, psoy.getModelMatrix());
+            }
         }
     }
 
