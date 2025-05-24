@@ -23,6 +23,8 @@ set(CDF_SOURCES #list of all source files in the src/ directory
     Engine/Graphics/graphicsPrepareSystem.cpp
     Engine/Graphics/LightSystem.cpp
 
+    Engine/Physics/physicsWorld.cpp
+
     Engine/ComponentPosition.cpp
     Engine/ComponentPhysics.cpp
 

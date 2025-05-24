@@ -55,6 +55,7 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 
 #include "Labyrinth/Engine/Graphics/graphicsPrepareSystem.hpp"
 
+#include "Labyrinth/Engine/Physics/physicsWorld.hpp"
 
 namespace lp
 {
@@ -118,21 +119,9 @@ namespace lp
         // static int id_cunter = 1;
         // std::vector<FF*> songs_loaded;
 
-        lp::gl::Bullet3Debug bulletDebugRenderer;
-
-        // Build the broadphase
-        std::unique_ptr<btBroadphaseInterface> broadphase = std::make_unique<btDbvtBroadphase>();
-    
-        // Set up the collision configuration and dispatcher
-        std::unique_ptr<btDefaultCollisionConfiguration> collisionConfiguration = std::make_unique<btDefaultCollisionConfiguration>();
-        std::unique_ptr<btCollisionDispatcher> dispatcher = std::make_unique<btCollisionDispatcher>(collisionConfiguration.get());
-    
-        // The actual physics solver
-        std::unique_ptr<btSequentialImpulseConstraintSolver> solver = std::make_unique<btSequentialImpulseConstraintSolver>();
-     
-        // The world.
-        std::unique_ptr<btDiscreteDynamicsWorld> dynamicsWorld = std::make_unique<btDiscreteDynamicsWorld>(dispatcher.get(), broadphase.get(), solver.get(), collisionConfiguration.get()); //this is what crashes. in the destructor it tries to free some stuff, and ... (std::unique_ptr)
-        dynamicsWorld->setDebugDrawer(&bulletDebugRenderer);
+        lp::ph::PhysicsWorld phWorld;
+        phWorld.initialize();
+        btDiscreteDynamicsWorld* dynamicsWorld = phWorld.getWorld();
         
         dynamicsWorld->setGravity(btVector3(0,-10,0));
     
@@ -228,7 +217,7 @@ namespace lp
             mLightSystem->update();
             
             lp::gl::ProcessedScene pScene;
-            GlobalPositioningSystem.process(pScene, bulletDebugRenderer);
+            GlobalPositioningSystem.process(pScene, *phWorld.getDebugRenderer());
 
             {
                 ImGui::BeginMainMenuBar();
@@ -462,9 +451,7 @@ namespace lp
 
             if(mDoPhysics)
             {
-                dynamicsWorld->stepSimulation(deltaTime, 100);
-                dynamicsWorld->debugDrawWorld();
-                bulletDebugRenderer.flushLines();
+                phWorld.stepSimulation(deltaTime);
             }
             
           //  std::cout << "After update() of physics\n";
