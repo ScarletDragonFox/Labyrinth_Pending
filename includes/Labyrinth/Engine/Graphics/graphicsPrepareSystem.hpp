@@ -12,6 +12,9 @@
 
 namespace lp::gl
 {
+    /// @brief forward declaration of Bullet3Debug
+    class Bullet3Debug;
+
     /// @brief semi-internal class used by GraphicsPrepareSystem.
     ///
     /// This recives all Entities with a ComponentModel + ComponentPhysics
@@ -61,7 +64,7 @@ namespace lp::gl
 
         /// @brief shoves all data into the ProcessedScene
         /// @param output output. clears all data that was there previously
-        void process(ProcessedScene& output);
+        void process(ProcessedScene& output, const Bullet3Debug& bulletDebug);
 
         private:
 

@@ -54,7 +54,7 @@ namespace lp::gl
         glNamedBufferStorage(mUBO_Player, sizeof(RendererForwardPlus_PlayerData), nullptr, GL_DYNAMIC_STORAGE_BIT);
     }
 
-    void ForwardRenderer::render(const DebugRendererData& cv_data, const lp::gl::ProcessedScene& cv_pscene)
+    void ForwardRenderer::render(const lp::gl::ProcessedScene& cv_pscene)
     {
         glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); //set clipping plane to [0,1], instead of the default [-1,1] 
         glDepthFunc(GL_GREATER); //these 3 reverse the depth buffer
@@ -84,14 +84,14 @@ namespace lp::gl
         shader.SetUniform(4, glm::vec3(0.1, 1.0f, 0.0f));
         renderCube();
 
-        if(cv_data.drawCount > 0 ){
+        if(cv_pscene.mBulletDebugDrawCount > 0 ){
             shader.LoadShader(ShaderType::DebugLine);
             shader.Use();
             constexpr glm::mat4 modelBulletDebugDraw = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
             shader.SetUniform(3, modelBulletDebugDraw);
             glBindVertexArray(mVertexArrayBulletLineDebug);
-            glVertexArrayVertexBuffer(mVertexArrayBulletLineDebug, 0, cv_data.VBO, 0, 6 * sizeof(float));
-            glDrawArrays(GL_LINES, 0, cv_data.drawCount);
+            glVertexArrayVertexBuffer(mVertexArrayBulletLineDebug, 0, cv_pscene.mBulletDebugBuffer, 0, 6 * sizeof(float));
+            glDrawArrays(GL_LINES, 0, cv_pscene.mBulletDebugDrawCount);
             glBindVertexArray(0);
         }
         
@@ -122,37 +122,7 @@ namespace lp::gl
             glBindVertexArray(0);
             lp::gl::Texture::Unbind(0);
         }
-
-        if(cv_data.mdl != nullptr)
-        {
-            //std::cout << "mdl render()\n";
-            shader.LoadShader(ShaderType::ModelTextured);
-            shader.Use();
-            shader.SetUniform(3, glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 0.0f, 0.0f)));
-
-            lp::res::LoadedModel::MaterialID_t lastMaterial = 4'000'000'000u; //hopefully we will never a model with this many materials
-
-            glBindVertexArray(mVertexArrayModelTextured);
-            for(const auto &i : cv_data.mdl->mMeshes)
-            {
-                if(lastMaterial != i.mMaterialID)
-                {
-                    cv_data.mdl->mMaterials[i.mMaterialID].mColor.Bind(0);
-                }
-                //std::cout << "VAO: " << mVertexArrayModelTextured << ", VBO: " << i.mVBO << ", EBO: " << i.mEBO << ", DrawCount: " << i.mDrawCount << "\n";
-                glVertexArrayVertexBuffer(mVertexArrayModelTextured, 0, i.mVBO, 0, sizeof(lp::res::VertexFull));
-                glVertexArrayElementBuffer(mVertexArrayModelTextured, i.mEBO);
-                glDrawElements(GL_TRIANGLES, i.mDrawCount, GL_UNSIGNED_INT, nullptr);
-            }
-            glBindVertexArray(0);
-            lp::gl::Texture::Unbind(0); //unbind color texture
-            //std::cout << "mdl render() -- END ----\n";
-        }
-
         glUseProgram(0);
-
-
-
     }
 
     void ForwardRenderer::updatePlayer(const lp::Player& cr_player, bool cv_wasChanged)

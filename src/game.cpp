@@ -228,7 +228,7 @@ namespace lp
             mLightSystem->update();
             
             lp::gl::ProcessedScene pScene;
-            GlobalPositioningSystem.process(pScene);
+            GlobalPositioningSystem.process(pScene, bulletDebugRenderer);
 
             {
                 ImGui::BeginMainMenuBar();
@@ -477,23 +477,7 @@ namespace lp
                 glViewport(0, 0, width, height);
             }
             
-            
-            gl::DebugRendererData dtttta;
-            
-            dtttta.mCamProjection = mPlayer.getProjectionMatrix(wbh);
-            dtttta.mCamView = mPlayer.getViewMatrix();
-            if(bulletDebugRenderer.getBuffer())
-            {
-                dtttta.drawCount = bulletDebugRenderer.getDrawCount();
-                dtttta.VBO = bulletDebugRenderer.getBuffer();
-                //std::cout << "VAO: " << VAO_temp << "\n";
-                //std::cout << "VBO: " << bulletDebugRenderer.getBuffer() << "\n";
-                //std::cout << "drawCount: " << bulletDebugRenderer.getDrawCount() << "\n";
-            }
-
-          //  dtttta.mdl = g_engine.getResurceManager().getLoadedModel(modelRef);
-            
-            mRenndd.render(dtttta, pScene);
+            mRenndd.render(pScene);
           //  std::cout << "After mRenndd.render(dtttta)\n";
 
             mWindow.swapBuffers();

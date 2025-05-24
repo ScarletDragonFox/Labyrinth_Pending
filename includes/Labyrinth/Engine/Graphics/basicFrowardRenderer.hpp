@@ -20,15 +20,6 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 
 namespace lp::gl
 {
-    struct DebugRendererData
-    {
-        glm::mat4 mCamView = {};
-        glm::mat4 mCamProjection = {};
-        GLuint VBO = 0;
-        GLuint drawCount = 0;
-        const lp::res::LoadedModel* mdl = nullptr;
-    };
-
     class ForwardRenderer
     {
         struct RendererForwardPlus_PlayerData
@@ -40,7 +31,7 @@ namespace lp::gl
         };
         public:
         void setup(const unsigned int cv_width, unsigned int cv_height);
-        void render(const DebugRendererData& cv_data, const lp::gl::ProcessedScene& cv_pscene);
+        void render(const lp::gl::ProcessedScene& cv_pscene);
 
         /// @brief update the RendererForwardPlus_PlayerData and the UBO storing it.
         ///

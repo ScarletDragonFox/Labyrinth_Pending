@@ -10,6 +10,8 @@
 
 #include <vector>
 
+#include <Labyrinth/Engine/Graphics/bullet3Debug.hpp>
+
 namespace lp::gl
 {
     GraphicsPrepareSystem::GraphicsPrepareSystem()
@@ -22,7 +24,7 @@ namespace lp::gl
         this->mSystemPositions = ecsR.registerSystem<GPS_Model_w_Position>(cpos);
     }
 
-    void GraphicsPrepareSystem::process(ProcessedScene& output)
+    void GraphicsPrepareSystem::process(ProcessedScene& output, const Bullet3Debug& bulletDebug)
     {
         auto& ecsR = lp::g_engine.getECS();
         {
@@ -56,6 +58,9 @@ namespace lp::gl
                 this->addModel(output, mdl.mID, mdl.mModel, psoy.getModelMatrix());
             }
         }
+
+        output.mBulletDebugBuffer = bulletDebug.getBuffer();
+        output.mBulletDebugDrawCount = bulletDebug.getDrawCount();
     }
 
     void GraphicsPrepareSystem::addModel(ProcessedScene& output, const lp::res::ModelID_t id, std::shared_ptr<lp::res::LoadedModel>& ptr, const glm::mat4& matrix)

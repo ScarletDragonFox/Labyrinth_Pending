@@ -25,7 +25,10 @@ namespace lp::gl
 
         /// @brief size of the mSSB_AliveLights buffer
         GLuint mLightCount = 0;
-    
+        
+        GLuint mBulletDebugBuffer = 0;
+        GLuint mBulletDebugDrawCount = 0;
+
         struct ModelsHolder
         {
             std::shared_ptr<lp::res::LoadedModel> mPtr;
