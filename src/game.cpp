@@ -126,33 +126,25 @@ namespace lp
         dynamicsWorld->setGravity(btVector3(0,-10,0));
     
         std::unique_ptr<btRigidBody> groundRigidBody;
-        std::unique_ptr<btRigidBody> fallRigidBody;
         std::unique_ptr<btCollisionShape> groundShape = std::make_unique<btStaticPlaneShape>(btVector3(0,1,0), 1);
-        std::unique_ptr<btCollisionShape> fallShape = std::make_unique<btSphereShape>((btScalar)1.0f);
-
-       // {
-            std::unique_ptr<btDefaultMotionState> groundMotionState = std::make_unique<btDefaultMotionState>(btTransform(btQuaternion(0,0,0,1), btVector3(0,-1,0)));
-    
+        std::unique_ptr<btDefaultMotionState> groundMotionState = std::make_unique<btDefaultMotionState>(btTransform(btQuaternion(0,0,0,1), btVector3(0,-1,0)));
+        {
             btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, groundMotionState.get(), groundShape.get(), btVector3(0,0,0));
-        
             groundRigidBody =  std::make_unique<btRigidBody>(groundRigidBodyCI);
-       // }
+        }
         
-    
         dynamicsWorld->addRigidBody(groundRigidBody.get());
-    
         
-       // {
-            std::unique_ptr<btDefaultMotionState> fallMotionState = std::make_unique<btDefaultMotionState>(btTransform(btQuaternion(0,0,0,1), btVector3(0,500,0)));
-    
+        std::unique_ptr<btRigidBody> fallRigidBody;
+        std::unique_ptr<btCollisionShape> fallShape = std::make_unique<btSphereShape>((btScalar)1.0f);
+        std::unique_ptr<btDefaultMotionState> fallMotionState = std::make_unique<btDefaultMotionState>(btTransform(btQuaternion(0,0,0,1), btVector3(0,500,0)));
+        {
             btScalar mass = 1;
             btVector3 fallInertia(0,0,0);
             fallShape->calculateLocalInertia(mass,fallInertia);
-        
             btRigidBody::btRigidBodyConstructionInfo fallRigidBodyCI(mass, fallMotionState.get() ,fallShape.get(), fallInertia);
             fallRigidBody = std::make_unique<btRigidBody>(fallRigidBodyCI);
-
-      //  }
+        }
         
          dynamicsWorld->addRigidBody(fallRigidBody.get());
     
@@ -445,27 +437,15 @@ namespace lp
             }
             
 
-           // std::cout << "After ImGui!\n";
            g_engine.getResurceManager().getModelLoaderRef().update(1.0/12.0);
-         //   std::cout << "After update() of load\n";
 
             if(mDoPhysics)
             {
                 phWorld.stepSimulation(deltaTime);
             }
             
-          //  std::cout << "After update() of physics\n";
 
-            double wbh = 0.0;
-            {
-                int width = 0, height = 0;
-                mWindow.debugGetFramebufferSize(width, height);
-                wbh = (double)width / (double)height;
-                glViewport(0, 0, width, height);
-            }
-            
             mRenndd.render(pScene);
-          //  std::cout << "After mRenndd.render(dtttta)\n";
 
             mWindow.swapBuffers();
         }

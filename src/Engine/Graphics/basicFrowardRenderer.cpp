@@ -56,6 +56,8 @@ namespace lp::gl
 
     void ForwardRenderer::render(const lp::gl::ProcessedScene& cv_pscene)
     {
+        glViewport(0, 0, this->mOutBuff.getWidth(), this->mOutBuff.getHeight());
+        
         glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); //set clipping plane to [0,1], instead of the default [-1,1] 
         glDepthFunc(GL_GREATER); //these 3 reverse the depth buffer
         glClearDepth(0); //clear depth to 0
@@ -104,7 +106,7 @@ namespace lp::gl
                 lp::res::LoadedModel::MaterialID_t lastMaterial = 4'000'000'000u; //hopefully we will never a model with this many materials
                 for(const auto& mesh: mdl.second.mPtr->mMeshes)
                 {
-                    //if(lastMaterial != mesh.mMaterialID)
+                    if(lastMaterial != mesh.mMaterialID)
                     {
                         mdl.second.mPtr->mMaterials[mesh.mMaterialID].mColor.Bind(0);
                         lastMaterial = mesh.mMaterialID;
