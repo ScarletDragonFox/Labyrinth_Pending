@@ -57,6 +57,8 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 
 #include "Labyrinth/Engine/Physics/physicsWorld.hpp"
 
+#include "Labyrinth/Engine/ComponentSoundSource.hpp"
+
 namespace lp
 {
 
@@ -88,6 +90,8 @@ namespace lp
         ecsr.registerComponent<lp::ComponentLight>();
         ecsr.registerComponent<lp::ComponentPosition>();
         ecsr.registerComponent<lp::ComponentPhysics>();
+        ecsr.registerComponent<lp::ComponentSoundSource>();
+        
         mLightSystem = ecsr.registerSystem<lp::LightSystem>(ecsr.getComponentSignature<lp::ComponentLight>());
         mLightSystem->update();
         for(int i = 0; i < 10; i++)
