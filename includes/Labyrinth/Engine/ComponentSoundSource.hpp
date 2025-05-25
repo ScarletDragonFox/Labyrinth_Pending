@@ -10,6 +10,12 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_POP()
 
 namespace lp
 {
+    namespace res
+    {
+        /// @brief forward declaration
+        class SoundManager;
+    }
+
     /// @brief Component representing a sound playing
     ///
     /// Gets removed when the sound stops
@@ -32,6 +38,9 @@ namespace lp
         /// @brief get the SoLoud::handle to the sound source
         /// @return SoLoud::handle
         SoLoud::handle getHandle(){ return mHandle; }
+
+        /// @brief so it can access mHandle & set it!
+        friend class lp::res::SoundManager;
 
         private:
         /// @brief Handle to the Sound Source in SoLoud
