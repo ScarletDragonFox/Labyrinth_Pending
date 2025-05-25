@@ -21,6 +21,14 @@ namespace lp
         return glm::vec3(btPos.getX(), btPos.getY(), btPos.getZ());
     }
 
+    glm::vec3 ComponentPhysics::getVelocity()const
+    {
+        if(!mRigidBody) return glm::vec3(0.0);
+        const auto& veloc = mRigidBody->getLinearVelocity();
+
+        return glm::vec3(veloc.getX(), veloc.getY(), veloc.getZ());
+    }
+
     void ComponentPhysics::setPosition(const glm::vec3 cv_position, const bool resetMomentum)
     { 
         if(!mRigidBody ||  !mRigidBody->getMotionState()) return;

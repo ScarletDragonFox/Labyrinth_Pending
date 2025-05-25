@@ -20,6 +20,10 @@ namespace lp
         /// @return position OR vec3(0.0) if error
         glm::vec3 getPosition()const;
 
+        /// @brief get the current, interpolated linear velocity of this object 
+        /// @return (linear) velocity OR vec3(0.0) if error
+        glm::vec3 getVelocity()const;
+
         /// @brief 'set the current position of the object'
         ///
         /// Teleports the object.
