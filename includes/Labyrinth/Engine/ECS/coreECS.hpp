@@ -87,7 +87,7 @@ namespace lp::ecs
         inline void removeComponent(const Entity cv_entity)
         {
             const Signature componentSign = mComponent.getComponentSignature<T>();
-            if(mEventListenableSign & componentSign == mEventListenableSign)
+            if((mEventListenableSign & componentSign) == mEventListenableSign)
             {
                 this->sendEventComponentDestroyed(componentSign, cv_entity);
             }
