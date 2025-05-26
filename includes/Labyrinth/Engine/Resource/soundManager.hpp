@@ -1,13 +1,17 @@
 #ifndef LABYRINTH_PENDING_ENGINE_RESOURCE_SOUNDMANAGER_HPP
 #define LABYRINTH_PENDING_ENGINE_RESOURCE_SOUNDMANAGER_HPP
 
-#include <soloud.h>
-
 #include "Labyrinth/Engine/ECS/baseSystem.hpp"
 
 #include <string>
 #include <string_view>
 #include <unordered_map>
+
+namespace SoLoud
+{
+    /// @brief forward declaration
+    class AudioSource;
+}
 
 namespace lp::res
 {

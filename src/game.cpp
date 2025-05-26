@@ -25,6 +25,7 @@
 #include "Labyrinth/Engine/ComponentLight.hpp"
 #include "Labyrinth/Engine/ComponentPosition.hpp"
 #include "Labyrinth/Engine/ComponentPhysics.hpp"
+#include "Labyrinth/Engine/ComponentSoundSource.hpp"
 
 #include "Labyrinth/Engine/Resource/resourceManager.hpp"
 #include "Labyrinth/Engine/Resource/shaderManager.hpp"
@@ -57,7 +58,7 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 
 #include "Labyrinth/Engine/Physics/physicsWorld.hpp"
 
-#include "Labyrinth/Engine/ComponentSoundSource.hpp"
+
 
 #include <Labyrinth/Engine/Resource/soundManager.hpp>
 
@@ -89,11 +90,6 @@ namespace lp
 
         auto& ecsr = g_engine.getECS();
 
-        ecsr.registerComponent<lp::ComponentLight>();
-        ecsr.registerComponent<lp::ComponentPosition>();
-        ecsr.registerComponent<lp::ComponentPhysics>();
-        ecsr.registerComponent<lp::ComponentSoundSource>();
-        
         mLightSystem = ecsr.registerSystem<lp::LightSystem>(ecsr.getComponentSignature<lp::ComponentLight>());
         mLightSystem->update();
         for(int i = 0; i < 10; i++)

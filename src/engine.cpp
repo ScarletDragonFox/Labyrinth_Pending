@@ -11,6 +11,10 @@
 #include <Labyrinth/Engine/Event/eventManager.hpp>
 #include <Labyrinth/Engine/Resource/resourceManager.hpp>
 
+#include "Labyrinth/Engine/ComponentLight.hpp"
+#include "Labyrinth/Engine/ComponentPosition.hpp"
+#include "Labyrinth/Engine/ComponentPhysics.hpp"
+#include "Labyrinth/Engine/ComponentSoundSource.hpp"
 
 namespace lp
 {
@@ -25,6 +29,11 @@ namespace lp
 
     bool Engine::initialize()
     {
+        mECSPtr->registerComponent<lp::ComponentLight>();
+        mECSPtr->registerComponent<lp::ComponentPosition>();
+        mECSPtr->registerComponent<lp::ComponentPhysics>();
+        mECSPtr->registerComponent<lp::ComponentSoundSource>();
+
         if(mSoundPtr->init() != SoLoud::SO_NO_ERROR)
         {
             std::cerr << "Failed to initialize SoLoud\n";
@@ -34,6 +43,12 @@ namespace lp
         if(mResourcesPtr->initialize())
         {
             std::cerr << "Resource Manager failed to initialize\n";
+            return true;
+        }
+
+        if(mSoundMan.initialize("assets/Audio/index.json"))
+        {
+            std::cerr << "Sound Manager failed to initialize\n";
             return true;
         }
 

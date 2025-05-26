@@ -3,7 +3,7 @@
 
 #include <memory>
 
-
+#include "Labyrinth/Engine/Resource/soundManager.hpp"
 
 namespace SoLoud
 {
@@ -70,6 +70,9 @@ namespace lp
         ///
         /// Loads/Unloads & Stores all types of resources
         std::shared_ptr<lp::ResourceManager> mResourcesPtr;
+
+        /// @brief Manager of Sound
+        lp::res::SoundManager mSoundMan;
     };
     
     extern Engine g_engine;

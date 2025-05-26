@@ -13,6 +13,7 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <soloud_wav.h>
+#include <soloud.h>
 
 namespace lp::res
 {
