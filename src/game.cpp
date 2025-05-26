@@ -59,6 +59,8 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 
 #include "Labyrinth/Engine/ComponentSoundSource.hpp"
 
+#include <Labyrinth/Engine/Resource/soundManager.hpp>
+
 namespace lp
 {
 
@@ -99,6 +101,8 @@ namespace lp
             lp::ecs::Entity ent = ecsr.createEntity();
             lp::ComponentLight light;
             light.setRadius((rand() %20'000) /1000.0f);
+            light.setColor(glm::vec3((rand() %20'000) /20000.0f, (rand() %20'000) /20000.0f, (rand() %20'000) /20000.0f));
+            light.setPosition(glm::vec3((rand() %20'000) /100.0f, (rand() %20'000) /100.0f, (rand() %20'000) /100.0f) - glm::vec3(100));
             ecsr.addComponent<lp::ComponentLight>(ent, light);
         }
         
@@ -112,6 +116,12 @@ namespace lp
 
         // SoLoud::Speech speech;
         // speech.setParams(2000U, 9.0f, 0.5f, 20);
+
+        lp::res::SoundManager SMan;
+        if(SMan.initialize("assets/Audio/index.json"))
+        {
+            std::cerr << "SoundManager failed to initialize!\n";
+        }
 
         // struct FF
         // {

@@ -10,8 +10,74 @@
 #include <vector>
 #include <iostream>
 
+#include <fstream>
+#include <nlohmann/json.hpp>
+#include <soloud_wav.h>
+
 namespace lp::res
 {
+    bool SoundManager::initialize(const std::string_view soundsfilename)
+    {
+        {
+            auto& Recs = g_engine.getECS();
+            const lp::ecs::Signature SoundCompSign = Recs.getComponentSignature<ComponentSoundSource>();
+            const lp::ecs::Signature PhysicsCompSign = Recs.getComponentSignature<ComponentPhysics>();
+            const lp::ecs::Signature PositionCompSign = Recs.getComponentSignature<ComponentPosition>();
+
+            Recs.registerSystem<SoundManager_AuxillaryPhysics>(SoundCompSign | PhysicsCompSign);
+            Recs.registerSystem<SoundManager_AuxillaryPosition>(SoundCompSign | PositionCompSign);
+        }
+        
+
+        using json = nlohmann::json;
+        std::ifstream file(soundsfilename.data());
+        if(!file.is_open()) return true;
+
+        json data = json::parse(file);
+        if(!data.contains("array"))
+        {
+            return true;
+        }
+        for(const auto& dat: data["array"])
+        {
+            try
+            {
+                if(dat.contains("filename"))
+                {
+                    std::string filename = dat["filename"].get<std::string>();
+                    if(mAudios.contains(filename)) continue;
+                    SoLoud::Wav *wavp = new SoLoud::Wav();
+                    int res = wavp->load(filename.c_str());
+                    if(res != 0)
+                    {
+                        AudioData ad;
+                        ad.source = wavp;
+                        mAudios[filename] = ad;
+                    } else{
+                        std::cerr << "Could't load " << filename << " SoLoud's result: " << res << "\n";
+                        delete wavp;
+                    }
+                }
+            } catch(const json::exception& e)
+            {
+                std::cerr << "SoundManager::JSON: " << e.what() << "\n";
+            }
+        }
+        //std::cout << data.dump() << "\n";
+
+        file.close();
+        return false;
+    }
+
+    SoundManager::~SoundManager()
+    {
+        this->stopAll();
+        for(const auto& as:mAudios)
+        {
+            delete as.second.source;
+        }
+    }
+
     bool SoundManager::isLoaded(const std::string_view soundNameID)
     {
         return mAudios.find(soundNameID.data()) != mAudios.end();
@@ -49,7 +115,7 @@ namespace lp::res
             }
             ComponentSoundSource CSS;
             CSS.mHandle = sL.play3d((*iter->second.source), pos.x, pos.y, pos.z, velo.x, velo.y, velo.z);
-            
+
             ecsR.addComponent(cv_entity, CSS);
         }
     }

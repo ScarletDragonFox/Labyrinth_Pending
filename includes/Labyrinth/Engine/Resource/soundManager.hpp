@@ -52,9 +52,16 @@ namespace lp::res
     };
 
 
+    /// @brief Sound Manager
+    /// @todo TODO: stream big sounds instead of having them be constantly in memory
     class SoundManager: lp::ecs::System
     {
         public:
+        /// @brief initalize the SoundManager & load the sounds.json file
+        /// @param soundsfilename the path+filename to the sounds.json file
+        /// @return true on fail, false on success
+        bool initialize(const std::string_view soundsfilename);
+
         /// @brief removes old/stopped sound source components
         void update();
 
@@ -76,6 +83,9 @@ namespace lp::res
         /// @brief resume all stopped sounds
         /// @todo TODO: untested!
         void resumeAll();
+
+        /// @brief destuctor
+        ~SoundManager();
 
         private:
         /// @brief Continer struct for AudioSources & data
