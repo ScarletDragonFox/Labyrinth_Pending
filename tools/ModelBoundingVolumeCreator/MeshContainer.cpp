@@ -23,6 +23,15 @@ namespace lpt
     void MeshPhysics::ui()
     {
         ImGui::Text("Verticies Count = %u", (unsigned int)mPositions.size());
+        ImGui::Text("Indicies Count = %u", (unsigned int)mIndicies.size());
+    }
+
+    MeshPhysics* MeshContainer::getMesh(const MeshDragDropID& cv_id)
+    {
+        if(!mMeshes.contains(cv_id.mModel)) return nullptr;
+        auto& ref = mMeshes[cv_id.mModel];
+        if(!ref.contains(cv_id.mID)) return nullptr;
+        return &(ref[cv_id.mID]);
     }
 
     void MeshContainer::ui(bool* opened)
@@ -133,18 +142,16 @@ namespace lpt
         std::vector<MeshPhysics> meshes;
         meshes.reserve(scene->mNumMeshes);
 
-        std::vector<glm::vec3> temp_pos;
-
         std::size_t iref = 0;
         for(aiMesh* am: assimp_meshes)
         {
             MeshPhysics mp;
-            temp_pos.reserve(am->mNumVertices);
-            mp.mPositions.reserve(std::size_t(am->mNumFaces) * 3);
+            mp.mPositions.reserve(am->mNumVertices);
+            mp.mIndicies.reserve(std::size_t(am->mNumFaces) * 3);
 
             for (unsigned int i = 0; i < am->mNumVertices; i++)
             {
-                temp_pos.push_back(glm::vec3(am->mVertices[i].x, am->mVertices[i].y, am->mVertices[i].z));
+                mp.mPositions.push_back(glm::vec3(am->mVertices[i].x, am->mVertices[i].y, am->mVertices[i].z));
             }
 
             for (unsigned int j = 0; j < am->mNumFaces; j++)
@@ -155,12 +162,10 @@ namespace lpt
                     std::cerr << "The number of verticies in a face is not 3\n"; 
                     continue;
                 }
-                // retrieve all indices of the face and store them in the output vector
-                mp.mPositions.push_back(temp_pos[face.mIndices[0]]);
-                mp.mPositions.push_back(temp_pos[face.mIndices[1]]);
-                mp.mPositions.push_back(temp_pos[face.mIndices[2]]);
+                mp.mIndicies.push_back(face.mIndices[0]);
+                mp.mIndicies.push_back(face.mIndices[1]);
+                mp.mIndicies.push_back(face.mIndices[2]);
             }
-            temp_pos.clear();
 
             if(am->mName.length == 0)
             {

@@ -26,15 +26,24 @@ namespace lpt
         void ui();
         friend class MeshContainer;
 
+        const std::vector<glm::vec3>& getPositionsVector()const {return mPositions;}
+        const std::vector<unsigned int>& getIndiciesVector()const {return mIndicies;}
+
         private:
         std::string mName = "Mesh";
         std::vector<glm::vec3> mPositions;
+        std::vector<unsigned int> mIndicies;
     };
 
     class MeshContainer
     {
         public:
         void ui(bool* opened);
+        
+        /// @brief get mesh
+        /// @param cv_id id to mesh
+        /// @return nullptr on error
+        MeshPhysics* getMesh(const MeshDragDropID& cv_id);
         private:
 
         void loadMeshes(const std::string_view cv_path);

@@ -26,11 +26,34 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 
 #include "MeshContainer.hpp"
 
+#include <imgui_internal.h> //for BeginDrapDropTargetWindow()
+
 namespace
 {
     void opengl_message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, [[maybe_unused]]  GLsizei length, GLchar const* message, [[maybe_unused]] void const* user_param);
 
     btCollisionWorld::ClosestRayResultCallback RayTestObtain(btDynamicsWorld* v_world, const lp::Player& cr_Player, lp::Window& r_window, const glm::vec2 cv_mousePos);
+
+    /// @brief from https://github.com/ocornut/imgui/issues/5539
+    bool BeginDrapDropTargetWindow(const char* payload_type)
+    {
+        using namespace ImGui;
+        ImRect inner_rect = GetCurrentWindow()->InnerRect;
+        if (BeginDragDropTargetCustom(inner_rect, GetID("##WindowBgArea")))
+            if (const ImGuiPayload* payload = AcceptDragDropPayload(payload_type, ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect))
+            {
+                if (payload->IsPreview())
+                {
+                    ImDrawList* draw_list = GetForegroundDrawList();
+                    draw_list->AddRectFilled(inner_rect.Min, inner_rect.Max, GetColorU32(ImGuiCol_DragDropTarget, 0.05f));
+                    draw_list->AddRect(inner_rect.Min, inner_rect.Max, GetColorU32(ImGuiCol_DragDropTarget), 0.0f, 0, 2.0f);
+                }
+                if (payload->IsDelivery())
+                    return true;
+                EndDragDropTarget();
+            }
+        return false;
+    }
 }
 
 #include "RigidBodyConteiner.hpp"
@@ -375,11 +398,69 @@ int main()
         {
             if(ImGui::Begin("RigidBody Container ?", &IMGUI_ShowRigidBosyContainerWindow))
             {
+                
+                if(BeginDrapDropTargetWindow("MESH_TYPE"))
+                {
+                    const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MESH_TYPE");
+                    if(payload != nullptr && payload->DataSize == sizeof(lpt::MeshDragDropID))
+                    {
+                        lpt::MeshDragDropID* ptr = (lpt::MeshDragDropID*)payload->Data;
+                        std::cout << "Dropped a " << ptr->mModel << " @ " << ptr->mID << "\n";
+                        
+                            const auto* mmesh = meshContl.getMesh(*ptr);
+                            if(mmesh != nullptr)
+                            {
+                                btIndexedMesh meshBT;
+                                meshBT.m_numTriangles = mmesh->getIndiciesVector().size() / 3;
+                                meshBT.m_triangleIndexBase = (const unsigned char*)mmesh->getIndiciesVector().data();
+                                meshBT.m_triangleIndexStride = 3 * sizeof(unsigned int);
+                                meshBT.m_numVertices = mmesh->getPositionsVector().size();
+                                meshBT.m_vertexBase = (const unsigned char*)mmesh->getPositionsVector().data();
+                                meshBT.m_vertexStride = sizeof(glm::vec3);
+                                meshBT.m_vertexType = PHY_FLOAT;
+                                btTriangleIndexVertexArray *interf = new btTriangleIndexVertexArray(); //can't kill this, memory leak FIXME TODO
+                                interf->addIndexedMesh(meshBT);
+                                btBvhTriangleMeshShape* shape = new btBvhTriangleMeshShape(interf, true);
+                                btMotionState* mstate = new btDefaultMotionState();
+                                btRigidBody* body = new btRigidBody(0.0, mstate, shape);
+                                RBCCCT.addNewChild(body);
+                                dynamicsWorld->addRigidBody(body); //https://www.google.com/search?client=firefox-b-d&q=bullet+physics+one+sided+triangle+mesh+collision    <- note
+
+                                std::cout << "Object added successfully\n";
+                            } else std::cerr << "Dropped an invalid mesh!\n";
+                            
+                        
+                        
+                    }
+                    ImGui::EndDragDropTarget();
+                }
+                //This works!!
+                // need to differentiate between a STATIC btCollisionShape & a dynamic/kinematic one
+                // only a static body can have a btTriangleMesh; btBvhTriangleMeshShape; ?
+                // but apparently there MAY be others
+                // TODO: btConvexHullShape <- what meshes can be this?
+                // - upon getting payload get its reference (make function)
+                // - show a ui??
+                //   + popup modal?
+                //   + regular window?
+                // - this will then create this
+
+                /// TODO: investigate the aiProcess_PreTransformVertices flag <- may fix out transorm issue
+                ///  Adding on to that, remove all unused data from being imported by assimp
+                // https://github.com/ocornut/imgui/wiki/Multi-Select
+                
+
                 RBCCCT.drawUI();
             }
             ImGui::End();
         }
         if(IMGUI_ShowMeshContainerWindow) meshContl.ui(&IMGUI_ShowMeshContainerWindow);
+
+        //ImGui mesh modification window goes here
+        //it modifies a mesh/its copy
+        // - shows info?
+        // - drag & drop onto it to use the new mesh
+        // - modal popup if wrong
 
         // @see https://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-a-physics-library/
         //if imgui doesn't want the mouse AND left mouse button was pressed
