@@ -56,10 +56,32 @@ namespace lp::ph
         mDebugRender.flushLines();
     }
 
+    ColliderID_t PhysicsWorld::registerCollisionShape(btCollisionShape* v_collShape)
+    {
+        if(v_collShape == nullptr) return lp::ph::const_collider__id_invalid;
+        const lp::ph::ColliderID_t ret = mNextColliderID;
+        mCollisionShapes[mNextColliderID] = v_collShape;
+        mNextColliderID++;
+        return ret;
+    }
+
+    void PhysicsWorld::unloadCollisionShape(const ColliderID_t cv_id)
+    {
+        if(mCollisionShapes.contains(cv_id)){
+            delete mCollisionShapes[cv_id];
+            mCollisionShapes.erase(cv_id);
+        }
+    }
+
+
     void PhysicsWorld::destroy()
     {
         auto& ReventM = g_engine.getEventManager();
         ReventM.unregister(this->mComponentCreatedEventID);
         ReventM.unregister(this->mComponentDestroyedEventID);
+        for(const auto&i:this->mCollisionShapes)
+        {
+            delete i.second;
+        }
     }
 }

@@ -13,8 +13,15 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 
 #include "Labyrinth/Engine/Event/eventManager.hpp"
 
+#include <unordered_map>
+
 namespace lp::ph
 {
+    /// @brief id of the btCollisionShape
+    using ColliderID_t = std::uint32_t;
+    /// @brief invalid ColliderID_t. Used as default
+    constexpr ColliderID_t const_collider__id_invalid = 0;
+
     /// @brief represents the Bullet Physics World.
     ///
     /// bullet-classes stored as a shared_ptr so they can be moved.
@@ -37,6 +44,21 @@ namespace lp::ph
         /// @return const pointer
         lp::gl::Bullet3Debug const*  getDebugRenderer() const { return &mDebugRender; }
 
+        /// @brief 'register' a new btCollisionShape, taking over its ownership
+        /// @param v_collShape the btCollisionShape pointer to take ownership of
+        /// @return id or lp::ph::const_collider__id_invalid if v_collShape == nullptr
+        ColliderID_t registerCollisionShape(btCollisionShape* v_collShape);
+
+        /// @brief unload a btCollisionShape
+        /// @param cv_id id to the collision shape
+        /// @warning Make sure that nothing uses this Collider BEFORE calling this function!
+        void unloadCollisionShape(const ColliderID_t cv_id);
+
+        /// @brief get a Debug const reference to btCollisionShape Container
+        /// @return const reference to Container
+        const std::unordered_map<ColliderID_t, btCollisionShape*>& getDebugCollisionShapeContainer() const { return mCollisionShapes; }
+
+        /// @brief destroy the physics world, unload all the things
         void destroy();
 
         private:
@@ -55,6 +77,12 @@ namespace lp::ph
 
         lp::EventListenerID mComponentCreatedEventID = 0;
         lp::EventListenerID mComponentDestroyedEventID = 0;
+
+        /// @brief container of all collisionshapes???
+        std::unordered_map<ColliderID_t, btCollisionShape*> mCollisionShapes;
+
+        /// @brief id of the next ColliderID_t
+        ColliderID_t mNextColliderID = const_collider__id_invalid + 1;
     };
 } //lp::ph
 

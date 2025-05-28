@@ -135,51 +135,37 @@ namespace lp
         
         dynamicsWorld->setGravity(btVector3(0,-10,0));
     
-        std::unique_ptr<btRigidBody> groundRigidBody;
-        std::unique_ptr<btCollisionShape> groundShape = std::make_unique<btStaticPlaneShape>(btVector3(0,1,0), 1);
-        std::unique_ptr<btDefaultMotionState> groundMotionState = std::make_unique<btDefaultMotionState>(btTransform(btQuaternion(0,0,0,1), btVector3(0,-1,0)));
-        {
-            btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, groundMotionState.get(), groundShape.get(), btVector3(0,0,0));
-            groundRigidBody =  std::make_unique<btRigidBody>(groundRigidBodyCI);
-        }
-        
-        dynamicsWorld->addRigidBody(groundRigidBody.get());
-        
-        std::unique_ptr<btRigidBody> fallRigidBody;
-        std::unique_ptr<btCollisionShape> fallShape = std::make_unique<btSphereShape>((btScalar)1.0f);
-        std::unique_ptr<btDefaultMotionState> fallMotionState = std::make_unique<btDefaultMotionState>(btTransform(btQuaternion(0,0,0,1), btVector3(0,500,0)));
-        {
-            btScalar mass = 1;
-            btVector3 fallInertia(0,0,0);
-            fallShape->calculateLocalInertia(mass,fallInertia);
-            btRigidBody::btRigidBodyConstructionInfo fallRigidBodyCI(mass, fallMotionState.get() ,fallShape.get(), fallInertia);
-            fallRigidBody = std::make_unique<btRigidBody>(fallRigidBodyCI);
-        }
-        
-         dynamicsWorld->addRigidBody(fallRigidBody.get());
-        
+
+        lp::ph::ColliderID_t fallSphere_collider = lp::ph::const_collider__id_invalid;
+        lp::ecs::Entity allSphere_entity = lp::ecs::const_entity_invalid;
         {
             auto& Recs = g_engine.getECS();
-            lp::ecs::Entity floot = Recs.createEntity();
+            allSphere_entity = Recs.createEntity();
+            lp::ComponentPhysics phy;
+            btCollisionShape* csfallSphere = new btSphereShape(1.0);
+            fallSphere_collider = g_engine.getPhysicsWorld().registerCollisionShape(csfallSphere);
+            const btScalar mass = 1; btVector3 fallInertia(0,0,0);
+            csfallSphere->calculateLocalInertia(mass, fallInertia);
+            phy.mState = std::make_shared<btDefaultMotionState>(btTransform(btQuaternion(0,0,0,1), btVector3(0,500,0)));
+            btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(mass, phy.mState.get(), csfallSphere, fallInertia);
+            phy.mRigidBody = std::make_shared<btRigidBody>(groundRigidBodyCI);
+            Recs.addComponent(allSphere_entity, phy);
+        }
+        
+        
+        lp::ph::ColliderID_t floor_collider = lp::ph::const_collider__id_invalid;
+        lp::ecs::Entity floor_entity = lp::ecs::const_entity_invalid;
+        {
+            btCollisionShape* csfloor = new btStaticPlaneShape(btVector3(0,1,0), 1);
+            floor_collider = g_engine.getPhysicsWorld().registerCollisionShape(csfloor);
+            auto& Recs = g_engine.getECS();
+            floor_entity = Recs.createEntity();
             lp::ComponentPhysics phy;
             phy.mState = std::make_shared<btDefaultMotionState>(btTransform(btQuaternion(0,0,0,1), btVector3(0, 0, 0)));
-            btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, phy.mState.get(), groundShape.get(), btVector3(0,0,0));
+            btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, phy.mState.get(), csfloor, btVector3(0,0,0));
             phy.mRigidBody = std::make_shared<btRigidBody>(groundRigidBodyCI);
-            Recs.addComponent(floot, phy);
-
+            Recs.addComponent(floor_entity, phy);
         }
-
-
-        // for (int i=0 ; i<3000 ; i++) {
-        //     dynamicsWorld->stepSimulation(deltaTime, 100);
-        //     btTransform trans;
-        //     fallRigidBody->getMotionState()->getWorldTransform(trans);
-        //     std::cout << "sphere " << i <<" height: " << trans.getOrigin().getY() << "\n";
-        //     if(glm::distance(trans.getOrigin().getY(), (btScalar)1) < 0.0001f)
-        //     {
-        //         break;
-        //     }
-        // }   
 
         // https://www.youtube.com/watch?app=desktop&v=BGAwRKPlpCw&t=14s
         // https://pybullet.org/Bullet/BulletFull/classbtCollisionShape.html
@@ -258,21 +244,21 @@ namespace lp
                     //         fallRigidBody->activate();
                     //     }
                     // }
-                    {
-                        const auto btPos = fallRigidBody->getWorldTransform().getOrigin();
-                        ImGui::Text("Pos: x:%.2f ,y:%.2f ,z:%.2f", btPos.getX(), btPos.getY(), btPos.getZ());
-                    }
-                    {
-                        const auto btPos = fallRigidBody->getCenterOfMassPosition();
-                        ImGui::Text("CenterOfMassPositio: x:%.2f ,y:%.2f ,z:%.2f", btPos.getX(), btPos.getY(), btPos.getZ());
-                    }
-                    {
-                        btTransform trans;
-                        fallRigidBody->getMotionState()->getWorldTransform(trans);
+                    // {
+                    //     const auto btPos = fallRigidBody->getWorldTransform().getOrigin();
+                    //     ImGui::Text("Pos: x:%.2f ,y:%.2f ,z:%.2f", btPos.getX(), btPos.getY(), btPos.getZ());
+                    // }
+                    // {
+                    //     const auto btPos = fallRigidBody->getCenterOfMassPosition();
+                    //     ImGui::Text("CenterOfMassPositio: x:%.2f ,y:%.2f ,z:%.2f", btPos.getX(), btPos.getY(), btPos.getZ());
+                    // }
+                    // {
+                    //     btTransform trans;
+                    //     fallRigidBody->getMotionState()->getWorldTransform(trans);
                         
-                        const auto btPos = trans.getOrigin();
-                        ImGui::Text("Pos - 2: x:%.2f ,y:%.2f ,z:%.2f", btPos.getX(), btPos.getY(), btPos.getZ()); //Interpolated position
-                    }
+                    //     const auto btPos = trans.getOrigin();
+                    //     ImGui::Text("Pos - 2: x:%.2f ,y:%.2f ,z:%.2f", btPos.getX(), btPos.getY(), btPos.getZ()); //Interpolated position
+                    // }
                         
                     
                     ImGui::EndMenu();
@@ -384,9 +370,10 @@ namespace lp
                     ImGui::SliderFloat3("Force", &vIctooor.x, -100.0, 100.0);
                     if(ImGui::Button("push"))
                     {
-                        fallRigidBody->applyCentralForce({vIctooor.x, vIctooor.y, vIctooor.z});
-                        //fallRigidBody->applyCentralPushImpulse({vIctooor.x, vIctooor.y, vIctooor.z});
-                        fallRigidBody->activate();
+                        auto& physicsC = g_engine.getECS().getComponent<lp::ComponentPhysics>(allSphere_entity);
+                        physicsC.mRigidBody->applyCentralForce({vIctooor.x, vIctooor.y, vIctooor.z});
+                        //physicsC.mRigidBody->applyCentralPushImpulse({vIctooor.x, vIctooor.y, vIctooor.z});
+                        physicsC.mRigidBody->activate();
                     }
                 }
                 ImGui::End();
@@ -471,8 +458,6 @@ namespace lp
 
             mWindow.swapBuffers();
         }
-         dynamicsWorld->removeRigidBody(groundRigidBody.get());
-         dynamicsWorld->removeRigidBody(fallRigidBody.get());
     }
 
     void Game::destroy()
