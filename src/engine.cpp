@@ -10,6 +10,7 @@
 #include <Labyrinth/Engine/ECS/coreECS.hpp>
 #include <Labyrinth/Engine/Event/eventManager.hpp>
 #include <Labyrinth/Engine/Resource/resourceManager.hpp>
+#include <Labyrinth/Engine/Physics/physicsWorld.hpp>
 
 #include "Labyrinth/Engine/ComponentLight.hpp"
 #include "Labyrinth/Engine/ComponentPosition.hpp"
@@ -25,6 +26,7 @@ namespace lp
         mECSPtr = std::make_shared<lp::ecs::CoreECS>();
         mEventsPtr = std::make_shared<lp::EventManager>();
         mResourcesPtr = std::make_shared<lp::ResourceManager>();
+        mPhysicsWorldPtr = std::make_shared<lp::ph::PhysicsWorld>();
     }
 
     bool Engine::initialize()
@@ -52,12 +54,16 @@ namespace lp
             return true;
         }
 
+        mPhysicsWorldPtr->initialize();
+
         return false;
     }
 
     void Engine::destroy()
     {
         mSoundPtr->deinit();
+        mPhysicsWorldPtr->destroy();
+        mResourcesPtr->destroy();
     }
   
 

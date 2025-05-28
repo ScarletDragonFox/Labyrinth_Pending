@@ -11,6 +11,8 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_PUSH();
 
 LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 
+#include "Labyrinth/Engine/Event/eventManager.hpp"
+
 namespace lp::ph
 {
     /// @brief represents the Bullet Physics World.
@@ -33,7 +35,10 @@ namespace lp::ph
 
         /// @brief get const pointer to debug Bullet Drawing class
         /// @return const pointer
-        lp::gl::Bullet3Debug const*  getDebugRenderer() const { return &mDebugRender; } 
+        lp::gl::Bullet3Debug const*  getDebugRenderer() const { return &mDebugRender; }
+
+        void destroy();
+
         private:
         /// @brief Debug Bullet renderer
         lp::gl::Bullet3Debug mDebugRender;
@@ -47,6 +52,9 @@ namespace lp::ph
         std::shared_ptr<btConstraintSolver> mSolver;
         /// @brief World, stores everything + logic
         std::shared_ptr<btDiscreteDynamicsWorld> mWorld;
+
+        lp::EventListenerID mComponentCreatedEventID = 0;
+        lp::EventListenerID mComponentDestroyedEventID = 0;
     };
 } //lp::ph
 

@@ -113,11 +113,7 @@ namespace lp
         // SoLoud::Speech speech;
         // speech.setParams(2000U, 9.0f, 0.5f, 20);
 
-        lp::res::SoundManager SMan;
-        if(SMan.initialize("assets/Audio/index.json"))
-        {
-            std::cerr << "SoundManager failed to initialize!\n";
-        }
+
 
         // struct FF
         // {
@@ -128,10 +124,14 @@ namespace lp
         // }; 
         // static int id_cunter = 1;
         // std::vector<FF*> songs_loaded;
+        {
+            lp::ecs::Signature olf = g_engine.getECS().getComponentEventListenablesSignature();
+            olf |= g_engine.getECS().getComponentSignature<lp::ComponentPhysics>();
+            g_engine.getECS().setComponentEventListenablesSignature(olf);     
+        }
+        
 
-        lp::ph::PhysicsWorld phWorld;
-        phWorld.initialize();
-        btDiscreteDynamicsWorld* dynamicsWorld = phWorld.getWorld();
+        btDiscreteDynamicsWorld* dynamicsWorld = g_engine.getPhysicsWorld().getWorld();
         
         dynamicsWorld->setGravity(btVector3(0,-10,0));
     
@@ -157,7 +157,19 @@ namespace lp
         }
         
          dynamicsWorld->addRigidBody(fallRigidBody.get());
-    
+        
+        {
+            auto& Recs = g_engine.getECS();
+            lp::ecs::Entity floot = Recs.createEntity();
+            lp::ComponentPhysics phy;
+            phy.mState = std::make_shared<btDefaultMotionState>(btTransform(btQuaternion(0,0,0,1), btVector3(0, 0, 0)));
+            btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, phy.mState.get(), groundShape.get(), btVector3(0,0,0));
+            phy.mRigidBody = std::make_shared<btRigidBody>(groundRigidBodyCI);
+            Recs.addComponent(floot, phy);
+
+        }
+
+
         // for (int i=0 ; i<3000 ; i++) {
         //     dynamicsWorld->stepSimulation(deltaTime, 100);
         //     btTransform trans;
@@ -219,7 +231,7 @@ namespace lp
             mLightSystem->update();
             
             lp::gl::ProcessedScene pScene;
-            GlobalPositioningSystem.process(pScene, *phWorld.getDebugRenderer());
+            GlobalPositioningSystem.process(pScene, *g_engine.getPhysicsWorld().getDebugRenderer());
 
             {
                 ImGui::BeginMainMenuBar();
@@ -451,7 +463,7 @@ namespace lp
 
             if(mDoPhysics)
             {
-                phWorld.stepSimulation(deltaTime);
+                g_engine.getPhysicsWorld().stepSimulation(deltaTime);
             }
             
 
@@ -476,22 +488,25 @@ namespace
     void int_imgui_all_entities_window(bool* windowOpen)
     {
         auto& Recs = lp::g_engine.getECS();
+        auto& Rsol = lp::g_engine.getSoLoud();
         static const lp::ecs::Signature c_sign_light = Recs.getComponentSignature<lp::ComponentLight>();
         static const lp::ecs::Signature c_sign_model = Recs.getComponentSignature<lp::ComponentModel>();
         static const lp::ecs::Signature c_sign_physics = Recs.getComponentSignature<lp::ComponentPhysics>();
         static const lp::ecs::Signature c_sign_position = Recs.getComponentSignature<lp::ComponentPosition>();
+        static const lp::ecs::Signature c_sign_soundsource = Recs.getComponentSignature<lp::ComponentSoundSource>();
 
         static std::pair<lp::ecs::Entity, lp::ecs::Signature> pair{lp::ecs::const_entity_invalid, 0};
 
         if(ImGui::Begin("Debug All Entities View", windowOpen))
         {
             const auto& allEntities = Recs.getDebugEntityMap();
-            if (ImGui::BeginTable("table3", 5, ImGuiTableFlags_Borders))
+            if (ImGui::BeginTable("table3", 6, ImGuiTableFlags_Borders))
             {
                 ImGui::TableSetupColumn("Entity ID");
                 ImGui::TableSetupColumn("Light C.");
                 ImGui::TableSetupColumn("Model C.");
                 ImGui::TableSetupColumn("Physics/Position C.");
+                ImGui::TableSetupColumn("SoundSource C.");
                 ImGui::TableSetupColumn("Inspect");
                 ImGui::TableHeadersRow();
                 for(const auto& ent:allEntities)
@@ -506,6 +521,8 @@ namespace
                     ImGui::TableSetColumnIndex(3);
                     ImGui::Text("%s", ((ent.second & c_sign_physics || ent.second & c_sign_position) ? "X": " "));
                     ImGui::TableSetColumnIndex(4);
+                    ImGui::Text("%s", (ent.second & c_sign_soundsource ? "X": " "));
+                    ImGui::TableSetColumnIndex(5);
                     ImGui::PushID(ent.first);
                     if(ImGui::Button("Select"))
                     {
@@ -565,7 +582,23 @@ namespace
                         ImGui::Text("Position: x = %f, y = %f, z = %f", model.getPosition().x, model.getPosition().y, model.getPosition().z);
                         ImGui::Text("Scale: x = %f, y = %f, z = %f", model.getScale().x, model.getScale().y, model.getScale().z);
                         ImGui::Text("Position: x = %f, y = %f, z = %f, w = %f", model.getRotation().x, model.getRotation().y, model.getRotation().z, model.getRotation().w);
-                        ImGui::Text("Sample Text");
+                        ImGui::TreePop();
+                    }
+                }
+                if(pair.second & c_sign_soundsource)
+                {
+                    if(ImGui::TreeNode("Sound Source"))
+                    {
+                        auto& sound = Recs.getComponent<lp::ComponentSoundSource>(pair.first);
+                        SoLoud::handle hand = sound.getHandle();
+                        
+                        ImGui::Text("Looping %s", (Rsol.getLooping(hand) ? "yes": "no"));
+                        ImGui::Text("Loop point: %f", (float)Rsol.getLoopPoint(hand));
+                        ImGui::Text("Overall Volume: %f", (float)Rsol.getOverallVolume(hand));
+                        ImGui::Text("Pan: %f", (float)Rsol.getPan(hand));
+                        ImGui::Text("Protect Voice %s", (Rsol.getProtectVoice(hand) ? "yes": "no"));
+                        ImGui::Text("Relative Play Speed: %f", (float)Rsol.getRelativePlaySpeed(hand));
+                        ImGui::Text("Samplerate: %f", (float)Rsol.getSamplerate(hand));
                         ImGui::TreePop();
                     }
                 }

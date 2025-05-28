@@ -12,6 +12,12 @@ class btDefaultMotionState;
 
 namespace lp
 {
+    namespace ph
+    {
+        /// @brief forward declaration
+        class PhysicsWorld;
+    }
+
     class ComponentPhysics
     {
         public:
@@ -55,7 +61,10 @@ namespace lp
         /// @param resetMomentum if true momentum + forces gets set to 0
         void setRotation(const glm::vec3 cv_rot, const bool resetMomentum = true);
 
-        private:
+        friend class lp::ph::PhysicsWorld;
+
+        //private:
+        public: //temporary
         /// @brief this must be a ptr. the address of a component can change,
         ///
         /// But the address of all Bullet-physics-world-aware classes must stay the same!

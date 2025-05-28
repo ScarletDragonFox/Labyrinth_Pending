@@ -19,6 +19,12 @@ namespace lp
         class CoreECS;
     }
     
+    namespace ph
+    {
+        /// @brief forward declaration of lp::ph::PhysicsWorld
+        class PhysicsWorld;
+    };
+
     /// @brief EventManager class forward definition.
     class EventManager;
 
@@ -56,6 +62,14 @@ namespace lp
         /// @brief destroy the Engine & all ts data
         void destroy();
 
+        /// @brief get the sound manager reference
+        /// @return sound manager reference
+        lp::res::SoundManager& getSoundManager() { return mSoundMan; }
+
+        /// @brief get the physics world reference
+        /// @return physics world reference
+        lp::ph::PhysicsWorld& getPhysicsWorld() { return *mPhysicsWorldPtr; }
+
         private:
         /// @brief SoLoud's sound engine
         std::shared_ptr<SoLoud::Soloud> mSoundPtr;
@@ -70,6 +84,9 @@ namespace lp
         ///
         /// Loads/Unloads & Stores all types of resources
         std::shared_ptr<lp::ResourceManager> mResourcesPtr;
+
+        /// @brief Continaer of the physics world
+        std::shared_ptr<lp::ph::PhysicsWorld> mPhysicsWorldPtr;
 
         /// @brief Manager of Sound
         lp::res::SoundManager mSoundMan;
