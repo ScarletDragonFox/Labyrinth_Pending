@@ -40,7 +40,7 @@ namespace lp::ecs
             .entity = cv_entity,
             .signature = cv_signature
         };
-        lp::Event evt(lp::EventTypes::ECS_ComponentDestroyed, data);
+        lp::Event evt(lp::EventTypes::ECS_ComponentCreated, data);
         g_engine.getEventManager().emit(evt);
     }
 }

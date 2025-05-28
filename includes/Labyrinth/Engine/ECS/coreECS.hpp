@@ -57,6 +57,10 @@ namespace lp::ecs
             Signature componentSign = mComponent.getComponentSignature<T>();
             entitySign |= componentSign;
             mSystem.entitySignatureChanged(cv_entity, entitySign);
+            if((mEventListenableSign & componentSign) == mEventListenableSign)
+            {
+                this->sendEventComponentCreated(componentSign, cv_entity);
+            }
         }
 
         /// @brief add (attach) a Component to an Entity
@@ -72,7 +76,7 @@ namespace lp::ecs
             Signature componentSign = mComponent.getComponentSignature<T>();
             entitySign |= componentSign;
             mSystem.entitySignatureChanged(cv_entity, entitySign);
-            if(mEventListenableSign & componentSign == mEventListenableSign)
+            if((mEventListenableSign & componentSign) == mEventListenableSign)
             {
                 this->sendEventComponentCreated(componentSign, cv_entity);
             }
