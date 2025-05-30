@@ -170,7 +170,7 @@ namespace lp::res
             LoadedModel& outputModel = *resultModelActualStorage;
             outputModel.mFile = c_path;
 
-            constexpr unsigned int Flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices;// | aiProcess_GenUVCoords | aiProcess_SortByPType;
+            constexpr unsigned int Flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices | aiProcess_PreTransformVertices;// | aiProcess_GenUVCoords | aiProcess_SortByPType;
             Assimp::Importer importer;
             
             const aiScene* scene = importer.ReadFile(cv_filename.data(), Flags);
