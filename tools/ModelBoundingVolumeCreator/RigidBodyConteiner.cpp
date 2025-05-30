@@ -33,7 +33,7 @@ namespace lpt
 
     }
 
-    RigidBodyContainerSingular::RigidBodyContainerSingular(std::shared_ptr<btDynamicsWorld> vWorld, btRigidBody* body)
+    RigidBodyContainerSingular::RigidBodyContainerSingular(std::shared_ptr<btDynamicsWorld> vWorld, btRigidBody* body, const char* name)
     {
         mWorld = vWorld;
         mBodyMotionState = std::make_shared<btDefaultMotionState>();//*body->getMotionState(
@@ -48,6 +48,7 @@ namespace lpt
         mBody->setFlags(btCollisionObject::CF_KINEMATIC_OBJECT);
         this->mShape.assign(body->getCollisionShape());
 
+        if(name == nullptr)
         {
             const char* nname =this->getNameBullet();
             const std::size_t len = strlen(nname);
@@ -56,6 +57,14 @@ namespace lpt
                 this->mNameBuffer[i] = '\0';
             }
             std::strncpy(this->mNameBuffer, nname, len > 51 ? 50: len);
+        } else
+        {
+            const std::size_t len = strlen(name);
+            for(std::size_t i = 0; i < 51; i++)
+            {
+                this->mNameBuffer[i] = '\0';
+            }
+             std::strncpy(this->mNameBuffer, name, len > 51 ? 50: len);
         }
     }
 
@@ -164,9 +173,9 @@ namespace lpt
         this->mObjects.clear();
     }
 
-    void RigidBosyContainerCreationClassThing::addNewChild(btRigidBody* body)
+    void RigidBosyContainerCreationClassThing::addNewChild(btRigidBody* body, const char* name)
     {
-        this->mObjects.push_back(std::make_unique<RigidBodyContainerSingular>(this->mWorld, body));
+        this->mObjects.push_back(std::make_unique<RigidBodyContainerSingular>(this->mWorld, body, name));
     }
 
     void RigidBosyContainerCreationClassThing::drawUI()

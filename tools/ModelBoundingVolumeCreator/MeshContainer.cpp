@@ -117,7 +117,7 @@ namespace lpt
         }
         const std::string directory = c_path.parent_path().string();
 
-        constexpr unsigned int Flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_RemoveComponent;
+        constexpr unsigned int Flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_RemoveComponent | aiProcess_PreTransformVertices;
         //aiProcess_PreTransformVertices; //fixes the no transform for meshes problem!!!
         Assimp::Importer importer;
         // ignore / do not import all components bar aiComponent_MESHES, as we don't use them

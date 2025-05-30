@@ -128,7 +128,10 @@ int main()
     vPhysicsBody->setCollisionShape(vPhysicsShape); //use this???
     btMotionState* vvvsefsfd = new  btDefaultMotionState();
     vPhysicsBody->setMotionState(vvvsefsfd);
-    vPhysicsBody->setCollisionFlags(vPhysicsBody->getCollisionFlags() | btCollisionObject::CF_DISABLE_VISUALIZE_OBJECT); 
+    vPhysicsBody->setCollisionFlags(vPhysicsBody->getCollisionFlags() | btCollisionObject::CF_DISABLE_VISUALIZE_OBJECT);
+    vPhysicsBody->setCcdSweptSphereRadius(100.0);
+    vPhysicsBody->setCcdMotionThreshold(1e-7);
+    //https://docs.panda3d.org/1.10/python/programming/physics/bullet/ccd
     dynamicsWorld->addRigidBody(vPhysicsBody.get());
 
 
@@ -175,6 +178,8 @@ int main()
     bool IMGUI_ShowDemoWindow = false;
     bool IMGUI_ShowRigidBosyContainerWindow = false;
     bool IMGUI_ShowMeshContainerWindow = true;
+    bool TRIGGER_drawDebug = true;
+
     double lastFrameTime = glfwGetTime();
     while(!window.shouldClose())
     {
@@ -193,6 +198,7 @@ int main()
             vPhysicsBody->setLinearVelocity(btVector3(0, 0, 0));
             vPhysicsBody->setTurnVelocity(btVector3(0, 0, 0));
             vPhysicsBody->activate();
+            
         }
         {
             playerData.mPosition = mPlayer.getPosition();
@@ -361,6 +367,8 @@ int main()
                     }
                 }
                 ImGui::SetItemTooltip("Enable collision for the players' camera");
+                ImGui::Checkbox("Draw Debug", &TRIGGER_drawDebug);
+                ImGui::SetItemTooltip("Draw Bullet debug");
                 ImGui::EndMenu();
             }
             ImGui::EndMainMenuBar();
@@ -487,7 +495,7 @@ int main()
         // make a menu to load a model & display it
         // make a menu to import/export files
 
-        dynamicsWorld->debugDrawWorld();
+        if(TRIGGER_drawDebug) dynamicsWorld->debugDrawWorld();
         dynamicsWorld->stepSimulation(deltaTime);
 
         {
@@ -512,7 +520,8 @@ int main()
 
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, UBOplayerDataBuffer);
 
-        if(bulletDebugRenderer.getBuffer() != 0)
+        
+        if(TRIGGER_drawDebug == true && bulletDebugRenderer.getBuffer() != 0)
         {
             lp::gl::RegularShader shader;
             shader.LoadShader(lp::gl::ShaderType::DebugLine);
