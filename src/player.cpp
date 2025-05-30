@@ -6,6 +6,8 @@
 
 #include <glm/gtc/quaternion.hpp> //glm::angleAxis, glm::quat
 
+#include <soloud.h>
+
 namespace lp
 {
     Player::Player()
@@ -131,6 +133,8 @@ namespace lp
             mPosition += mPositionDelta.x * mVectorFront;
             mPosition += mPositionDelta.y * mVectorUp;
             mPosition += mPositionDelta.z * mVectorRight;
+            lp::g_engine.getSoLoud().set3dListenerVelocity(mPositionDelta.x, mPositionDelta.y, mPositionDelta.z);
+            lp::g_engine.getSoLoud().set3dListenerPosition(mPosition.x, mPosition.y, mPosition.z);
             mPositionDelta = {};
         }
     }
@@ -180,6 +184,9 @@ namespace lp
         this->mVectorFront = glm::normalize(front);
         this->mVectorRight = glm::normalize(right);
         this->mVectorUp = glm::normalize(up);
+
+        lp::g_engine.getSoLoud().set3dListenerUp(this->mVectorUp.x, this->mVectorUp.y, this->mVectorUp.z);
+        lp::g_engine.getSoLoud().set3dListenerAt(this->mVectorFront.x, this->mVectorFront.y, this->mVectorFront.z);
     }
 
     void Player::loadDefaultConfig()

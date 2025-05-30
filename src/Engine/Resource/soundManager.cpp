@@ -15,6 +15,8 @@
 #include <soloud_wav.h>
 #include <soloud.h>
 
+#include <cmath>
+
 namespace lp::res
 {
     bool SoundManager::initialize(const std::string_view soundsfilename)
@@ -49,7 +51,7 @@ namespace lp::res
                     if(mAudios.contains(filename)) continue;
                     SoLoud::Wav *wavp = new SoLoud::Wav();
                     int res = wavp->load(filename.c_str());
-                    if(res != 0)
+                    if(res == 0)
                     {
                         AudioData ad;
                         ad.source = wavp;
@@ -115,8 +117,12 @@ namespace lp::res
                 pos = positionC.getPosition();
             }
             ComponentSoundSource CSS;
-            CSS.mHandle = sL.play3d((*iter->second.source), pos.x, pos.y, pos.z, velo.x, velo.y, velo.z);
-
+            CSS.mHandle = sL.play3d((*iter->second.source), pos.x, pos.y, pos.z, velo.x, velo.y, velo.z, 1);
+            CSS.setAttenuationModel(SoLoud::AudioSource::ATTENUATION_MODELS::LINEAR_DISTANCE);
+            CSS.setRolloffFactor(1.0);
+            CSS.setMax(200.0);
+            CSS.setMin(50.0);
+            
             ecsR.addComponent(cv_entity, CSS);
         }
     }
