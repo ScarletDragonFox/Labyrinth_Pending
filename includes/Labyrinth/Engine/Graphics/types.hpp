@@ -23,7 +23,11 @@ namespace lp::gl
         /// Outputs interpolated line color to the framebuffer in the 0-slot
         DebugLine,
 
+        /// @brief simple shader for a textured model
         ModelTextured,
+
+        /// @brief Bilboard shader for debug icons like sound/audio source location
+        BillboardIcon,
 
         /// @brief Last ''shader'', serves as an invalid value and a count of how many shader there are in here 
         /// @warning DO NOT TOUCH! must be last
@@ -48,6 +52,7 @@ namespace lp::gl
             "SimpleColor",
             "DebugLine",
             "ModelTextured",
+            "BillboardIcon",
             "Count"
         };
         static_assert((sizeof(names) / sizeof(names[0])) != static_cast<std::size_t>(ShaderType::Count), "The 'name' array of shader names was not updated!");

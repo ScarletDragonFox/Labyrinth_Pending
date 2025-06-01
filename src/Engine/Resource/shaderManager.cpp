@@ -117,6 +117,11 @@ namespace
     /// @brief fragment shader of ModelTextured
     const char* const l_shaderpath_ModelTextured_fs = "shaders/modelTextured/modelTextured.fs.glsl";
 
+    /// @brief vertex shader of BillboardIcon
+    const char* const l_shaderpath_BillboardIcon_vs = "shaders/billboardIcon/billboardIcon.vs.glsl";  
+    /// @brief fragment shader of BillboardIcon
+    const char* const l_shaderpath_BillboardIcon_fs = "shaders/billboardIcon/billboardIcon.fs.glsl";
+
     //ComputeShader shader program filepaths:
 
     /// @brief compute shader of name
@@ -136,6 +141,10 @@ namespace lp::res
 
             mRegularShaders[static_cast<int>(lp::gl::ShaderType::ModelTextured)].mVertexPath = l_shaderpath_ModelTextured_vs;
             mRegularShaders[static_cast<int>(lp::gl::ShaderType::ModelTextured)].mFragmentPath = l_shaderpath_ModelTextured_fs;
+
+            mRegularShaders[static_cast<int>(lp::gl::ShaderType::BillboardIcon)].mVertexPath = l_shaderpath_BillboardIcon_vs;
+            mRegularShaders[static_cast<int>(lp::gl::ShaderType::BillboardIcon)].mFragmentPath = l_shaderpath_BillboardIcon_fs;
+
         }
 
         {

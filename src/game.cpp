@@ -12,6 +12,8 @@
 
 #include <glad/gl.h>
 
+#include <stb_image.h>
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -187,6 +189,24 @@ namespace lp
             CModl.mID = modelRef;
             g_engine.getECS().addComponent(EE, CPos);
             g_engine.getECS().addComponent(EE, CModl);
+        }
+
+
+        lp::gl::Texture debugTextureLight;
+        lp::gl::Texture debugTextureSound;
+        {
+            int x = 0; int y = 0; int channels = 0;
+            stbi_uc* data = stbi_load("assets/images/icons/reshot-icon-light-max.png", &x, &y, &channels, 4); //
+            if(data){
+                debugTextureLight.create(lp::gl::Format::RGBA8, glm::uvec2(x, y), data, 0, true);
+                stbi_image_free(data);
+            } else std::cout << "Couldn't load icon-light-max: " << stbi_failure_reason() << "\n";
+            
+            data = stbi_load("assets/images/icons/reshot-icon-high-audio.png ", &x, &y, &channels, 4);
+            if(data){
+                debugTextureSound.create(lp::gl::Format::RGBA8, glm::uvec2(x, y), data, 0, true);
+                stbi_image_free(data);
+            } else std::cout << "Couldn't load icon-high-audio: " << stbi_failure_reason() << "\n";
         }
 
         //https://web.archive.org/web/20130419113144/http://bulletphysics.org/mediawiki-1.5.8/index.php/Hello_World
@@ -452,9 +472,21 @@ namespace lp
             {
                 g_engine.getPhysicsWorld().stepSimulation(deltaTime);
             }
-            
-
+            std::vector<glm::vec3> mLightPositions;
+            {
+                auto& Recs = g_engine.getECS();
+                for(const auto& entit: this->mLightSystem->mLightBufferEntityMap)
+                {
+                    if(Recs.isAlive(entit) && Recs.hasComponent<lp::ComponentLight>(entit))
+                    {
+                        const lp::ComponentLight& lig = Recs.getComponent<lp::ComponentLight>(entit);
+                        mLightPositions.push_back(lig.getPosition());
+                    }
+                }
+            }
             mRenndd.render(pScene);
+            mRenndd.debug001(mLightPositions, debugTextureLight);
+
 
             mWindow.swapBuffers();
         }

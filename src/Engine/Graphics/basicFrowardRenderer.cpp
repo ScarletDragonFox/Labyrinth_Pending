@@ -48,6 +48,8 @@ namespace lp::gl
             glVertexArrayAttribFormat(mVertexArrayBulletLineDebug, 1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float));
             glVertexArrayAttribBinding(mVertexArrayBulletLineDebug, 0, 0);
             glVertexArrayAttribBinding(mVertexArrayBulletLineDebug, 1, 0);
+
+            glCreateVertexArrays(1, &mVertexArrayDummy);
         }
 
         glCreateBuffers(1, &mUBO_Player);
@@ -125,6 +127,28 @@ namespace lp::gl
             lp::gl::Texture::Unbind(0);
         }
         glUseProgram(0);
+    }
+
+
+    void ForwardRenderer::debug001(std::vector<glm::vec3>& lightpositions, lp::gl::Texture& texture)
+    {
+        if(lightpositions.size() == 0) return;
+        glDisable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+        RegularShader shader;
+        shader.LoadShader(ShaderType::BillboardIcon);
+        shader.Use();
+        texture.Bind(0);
+        glBindVertexArray(this->mVertexArrayDummy);
+        for(auto& pos:lightpositions)
+        {
+            shader.SetUniform(3, pos);
+            
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+        glBindVertexArray(0);
+        lp::gl::Texture::Unbind(0);
+        glEnable(GL_CULL_FACE);
     }
 
     void ForwardRenderer::updatePlayer(const lp::Player& cr_player, bool cv_wasChanged)

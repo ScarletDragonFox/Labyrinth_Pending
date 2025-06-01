@@ -15,6 +15,9 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 
 #include <Labyrinth/Engine/Graphics/processedScene.hpp>
 
+#include <vector>
+#include <Labyrinth/Engine/Graphics/textures.hpp>
+
 ///UBO Bindings:
 // 0 - DebugRendererData / mUBO_Player
 
@@ -32,6 +35,7 @@ namespace lp::gl
         public:
         void setup(const unsigned int cv_width, unsigned int cv_height);
         void render(const lp::gl::ProcessedScene& cv_pscene);
+        void debug001(std::vector<glm::vec3>& lightpositions, lp::gl::Texture& texture);
 
         /// @brief update the RendererForwardPlus_PlayerData and the UBO storing it.
         ///
@@ -52,6 +56,9 @@ namespace lp::gl
 
         /// @brief VAO used for bullet debug drawing
         GLuint mVertexArrayBulletLineDebug = 0;
+
+        /// @brief empty VAO to stop OpenGL complaints
+        GLuint mVertexArrayDummy = 0;
 
         //GLsync mSyncCamera = {};
         GLuint mUBO_Player = 0;
