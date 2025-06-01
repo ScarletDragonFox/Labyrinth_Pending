@@ -12,7 +12,7 @@ namespace lp::res
         for(const auto& mdl:this->mEntities)
         {
             auto& comp = ecs.getComponent<lp::ComponentModel>(mdl);
-            if(comp.mID == cv_id)
+            if(comp.mID == cv_id && comp.mModel == nullptr)
             {
                 comp.mModel = v_ptr;
             }

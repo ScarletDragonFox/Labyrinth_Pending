@@ -54,7 +54,7 @@ namespace lp::res
         using FpSeconds = std::chrono::duration<double, std::chrono::seconds::period>;
         static_assert(std::chrono::treat_as_floating_point<FpSeconds::rep>::value, "Rep required to be floating point");
 
-        for(auto it = mLoaders.begin(); it != mLoaders.end();)
+        for(auto it = mLoaders.begin(); it != mLoaders.end(); ++it)
         {
             using namespace std::chrono_literals;
             if((*it).valid() && (*it).wait_for(1ns) == std::future_status::ready)
@@ -63,8 +63,6 @@ namespace lp::res
                 mModels[retStru.id] = retStru.mPtr;
                 it = mLoaders.erase(it);
                 mSystemModelLifetime->modelLoaded(retStru.id, retStru.mPtr); //update/notify ComponentModels that have this id that their model has loaded 
-            } else {
-                ++it;
             }
         }
 
@@ -144,6 +142,7 @@ namespace lp::res
 
     ModelID_t ModelLoader::scheduleLoad(const std::string_view cv_name)
     {
+
         for(const auto& model: this->mModelNames)
         {
             if(model.second == cv_name) return model.first; //early return on model already being loaded
@@ -151,7 +150,7 @@ namespace lp::res
 
         ++mLastModelID; //update mLastModelID
 
-        const auto loader_lambda = [this](const std::string_view cv_filename) -> LambdaReturnStructure
+        const auto loader_lambda = [this](const std::string cv_filename) -> LambdaReturnStructure
         {
             LambdaReturnStructure resturnStruct;
             resturnStruct.id = this->mLastModelID;
@@ -162,7 +161,7 @@ namespace lp::res
             {
                 return resturnStruct;
             }
-            const std::string directory = c_path.parent_path().string();
+            const std::string directory = c_path.parent_path().generic_string();
 
 
             std::shared_ptr<LoadedModel> resultModelActualStorage = std::make_shared<LoadedModel>();
@@ -305,7 +304,7 @@ namespace lp::res
             return resturnStruct;
         };
 
-        mLoaders.push_back(std::async(loader_lambda, cv_name));
+        mLoaders.push_back(std::async(loader_lambda, std::string(cv_name)));
 
         return mLastModelID; //return mLastModelID - now containing this model's id
     }
