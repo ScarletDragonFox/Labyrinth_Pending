@@ -150,10 +150,10 @@ namespace lp::res
 
         ++mLastModelID; //update mLastModelID
 
-        const auto loader_lambda = [this](const std::string cv_filename) -> LambdaReturnStructure
+        const auto loader_lambda = [this](const std::string cv_filename, const lp::res::ModelID_t cv_modelID) -> LambdaReturnStructure
         {
             LambdaReturnStructure resturnStruct;
-            resturnStruct.id = this->mLastModelID;
+            resturnStruct.id = cv_modelID;
             resturnStruct.mPtr = nullptr;
 
             const std::filesystem::path c_path(cv_filename);
@@ -304,7 +304,7 @@ namespace lp::res
             return resturnStruct;
         };
 
-        mLoaders.push_back(std::async(loader_lambda, std::string(cv_name)));
+        mLoaders.push_back(std::async(loader_lambda, std::string(cv_name), mLastModelID));
 
         return mLastModelID; //return mLastModelID - now containing this model's id
     }
