@@ -12,8 +12,6 @@
 
 #include <glad/gl.h>
 
-#include <stb_image.h>
-
 #include <iostream>
 #include <string>
 #include <vector>
@@ -166,6 +164,7 @@ namespace lp
             phy.mState = std::make_shared<btDefaultMotionState>(btTransform(btQuaternion(0,0,0,1), btVector3(0, 0, 0)));
             btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, phy.mState.get(), csfloor, btVector3(0,0,0));
             phy.mRigidBody = std::make_shared<btRigidBody>(groundRigidBodyCI);
+            //phy.mRigidBody->isActive(); //if true for an object ++ on the unsigned int (allows for tracking changes)
             Recs.addComponent(floor_entity, phy);
         }
 
@@ -184,29 +183,11 @@ namespace lp
         {
             lp::ecs::Entity EE = g_engine.getECS().createEntity();
             lp::ComponentPosition CPos;
-            CPos.setPosition({-100, 100, 0});
+            CPos.setPosition({0, 0, 0});
             lp::ComponentModel CModl;
             CModl.mID = modelRef;
             g_engine.getECS().addComponent(EE, CPos);
             g_engine.getECS().addComponent(EE, CModl);
-        }
-
-
-        lp::gl::Texture debugTextureLight;
-        lp::gl::Texture debugTextureSound;
-        {
-            int x = 0; int y = 0; int channels = 0;
-            stbi_uc* data = stbi_load("assets/images/icons/reshot-icon-light-max.png", &x, &y, &channels, 4); //
-            if(data){
-                debugTextureLight.create(lp::gl::Format::RGBA8, glm::uvec2(x, y), data, 0, true);
-                stbi_image_free(data);
-            } else std::cout << "Couldn't load icon-light-max: " << stbi_failure_reason() << "\n";
-            
-            data = stbi_load("assets/images/icons/reshot-icon-high-audio.png ", &x, &y, &channels, 4);
-            if(data){
-                debugTextureSound.create(lp::gl::Format::RGBA8, glm::uvec2(x, y), data, 0, true);
-                stbi_image_free(data);
-            } else std::cout << "Couldn't load icon-high-audio: " << stbi_failure_reason() << "\n";
         }
 
         //https://web.archive.org/web/20130419113144/http://bulletphysics.org/mediawiki-1.5.8/index.php/Hello_World
@@ -220,7 +201,6 @@ namespace lp
 
         bool IMGUIDoShowDebugAllEntitiesWindow = false;
 
-        
 
         bool mDoPhysics = false;
         double lastFrameTime = glfwGetTime();
@@ -239,6 +219,8 @@ namespace lp
             lp::gl::ProcessedScene pScene;
             GlobalPositioningSystem.process(pScene, *g_engine.getPhysicsWorld().getDebugRenderer());
 
+            g_engine.getSoLoud().update3dAudio();
+            
             {
                 ImGui::BeginMainMenuBar();
                 if(ImGui::BeginMenu("Options"))
@@ -301,7 +283,8 @@ namespace lp
                     {
                         this->mPlayer.getFoVRef() = glm::radians(CamFoV);
                     }
-
+                    ImGui::Checkbox("Draw debug light icons", &mRenndd.mTriggerDrawDebugLightIcons);
+                    ImGui::Checkbox("Draw debug sound icons", &mRenndd.mTriggerDrawDebugSoundIcons);
                     ImGui::EndMenu();
                 }
                 ImGui::EndMainMenuBar();
@@ -472,20 +455,14 @@ namespace lp
             {
                 g_engine.getPhysicsWorld().stepSimulation(deltaTime);
             }
-            std::vector<glm::vec3> mLightPositions;
-            {
-                auto& Recs = g_engine.getECS();
-                for(const auto& entit: this->mLightSystem->mLightBufferEntityMap)
-                {
-                    if(Recs.isAlive(entit) && Recs.hasComponent<lp::ComponentLight>(entit))
-                    {
-                        const lp::ComponentLight& lig = Recs.getComponent<lp::ComponentLight>(entit);
-                        mLightPositions.push_back(lig.getPosition());
-                    }
-                }
-            }
             mRenndd.render(pScene);
-            mRenndd.debug001(mLightPositions, debugTextureLight);
+            //TODO 3: create global + player sound settings
+            //TODO 4: decouple debug UI from code:
+            //  - step 1: put debug ui into own code
+            //    + it JUST needs to work, not be fast
+            //    + lp::g_engine.getECS().getDebugEntityMap()
+            //TODO 5: create a way to add/remove all these components + entities
+            //  - sound might be a challange
 
 
             mWindow.swapBuffers();

@@ -8,6 +8,14 @@
 
 #include "Labyrinth/Engine/Resource/modelLoader.hpp"
 
+#include <stb_image.h>
+
+#include "Labyrinth/Engine/ECS/coreECS.hpp"
+#include "Labyrinth/Engine/ComponentPosition.hpp"
+#include "Labyrinth/Engine/ComponentPhysics.hpp"
+#include "Labyrinth/Engine/ComponentSoundSource.hpp"
+#include "Labyrinth/Engine/ComponentLight.hpp"
+
 namespace
 {
     void renderCube();
@@ -54,6 +62,22 @@ namespace lp::gl
 
         glCreateBuffers(1, &mUBO_Player);
         glNamedBufferStorage(mUBO_Player, sizeof(RendererForwardPlus_PlayerData), nullptr, GL_DYNAMIC_STORAGE_BIT);
+
+
+        {
+            int x = 0; int y = 0; int channels = 0;
+            stbi_uc* data = stbi_load("assets/images/icons/reshot-icon-light-max.png", &x, &y, &channels, 4); //
+            if(data){
+                this->mTexLightIcon.create(lp::gl::Format::RGBA8, glm::uvec2(x, y), data, 0, true);
+                stbi_image_free(data);
+            } else std::cout << "Couldn't load icon-light-max: " << stbi_failure_reason() << "\n";
+            
+            data = stbi_load("assets/images/icons/reshot-icon-high-audio.png ", &x, &y, &channels, 4);
+            if(data){
+                this->mTexSoundIcon.create(lp::gl::Format::RGBA8, glm::uvec2(x, y), data, 0, true);
+                stbi_image_free(data);
+            } else std::cout << "Couldn't load icon-high-audio: " << stbi_failure_reason() << "\n";
+        }
     }
 
     void ForwardRenderer::render(const lp::gl::ProcessedScene& cv_pscene)
@@ -127,6 +151,8 @@ namespace lp::gl
             lp::gl::Texture::Unbind(0);
         }
         glUseProgram(0);
+
+        DrawDebugIcons();
     }
 
 
@@ -163,6 +189,56 @@ namespace lp::gl
     void ForwardRenderer::destroy()
     {
 
+    }
+
+    void ForwardRenderer::DrawDebugIcons()
+    {
+        glDisable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+        RegularShader shader;
+        shader.LoadShader(ShaderType::BillboardIcon);
+        shader.Use();
+        mTexSoundIcon.Bind(0);
+        glBindVertexArray(this->mVertexArrayDummy);
+        auto& Recs = lp::g_engine.getECS();
+        if(this->mTriggerDrawDebugSoundIcons)
+        {
+            const lp::ecs::Signature CPSign =  Recs.getComponentSignature<lp::ComponentPosition>();
+            const lp::ecs::Signature CSSSign =  Recs.getComponentSignature<lp::ComponentSoundSource>();
+            const lp::ecs::Signature CPhySign =  Recs.getComponentSignature<lp::ComponentPhysics>();
+            for(const auto& entit: Recs.getDebugEntityMap())
+            {
+                if(entit.second & CSSSign)
+                {
+                    glm::vec3 position = {};
+                    if(entit.second & CPSign)
+                    {
+                        position = Recs.getComponent<lp::ComponentPosition>(entit.first).getPosition();
+                    } else if(entit.second & CPhySign)
+                    {
+                        position = Recs.getComponent<lp::ComponentPhysics>(entit.first).getPosition();
+                    }
+                    shader.SetUniform(3, position);
+                    glDrawArrays(GL_TRIANGLES, 0, 6);
+                }
+            }
+        }
+        if(this->mTriggerDrawDebugLightIcons)
+        {
+            mTexLightIcon.Bind(0);
+            const lp::ecs::Signature CLSign =  Recs.getComponentSignature<lp::ComponentLight>();
+            for(const auto& entit: Recs.getDebugEntityMap())
+            {
+                if(entit.second & CLSign)
+                {
+                    shader.SetUniform(3, Recs.getComponent<lp::ComponentLight>(entit.first).getPosition());
+                    glDrawArrays(GL_TRIANGLES, 0, 6);
+                }
+            }
+        }
+         glBindVertexArray(0);
+        lp::gl::Texture::Unbind(0);
+        glEnable(GL_CULL_FACE);
     }
 }
 

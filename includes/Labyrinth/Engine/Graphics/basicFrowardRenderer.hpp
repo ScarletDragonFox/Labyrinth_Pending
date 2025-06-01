@@ -49,7 +49,13 @@ namespace lp::gl
         void updatePlayer(const lp::Player& cr_player, bool cv_wasChanged = true);
 
         void destroy();
+
+        bool mTriggerDrawDebugLightIcons = false;
+        bool mTriggerDrawDebugSoundIcons = false;
+
         private:
+
+        void DrawDebugIcons();
 
         /// @brief VAO used for all textured models
         GLuint mVertexArrayModelTextured = 0;
@@ -63,6 +69,9 @@ namespace lp::gl
         //GLsync mSyncCamera = {};
         GLuint mUBO_Player = 0;
         RendererForwardPlus_PlayerData mPlayerData;
+
+        lp::gl::Texture mTexLightIcon;
+        lp::gl::Texture mTexSoundIcon;
 
         Framebuffer mOutBuff;
         unsigned short mFramebufferAttachColorID = 0;
