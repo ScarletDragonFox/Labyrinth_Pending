@@ -4,11 +4,17 @@
 #include <Labyrinth/Engine/ECS/coreECS.hpp>
 #include <Labyrinth/Engine/ComponentPhysics.hpp>
 
+#include <bullet/BulletCollision/CollisionDispatch/btGhostObject.h> //btGhostPairCallback
+
 namespace lp::ph
 {
     void PhysicsWorld::initialize(){
         // Build the broadphase
         mBroadphase = std::make_shared<btDbvtBroadphase>();
+
+        mBroadphase->getOverlappingPairCache()->setInternalGhostPairCallback(new btGhostPairCallback()); //this is here so btGhostObject can have a callback, therefore experiencing collsion.
+        // Used by the player collision, so DON'T TOUCH!
+
         // Set up the collision configuration and dispatcher
         mCollisionConfiguration = std::make_shared<btDefaultCollisionConfiguration>();
         mDispatcher = std::make_shared<btCollisionDispatcher>(mCollisionConfiguration.get());

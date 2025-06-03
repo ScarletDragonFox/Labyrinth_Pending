@@ -4,9 +4,21 @@
 
 #include <GLFW/glfw3.h>
 
+LP_PRAGMA_DISABLE_ALL_WARNINGS_PUSH();
 #include <glm/gtc/quaternion.hpp> //glm::angleAxis, glm::quat
 
 #include <soloud.h>
+
+LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
+
+namespace
+{
+    /// @brief internal function to convert from btVector3 -> glm::vec3
+    inline glm::vec3 int_to_glm(btVector3& vec)
+    {
+        return glm::vec3(vec.getX(), vec.getY(), vec.getZ());
+    }
+}
 
 namespace lp
 {
@@ -48,9 +60,65 @@ namespace lp
         });
     }
 
+
+    void Player::createCollision(btDynamicsWorld *dynamicsWorld)
+    {
+        if(characterController) return;
+
+        // Create the collision shape for the character (a simple capsule)
+        shape = new btCapsuleShape(0.5, 1.75); // radius, height
+        btTransform startTransform;
+        startTransform.setIdentity();
+        startTransform.setOrigin(btVector3(mPosition.x, mPosition.y, mPosition.z));
+
+        // Create motion state (used to store the rigid body position)
+        motionState = new btDefaultMotionState(startTransform);
+
+        btVector3 localInertia(0, 0, 0);
+        shape->calculateLocalInertia(mass, localInertia);
+
+        // Create the ghost object (used by the kinematic character controller)
+        ghostObject = new btPairCachingGhostObject();
+        ghostObject->setWorldTransform(startTransform);
+        ghostObject->setCollisionShape(shape);
+        ghostObject->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
+
+        
+
+        // Create the character controller object
+        characterController = new btKinematicCharacterController(ghostObject, shape, (btScalar)0.35f, btVector3(0.0, 1.0, 0.0));
+        characterController->setLinearDamping(0.3);
+        
+        characterController->setUseGhostSweepTest(true);
+       // characterController->setGravity(btVector3(0, -9.8, 0));
+        ghostObject->setFriction(0.5);
+        // Set initial position and attach it to the world
+        ghostObject->setWorldTransform(startTransform);
+
+        dynamicsWorld->addCollisionObject(this->ghostObject, btBroadphaseProxy::CharacterFilter, btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
+        dynamicsWorld->addAction(this->characterController);
+    }
+
+    void Player::destroyCollision(btDynamicsWorld *dynamicsWorld)
+    {
+        dynamicsWorld->removeAction(this->characterController);
+        dynamicsWorld->removeCollisionObject(this->ghostObject);
+        
+
+        if(characterController) delete characterController; 
+        if(ghostObject) delete ghostObject; 
+        if(shape) delete shape; 
+        if(motionState) delete motionState; 
+
+        characterController = nullptr;
+        ghostObject = nullptr;
+        shape = nullptr;
+        motionState = nullptr;
+    }
+
     glm::mat4 Player::getViewMatrix()const
     {
-        return (glm::mat4)glm::lookAt(this->mPosition, this->mPosition + this->mVectorFront, this->mVectorUp);
+        return (glm::mat4)glm::lookAt(this->mCameraPosition, this->mCameraPosition + this->mVectorFront, this->mVectorUp);
     }
 
     namespace{
@@ -96,29 +164,82 @@ namespace lp
 
         if(!mTriggerInput) return;
 
+        bool motionOcurred = false;
         {
+            mPositionDelta = {};
+
             if(this->mKeymapps[static_cast<int>(Action::Forward)].pressed)
             {
-                this->mPositionDelta += glm::dvec3(1, 0, 0);
+                this->mPositionDelta += glm::dvec3(1, 0, 0); motionOcurred = true;
             }
             if(this->mKeymapps[static_cast<int>(Action::Back)].pressed)
             {
-                this->mPositionDelta += glm::dvec3(-1, 0, 0);
+                this->mPositionDelta += glm::dvec3(-1, 0, 0); motionOcurred = true;
             }
             if(this->mKeymapps[static_cast<int>(Action::Right)].pressed)
             {
-                this->mPositionDelta += glm::dvec3(0, 0, 1);
+                this->mPositionDelta += glm::dvec3(0, 0, 1); motionOcurred = true;
             }
             if(this->mKeymapps[static_cast<int>(Action::Left)].pressed)
             {
-                this->mPositionDelta += glm::dvec3(0, 0, -1);
+                this->mPositionDelta += glm::dvec3(0, 0, -1); motionOcurred = true;
             }
             if(this->mKeymapps[static_cast<int>(Action::Jump)].pressed)
             {
-                this->mPositionDelta += glm::dvec3(0, 1, 0); //TODO: jump should 'launch' the player up
+                if(characterController)
+                {
+                    if (characterController->onGround()) {
+                        characterController->jump(); motionOcurred = true;
+                    }
+                } 
             }
         }
+        
 
+        if(characterController)
+        {
+            if(motionOcurred)
+            {
+                characterController->setLinearDamping(0.3);
+            }else
+            {
+                characterController->setLinearDamping(0.8);
+            }
+
+            if(motionOcurred)
+            {
+                //mPosition = glm::normalize(mPositionDelta) * mFreeCamSpeed * deltaTime;
+                glm::dvec3 deltaCalct = glm::normalize(mPositionDelta) * mFreeCamSpeed * deltaTime;
+                {
+                    const glm::bvec3 why = glm::isnan(deltaCalct) || glm::isinf(deltaCalct);
+                    if(why.x || why.y || why.z){
+                        deltaCalct = {0.0, 0.0, 0.0};
+                    }
+                }
+                const glm::dvec3 problemSolver = deltaCalct.x * mVectorFront + deltaCalct.y * mVectorUp + deltaCalct.z * mVectorRight;
+                characterController->setWalkDirection(btVector3(problemSolver.x, problemSolver.y, problemSolver.z));
+            }
+
+            mPosition = int_to_glm(ghostObject->getWorldTransform().getOrigin());
+            mCameraPosition = mPosition + glm::dvec3(0, 1.5, 0); // Camera above character
+        } else
+        { //if there is no characterController, fallback to this
+            mPositionDelta = glm::normalize(mPositionDelta) * mFreeCamSpeed * deltaTime;
+             {
+                const glm::bvec3 why = glm::isnan(mPositionDelta) || glm::isinf(mPositionDelta);
+                if(why.x || why.y || why.z){
+                    mPositionDelta = {0.0, 0.0, 0.0};
+                }
+            }
+            mPosition += mPositionDelta.x * mVectorFront;
+            mPosition += mPositionDelta.y * mVectorUp;
+            mPosition += mPositionDelta.z * mVectorRight;
+            mCameraPosition = mPosition;
+        }
+
+        
+        
+        
         if(mOrientationDelta != glm::dvec2(0.0)) //check if the mouse was moved since last update
         {
             mOrientationDelta *= this->mMouseSenstitivity;
@@ -127,15 +248,18 @@ namespace lp
             this->updateVectors();
             mOrientationDelta = {};
         }
-        if(mPositionDelta != glm::dvec3(0.0))
+        if(motionOcurred)
         {
-            mPositionDelta = glm::normalize(mPositionDelta) * mFreeCamSpeed * deltaTime;
-            mPosition += mPositionDelta.x * mVectorFront;
-            mPosition += mPositionDelta.y * mVectorUp;
-            mPosition += mPositionDelta.z * mVectorRight;
-            lp::g_engine.getSoLoud().set3dListenerVelocity(mPositionDelta.x, mPositionDelta.y, mPositionDelta.z);
+            if(characterController)
+            {
+                const auto velo = characterController->getLinearVelocity();
+                lp::g_engine.getSoLoud().set3dListenerVelocity(velo.getX(), velo.getY(), velo.getZ());
+            } else{
+                lp::g_engine.getSoLoud().set3dListenerVelocity(mPositionDelta.x, mPositionDelta.y, mPositionDelta.z);
+            }
+             
             lp::g_engine.getSoLoud().set3dListenerPosition(mPosition.x, mPosition.y, mPosition.z);
-            mPositionDelta = {};
+            
         }
     }
 
@@ -144,6 +268,11 @@ namespace lp
         auto& eventMan = g_engine.getEventManager();
         eventMan.unregister(mMouseListenerID);
         eventMan.unregister(mKeyboardListenerID);
+
+        if(characterController) delete characterController;
+        if(ghostObject) delete ghostObject;
+        if(shape) delete shape;
+        if(motionState) delete motionState;
     }
 
     void Player::checkConstraints()

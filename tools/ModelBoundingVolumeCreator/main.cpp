@@ -187,7 +187,7 @@ int main()
 
         const double deltaTime = glfwGetTime() - lastFrameTime;
         lastFrameTime = glfwGetTime();
-        mPlayer.update(deltaTime);
+       // mPlayer.update(deltaTime);
 
         lp::g_engine.getResurceManager().getModelLoaderRef().update(1.0/60.0);
 

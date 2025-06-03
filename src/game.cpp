@@ -164,6 +164,7 @@ namespace lp
             phy.mState = std::make_shared<btDefaultMotionState>(btTransform(btQuaternion(0,0,0,1), btVector3(0, 0, 0)));
             btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, phy.mState.get(), csfloor, btVector3(0,0,0));
             phy.mRigidBody = std::make_shared<btRigidBody>(groundRigidBodyCI);
+            phy.mRigidBody->setFriction(1.0);
             //phy.mRigidBody->isActive(); //if true for an object ++ on the unsigned int (allows for tracking changes)
             Recs.addComponent(floor_entity, phy);
         }
@@ -201,6 +202,9 @@ namespace lp
 
         bool IMGUIDoShowDebugAllEntitiesWindow = false;
 
+        this->mPlayer.createCollision(g_engine.getPhysicsWorld().getWorld());
+
+        bool mDoPlayerCollision = true;
 
         bool mDoPhysics = false;
         double lastFrameTime = glfwGetTime();
@@ -215,7 +219,6 @@ namespace lp
             mRenndd.updatePlayer(mPlayer);
 
             mLightSystem->update();
-            
             lp::gl::ProcessedScene pScene;
             GlobalPositioningSystem.process(pScene, *g_engine.getPhysicsWorld().getDebugRenderer());
 
@@ -285,6 +288,16 @@ namespace lp
                     }
                     ImGui::Checkbox("Draw debug light icons", &mRenndd.mTriggerDrawDebugLightIcons);
                     ImGui::Checkbox("Draw debug sound icons", &mRenndd.mTriggerDrawDebugSoundIcons);
+                    if(ImGui::Checkbox("Should the player have collision?", &mDoPlayerCollision))
+                    {
+                        if(mDoPlayerCollision)
+                        {
+                            mPlayer.createCollision(lp::g_engine.getPhysicsWorld().getWorld());
+                        } else
+                        {
+                            mPlayer.destroyCollision(lp::g_engine.getPhysicsWorld().getWorld());
+                        }
+                    }
                     ImGui::EndMenu();
                 }
                 ImGui::EndMainMenuBar();

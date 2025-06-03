@@ -1,18 +1,45 @@
 #ifndef LABYRINTH_PENDING_PLAYER_HPP
 #define LABYRINTH_PENDING_PLAYER_HPP
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp> //glm::half_pi
 
 #include <array>
 
 #include "Labyrinth/Engine/Event/eventManager.hpp"
 
+#include "Labyrinth/Helpers/compilerErrors.hpp"
+
+LP_PRAGMA_DISABLE_ALL_WARNINGS_PUSH();
+
+#include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp> //glm::half_pi
+
+#include <bullet/btBulletDynamicsCommon.h> //TODO: heavy overkill, change this later!
+#include <bullet/BulletCollision/CollisionDispatch/btGhostObject.h> //btPairCachingGhostObject
+
+#include <bullet/BulletDynamics/Character/btKinematicCharacterController.h>
+
+LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
+
+
+//TODO: create an interface for controlling a character. Allows for detachment of camera code from keyboard code & physics code.
+
 namespace lp
 {
+    /// @brief A much-too-big class encompassing all it means to be & control a player!
     class Player
     {
         public:
+        /// @brief default constructor
         Player();
+
+        /// @brief create collision for the player.
+        /// @param dynamicsWorld world to add the camera collider to. MUST NOT BE NULLPTR!
+        /// @note does nothing if the world already exists
+        void createCollision(btDynamicsWorld *dynamicsWorld);
+
+        /// @brief remove the cameras collider from the world.
+        /// @param dynamicsWorld the world in question.
+        /// @warning Make sure that this world is the same one the cmaera was added to!
+        void destroyCollision(btDynamicsWorld *dynamicsWorld);
 
         /// @brief set the player's position (or the camera's position)
         /// @param cv_NewPos new position
@@ -37,8 +64,8 @@ namespace lp
         /// @return the camera's infinite projection matrix
         glm::mat4 getProjectionMatrix(double width_by_height)const;
 
-        /// @brief get the players position (or the camera's position)
-        /// @return the players position (or the camera's position)
+        /// @brief get the players position
+        /// @return the players position
         inline glm::vec3 getPosition() const { return mPosition; }
 
         /// @brief get the direction the camera is 'looking' at, as a vector
@@ -100,8 +127,8 @@ namespace lp
         std::array<KeyData, static_cast<int>(Action::Count)> mKeymapps;
 
 
-        /// @brief CURRENT position of the player (or player's camera)
-        glm::dvec3 mPosition = {};
+        /// @brief CURRENT position of the player
+        glm::dvec3 mPosition = {0, 10, 0};
 
         /// @brief CURRENT orientation of the player (or player's camera)
         ///
@@ -156,6 +183,13 @@ namespace lp
         /// @brief ID of cursor/mouse motion keyboard listener
         lp::EventListenerID mMouseListenerID = 0;
 
+        btRigidBody* body = nullptr;
+        btPairCachingGhostObject* ghostObject = nullptr;
+        btKinematicCharacterController* characterController = nullptr;
+        btCapsuleShape* shape = nullptr;
+        btDefaultMotionState* motionState = nullptr;
+        btScalar mass = 1.0;
+
 
         /// @brief private function to make sure the Yaw/Pitch values are in bounds
         void checkConstraints(); 
@@ -165,6 +199,9 @@ namespace lp
 
         /// @brief sets default values for the key mapping & sensitivity
         void loadDefaultConfig();
+
+        /// @brief the CURRENT position of the camera (separate from the players position, because .y += 1.5f)
+        glm::dvec3 mCameraPosition = {};
     };
 }
 
