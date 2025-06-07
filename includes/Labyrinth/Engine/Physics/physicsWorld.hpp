@@ -54,6 +54,14 @@ namespace lp::ph
         /// @warning Make sure that nothing uses this Collider BEFORE calling this function!
         void unloadCollisionShape(const ColliderID_t cv_id);
 
+        /// @brief unregister a btCollisionShape
+        ///
+        /// The specified collider will loose its assosiation with this physics world!
+        /// @param cv_id id to the collision shape
+        /// @note unlike unloadCollisionShape(), this doesn't unload anything
+        /// @return the collision shape in question, or nullptr if not found
+        btCollisionShape* unregisterCollisionShape(const ColliderID_t cv_id);
+
         /// @brief get a Debug const reference to btCollisionShape Container
         /// @return const reference to Container
         const std::unordered_map<ColliderID_t, btCollisionShape*>& getDebugCollisionShapeContainer() const { return mCollisionShapes; }

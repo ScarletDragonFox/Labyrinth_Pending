@@ -79,6 +79,14 @@ namespace lp::ph
         }
     }
 
+    btCollisionShape* PhysicsWorld::unregisterCollisionShape(const ColliderID_t cv_id)
+    {
+        if(mCollisionShapes.contains(cv_id)){
+            btCollisionShape* ptr = mCollisionShapes[cv_id];
+            mCollisionShapes.erase(cv_id);
+            return ptr;
+        } else return nullptr;
+    }
 
     void PhysicsWorld::destroy()
     {
