@@ -60,6 +60,10 @@ namespace
 
 #include <bullet/Extras/Serialize/BulletWorldImporter/btBulletWorldImporter.h>
 
+
+
+#include <Labyrinth/Engine/Physics/physicsWorld.hpp>
+
 struct RendererForwardPlus_PlayerData
 {
     glm::mat4 mView = {};
@@ -94,26 +98,11 @@ int main()
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
     lp::Player mPlayer;
-    
-
-    lp::gl::Bullet3Debug bulletDebugRenderer;
-
-     // Build the broadphase
-     std::unique_ptr<btBroadphaseInterface> broadphase = std::make_unique<btDbvtBroadphase>();
-    
-     // Set up the collision configuration and dispatcher
-     std::unique_ptr<btDefaultCollisionConfiguration> collisionConfiguration = std::make_unique<btDefaultCollisionConfiguration>();
-     std::unique_ptr<btCollisionDispatcher> dispatcher = std::make_unique<btCollisionDispatcher>(collisionConfiguration.get());
- 
-     // The actual physics solver
-     std::unique_ptr<btSequentialImpulseConstraintSolver> solver = std::make_unique<btSequentialImpulseConstraintSolver>();
-  
-     // The world.
-     std::shared_ptr<btDiscreteDynamicsWorld> dynamicsWorld = std::make_shared<btDiscreteDynamicsWorld>(dispatcher.get(), broadphase.get(), solver.get(), collisionConfiguration.get());
-     dynamicsWorld->setDebugDrawer(&bulletDebugRenderer);
+    auto& RphWorld = lp::g_engine.getPhysicsWorld();
      
-     dynamicsWorld->setGravity(btVector3(0, 0, 0));
- 
+    //  dynamicsWorld->setGravity(btVector3(0, 0, 0));
+    
+    RphWorld.getWorld()->setGravity(btVector3(0, -3.5, 0));
     std::unique_ptr<btRigidBody> vPhysicsBody;
     btCollisionShape* vPhysicsShape = new btSphereShape(1.0); //raw ptr for simplicity
 
@@ -132,8 +121,8 @@ int main()
     vPhysicsBody->setCcdSweptSphereRadius(100.0);
     vPhysicsBody->setCcdMotionThreshold(1e-7);
     //https://docs.panda3d.org/1.10/python/programming/physics/bullet/ccd
-    dynamicsWorld->addRigidBody(vPhysicsBody.get());
 
+    RphWorld.getWorld()->addRigidBody(vPhysicsBody.get());
 
     GLuint VAO_model = 0;
         {
@@ -146,7 +135,7 @@ int main()
             glVertexArrayAttribBinding(VAO_model, 1, 0);
         }
 
-    lpt::RigidBosyContainerCreationClassThing RBCCCT((std::shared_ptr<btDynamicsWorld>)dynamicsWorld);
+    lpt::RigidBosyContainerCreationClassThing RBCCCT((std::shared_ptr<btDynamicsWorld>)RphWorld.getWorld());
 
     RendererForwardPlus_PlayerData playerData;
 
@@ -178,7 +167,7 @@ int main()
     bool IMGUI_ShowDemoWindow = false;
     bool IMGUI_ShowRigidBosyContainerWindow = false;
     bool IMGUI_ShowMeshContainerWindow = true;
-    bool TRIGGER_drawDebug = true;
+    bool TRIGGER_drawDebug = true; bool mDoPlayerCollision = false;
 
     double lastFrameTime = glfwGetTime();
     while(!window.shouldClose())
@@ -187,7 +176,7 @@ int main()
 
         const double deltaTime = glfwGetTime() - lastFrameTime;
         lastFrameTime = glfwGetTime();
-       // mPlayer.update(deltaTime);
+        mPlayer.update(deltaTime);
 
         lp::g_engine.getResurceManager().getModelLoaderRef().update(1.0/60.0);
 
@@ -220,18 +209,18 @@ int main()
                 if(ImGui::Button("Save"))
                 {
                     btDefaultSerializer* serializer = new btDefaultSerializer();
-                    serializer->serializeName("TEST_NAME");
+                    serializer->serializeName("TEST_NAME"); 
 
-                    if(PLAYER_CollisionEnabled) dynamicsWorld->removeCollisionObject(vPhysicsBody.get());
+                    if(PLAYER_CollisionEnabled) RphWorld.getWorld()->removeCollisionObject(vPhysicsBody.get());
 
-                    const auto& coa = dynamicsWorld->getCollisionObjectArray();
+                    const auto& coa =  RphWorld.getWorld()->getCollisionObjectArray();
                     for(int i = 0; i < coa.size(); ++i)
                     {
                         std::cout << "Saving a " << coa.at(i)->getCollisionShape()->getName() << "\n";
                         //coa.at(i)->serializeSingleObject(serializer);
                     }
                     //coa.at(0)->setUserIndex(0);
-                    dynamicsWorld->serialize(serializer);
+                    RphWorld.getWorld()->serialize(serializer);
                     
                     serializer->serializeName("TEST_NAME -- 2");
                     FILE* file = fopen("bullet_res.bullet", "wb");
@@ -239,14 +228,14 @@ int main()
                     fclose(file);
                     delete serializer;
 
-                    if(PLAYER_CollisionEnabled) dynamicsWorld->addRigidBody(vPhysicsBody.get());
+                    if(PLAYER_CollisionEnabled)  RphWorld.getWorld()->addRigidBody(vPhysicsBody.get());
                 }
                 ImGui::SetItemTooltip("Save the current project");
                 if(ImGui::Button("Load"))
                 {
                     RBCCCT.killAllChildren();
                     
-                    btBulletWorldImporter* fileLoader = new btBulletWorldImporter(dynamicsWorld.get());
+                    btBulletWorldImporter* fileLoader = new btBulletWorldImporter( RphWorld.getWorld());
                     // fileLoader->setVerboseMode(15); //prints info about file to stdout
                     fileLoader->loadFile("bullet_res.bullet");
                     std::cout << "Loaded " <<  fileLoader->getNumCollisionShapes() << " Collision Shapes\n";
@@ -356,16 +345,27 @@ int main()
                 }
                 ImGui::SetItemTooltip("Stops the players' camera btCollisionShape from being visible in the Debug Drawer");
 
-                if(ImGui::Checkbox("Enable collision", &PLAYER_CollisionEnabled))
-                {
-                    if(PLAYER_CollisionEnabled)
+                // if(ImGui::Checkbox("Enable collision", &PLAYER_CollisionEnabled))
+                // {
+                //     if(PLAYER_CollisionEnabled)
+                //     {
+                //         dynamicsWorld->addRigidBody(vPhysicsBody.get());
+                //     } else
+                //     {
+                //         dynamicsWorld->removeRigidBody(vPhysicsBody.get());
+                //     }
+                    
+                // }
+                if(ImGui::Checkbox("Should the player have collision?", &mDoPlayerCollision))
                     {
-                        dynamicsWorld->addRigidBody(vPhysicsBody.get());
-                    } else
-                    {
-                        dynamicsWorld->removeRigidBody(vPhysicsBody.get());
+                        if(mDoPlayerCollision)
+                        {
+                            mPlayer.createCollision(lp::g_engine.getPhysicsWorld().getWorld());
+                        } else
+                        {
+                            mPlayer.destroyCollision(lp::g_engine.getPhysicsWorld().getWorld()); //
+                        }
                     }
-                }
                 ImGui::SetItemTooltip("Enable collision for the players' camera");
                 ImGui::Checkbox("Draw Debug", &TRIGGER_drawDebug);
                 ImGui::SetItemTooltip("Draw Bullet debug");
@@ -432,7 +432,7 @@ int main()
                                 btMotionState* mstate = new btDefaultMotionState();
                                 btRigidBody* body = new btRigidBody(0.0, mstate, shape);
                                 RBCCCT.addNewChild(body);
-                                dynamicsWorld->addRigidBody(body); //https://www.google.com/search?client=firefox-b-d&q=bullet+physics+one+sided+triangle+mesh+collision    <- note
+                                 RphWorld.getWorld()->addRigidBody(body); //https://www.google.com/search?client=firefox-b-d&q=bullet+physics+one+sided+triangle+mesh+collision    <- note
 
                                 std::cout << "Object added successfully\n";
                             } else std::cerr << "Dropped an invalid mesh!\n";
@@ -474,7 +474,7 @@ int main()
         //if imgui doesn't want the mouse AND left mouse button was pressed
         if(!ImGui::GetIO().WantCaptureMouse && ImGui::GetIO().MouseClicked[0]) 
         {
-            auto RayCallback = RayTestObtain(dynamicsWorld.get(), mPlayer, window, glm::vec2((float)ImGui::GetIO().MousePos.x, (float)ImGui::GetIO().MousePos.y));
+            auto RayCallback = RayTestObtain(RphWorld.getWorld(), mPlayer, window, glm::vec2((float)ImGui::GetIO().MousePos.x, (float)ImGui::GetIO().MousePos.y));
             if(RayCallback.hasHit())
             {
                 std::cout << "BANG!\n";
@@ -494,9 +494,12 @@ int main()
 
         // make a menu to load a model & display it
         // make a menu to import/export files
+        RphWorld.stepSimulation(deltaTime);
 
-        if(TRIGGER_drawDebug) dynamicsWorld->debugDrawWorld();
-        dynamicsWorld->stepSimulation(deltaTime);
+        //if(TRIGGER_drawDebug) dynamicsWorld->debugDrawWorld();
+        //dynamicsWorld->stepSimulation(deltaTime);
+        
+        //RphWorld.getDebugRenderer()
 
         {
             const btVector3 vec = vPhysicsBody->getWorldTransform().getOrigin();
@@ -521,7 +524,7 @@ int main()
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, UBOplayerDataBuffer);
 
         
-        if(TRIGGER_drawDebug == true && bulletDebugRenderer.getBuffer() != 0)
+        if(TRIGGER_drawDebug == true && RphWorld.getDebugRenderer()->getBuffer() != 0)
         {
             lp::gl::RegularShader shader;
             shader.LoadShader(lp::gl::ShaderType::DebugLine);
@@ -529,8 +532,8 @@ int main()
             shader.SetUniform(3, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
 
             glBindVertexArray(VAO_model);
-            glVertexArrayVertexBuffer(VAO_model, 0, bulletDebugRenderer.getBuffer(), 0, 6 * sizeof(float));
-            glDrawArrays(GL_LINES, 0, bulletDebugRenderer.getDrawCount());
+            glVertexArrayVertexBuffer(VAO_model, 0, RphWorld.getDebugRenderer()->getBuffer(), 0, 6 * sizeof(float));
+            glDrawArrays(GL_LINES, 0, RphWorld.getDebugRenderer()->getDrawCount());
             glBindVertexArray(0);
         }
 
