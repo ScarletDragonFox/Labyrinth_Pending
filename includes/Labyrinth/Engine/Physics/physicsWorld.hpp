@@ -11,16 +11,32 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_PUSH();
 
 LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 
+#include "Labyrinth/Engine/ECS/baseSystem.hpp"
+
 #include "Labyrinth/Engine/Event/eventManager.hpp"
 
 #include <unordered_map>
 
+#include "Labyrinth/Engine/Physics/colliderID_t.hpp"
+
 namespace lp::ph
 {
-    /// @brief id of the btCollisionShape
-    using ColliderID_t = std::uint32_t;
-    /// @brief invalid ColliderID_t. Used as default
-    constexpr ColliderID_t const_collider__id_invalid = 0;
+    /// @brief system used by the PhysicsWorld to keep track of all entities with a ComponentPhysics
+    class PhysicsWorldRemovalSystem: public lp::ecs::System
+    {
+        public:
+        /// @brief get the dirty flag
+        /// @return the dirty flag
+        bool getDirty() const { return this->mDirty; }
+
+        /// @brief set the dirty flag
+        /// @param cv_Dirty the dirty flag
+        void setDirty(const bool cv_Dirty) { this->mDirty = cv_Dirty; }
+
+        /// @brief get the set of Entities
+        /// @return const reference to set
+        std::set<lp::ecs::Entity> const & getSet() const{ return this->mEntities; }
+    };
 
     /// @brief represents the Bullet Physics World.
     ///
@@ -83,10 +99,12 @@ namespace lp::ph
         /// @brief World, stores everything + logic
         std::shared_ptr<btDiscreteDynamicsWorld> mWorld;
 
+        /// @brief id of event listener, used for destroying it in the destructor
         lp::EventListenerID mComponentCreatedEventID = 0;
+         /// @brief id of event listener, used for destroying it in the destructor
         lp::EventListenerID mComponentDestroyedEventID = 0;
 
-        /// @brief container of all collisionshapes???
+        /// @brief container of all collisionshapes
         std::unordered_map<ColliderID_t, btCollisionShape*> mCollisionShapes;
 
         /// @brief id of the next ColliderID_t

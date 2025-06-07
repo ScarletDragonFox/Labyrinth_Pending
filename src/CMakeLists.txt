@@ -30,6 +30,8 @@ set(CDF_SOURCES #list of all source files in the src/ directory
     Engine/ComponentPhysics.cpp
     Engine/ComponentSoundSource.cpp
 
+    Engine/Level/levelManager.cpp
+
     game.cpp
     engine.cpp
     player.cpp

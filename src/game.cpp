@@ -62,6 +62,8 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 
 #include <Labyrinth/Engine/Resource/soundManager.hpp>
 
+#include <Labyrinth/Engine/Level/levelManager.hpp>
+
 namespace lp
 {
 
@@ -107,6 +109,12 @@ namespace lp
 
     void Game::loop()
     {
+        lp::gl::GraphicsPrepareSystem GlobalPositioningSystem;
+
+        lp::LevelManager lm;
+
+        lm.loadLevel("assets/Levels/test.json");
+
         //https://stackoverflow.com/questions/21421074/how-to-create-a-full-screen-window-on-the-current-monitor-with-glfw
         //https://github.com/glfw/glfw/issues/1699
 
@@ -171,25 +179,9 @@ namespace lp
 
         // https://www.youtube.com/watch?app=desktop&v=BGAwRKPlpCw&t=14s
         // https://pybullet.org/Bullet/BulletFull/classbtCollisionShape.html
+
         //"D:/Semester_3/GK1/DELME/Relic Engine Framework/Assets/backpack/backpack.obj";
         //"C:/Programming/Personal/Solutions/ApplicationTestBuild/AppBuild/Models/Spheres/Spheres.gltf"
-
-
-        const char* temp_modelNamePath = "C:/Programming/Personal/Solutions/ApplicationTestBuild/AppBuild/Models/SponzaPBR-Intel/Main.1_Sponza/NewSponza_Main_glTF_002.gltf";
-
-        const auto modelRef = g_engine.getResurceManager().loadModel(temp_modelNamePath);
-        
-        lp::gl::GraphicsPrepareSystem GlobalPositioningSystem;
-
-        {
-            lp::ecs::Entity EE = g_engine.getECS().createEntity();
-            lp::ComponentPosition CPos;
-            CPos.setPosition({0, 0, 0});
-            lp::ComponentModel CModl;
-            CModl.mID = modelRef;
-            g_engine.getECS().addComponent(EE, CPos);
-            g_engine.getECS().addComponent(EE, CModl);
-        }
 
         //https://web.archive.org/web/20130419113144/http://bulletphysics.org/mediawiki-1.5.8/index.php/Hello_World
         //https://guibraga.medium.com/my-favorite-visual-studio-code-extensions-11573442008b
@@ -583,7 +575,7 @@ namespace
                 }
                 if(pair.second & c_sign_position)
                 {
-                    if(ImGui::TreeNode("Physics"))
+                    if(ImGui::TreeNode("Position"))
                     {
                         const auto& model = Recs.getComponent<lp::ComponentPosition>(pair.first);
                         ImGui::Text("Position: x = %f, y = %f, z = %f", model.getPosition().x, model.getPosition().y, model.getPosition().z);

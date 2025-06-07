@@ -8,7 +8,7 @@
 class btRigidBody;
 class btDefaultMotionState;
 
-// the .cpp file has not been added to CmakeListts!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#include "Labyrinth/Engine/Physics/colliderID_t.hpp"
 
 namespace lp
 {
@@ -76,34 +76,14 @@ namespace lp
         /// Stores its position & orientation
         std::shared_ptr<btDefaultMotionState> mState;
 
-        //we might need to have these NOT be unique_ptr.
+        /// @brief 'origin id' of this mRigidBody
+        ///
+        /// So when the level/ any rigidbody gets unloaded, we know which ComponentPhysics to kill
+        lp::ph::ColliderID_t mColliderID = lp::ph::const_collider__id_invalid;
+
+        // the std::shared_ptr's can't be unique_ptr's.
         // those don't like to be moved
         // which causes problems with std library's container classes
-
-
-        // std::shared_ptr-like class for storing a ref to the btCollsisionShape
-        // (the shape MUST stay alive for at least as long as every obj using it does!!!)
-
-
-        //mass is stored in the CollisionShape, but it looks like we can overload it?
-        //CollisionShapes CAN be shared among multiple objects
-
-
-        //have a seperate static & dynamic components??
-        // ANSWER: don't bother, just disapprove changing it.
-
-            // 1. When a component with physics dies...
-            // 2. Bullet needs to be notified
-            // 3. to remove the Entity object from its World
-            // Adding \ removing component types is dynamic-ish
-            // We need to sent an EntityDeath event?
-
-        //Another thing to do is use that cmake 'filter?' function to put files in right folders for msvc
-        // Also try to make msvc work out-of-the-box
-        // Not just compile-wise, but whole experience-wise
-        // (like set the default startup project & stuff)
-        // (maybe hide the non-runnable library dependancies in some kind of hierarchy if we can????)
-
     };
 }
 

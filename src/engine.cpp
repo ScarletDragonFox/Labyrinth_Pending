@@ -56,6 +56,9 @@ namespace lp
 
         mPhysicsWorldPtr->initialize();
 
+        const lp::ecs::Signature sign = mECSPtr->getComponentSignature<ComponentPhysics>();
+        mECSPtr->registerSystem<lp::ph::PhysicsWorldRemovalSystem>(sign);
+
         return false;
     }
 

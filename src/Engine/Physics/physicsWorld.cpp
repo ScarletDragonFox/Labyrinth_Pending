@@ -74,6 +74,16 @@ namespace lp::ph
     void PhysicsWorld::unloadCollisionShape(const ColliderID_t cv_id)
     {
         if(mCollisionShapes.contains(cv_id)){
+            
+            auto& Recs = lp::g_engine.getECS();
+            auto PWRsystem = Recs.getSystem<PhysicsWorldRemovalSystem>();
+            for(const auto& ent:PWRsystem->getSet())
+            {
+                if(Recs.getComponent<ComponentPhysics>(ent).mColliderID == cv_id)
+                {
+                    Recs.removeComponent<ComponentPhysics>(ent);
+                }
+            }
             delete mCollisionShapes[cv_id];
             mCollisionShapes.erase(cv_id);
         }
