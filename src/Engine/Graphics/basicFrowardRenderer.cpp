@@ -112,7 +112,7 @@ namespace lp::gl
         shader.SetUniform(4, glm::vec3(0.1, 1.0f, 0.0f));
         renderCube();
 
-        if(cv_pscene.mBulletDebugDrawCount > 0 ){
+        if(mTriggerDrawDebugBullet && cv_pscene.mBulletDebugDrawCount > 0 ){
             shader.LoadShader(ShaderType::DebugLine);
             shader.Use();
             constexpr glm::mat4 modelBulletDebugDraw = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));

@@ -85,6 +85,9 @@ namespace lp::ph
         /// @brief destroy the physics world, unload all the things
         void destroy();
 
+        /// @brief if true, will draw bullet debug lines
+        bool mDrawDebug = false;
+
         private:
         /// @brief Debug Bullet renderer
         lp::gl::Bullet3Debug mDebugRender;

@@ -53,6 +53,9 @@ namespace lp::gl
         bool mTriggerDrawDebugLightIcons = false;
         bool mTriggerDrawDebugSoundIcons = false;
 
+        // @brief if true, will draw bullet debug lines
+        bool mTriggerDrawDebugBullet = false;
+
         private:
 
         void DrawDebugIcons();

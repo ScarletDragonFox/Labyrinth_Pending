@@ -58,8 +58,11 @@ namespace lp::ph
     void PhysicsWorld::stepSimulation(const double timeStep)
     {
         mWorld->stepSimulation(static_cast<btScalar>(timeStep), 100);
-        mWorld->debugDrawWorld();
-        mDebugRender.flushLines();
+        if(mDrawDebug)
+        {
+            mWorld->debugDrawWorld();
+            mDebugRender.flushLines();
+        }
     }
 
     ColliderID_t PhysicsWorld::registerCollisionShape(btCollisionShape* v_collShape)

@@ -280,6 +280,10 @@ namespace lp
                     }
                     ImGui::Checkbox("Draw debug light icons", &mRenndd.mTriggerDrawDebugLightIcons);
                     ImGui::Checkbox("Draw debug sound icons", &mRenndd.mTriggerDrawDebugSoundIcons);
+                    if(ImGui::Checkbox("Draw debug bullet", &lp::g_engine.getPhysicsWorld().mDrawDebug))
+                    {
+                        mRenndd.mTriggerDrawDebugBullet = lp::g_engine.getPhysicsWorld().mDrawDebug;
+                    }
                     if(ImGui::Checkbox("Should the player have collision?", &mDoPlayerCollision))
                     {
                         if(mDoPlayerCollision)
