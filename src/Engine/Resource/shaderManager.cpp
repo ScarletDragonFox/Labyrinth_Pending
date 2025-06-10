@@ -122,6 +122,11 @@ namespace
     /// @brief fragment shader of BillboardIcon
     const char* const l_shaderpath_BillboardIcon_fs = "shaders/billboardIcon/billboardIcon.fs.glsl";
 
+    /// @brief vertex shader of IsoLightSphere
+    const char* const l_shaderpath_IsoLightSphere_vs = "shaders/isoLightSphere/isoLightSphere.vs.glsl";  
+    /// @brief fragment shader of IsoLightSphere
+    const char* const l_shaderpath_IsoLightSphere_fs = "shaders/isoLightSphere/isoLightSphere.fs.glsl";
+
     //ComputeShader shader program filepaths:
 
     /// @brief compute shader of name
@@ -145,6 +150,8 @@ namespace lp::res
             mRegularShaders[static_cast<int>(lp::gl::ShaderType::BillboardIcon)].mVertexPath = l_shaderpath_BillboardIcon_vs;
             mRegularShaders[static_cast<int>(lp::gl::ShaderType::BillboardIcon)].mFragmentPath = l_shaderpath_BillboardIcon_fs;
 
+            mRegularShaders[static_cast<int>(lp::gl::ShaderType::IsoLightSphere)].mVertexPath = l_shaderpath_IsoLightSphere_vs;
+            mRegularShaders[static_cast<int>(lp::gl::ShaderType::IsoLightSphere)].mFragmentPath = l_shaderpath_IsoLightSphere_fs;
         }
 
         {

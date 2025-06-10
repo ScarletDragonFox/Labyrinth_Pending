@@ -16,6 +16,8 @@
 #include "Labyrinth/Engine/ComponentSoundSource.hpp"
 #include "Labyrinth/Engine/ComponentLight.hpp"
 
+#include "Labyrinth/Engine/Graphics/debugPremadeMesh.hpp"
+
 namespace
 {
     void renderCube();
@@ -57,7 +59,24 @@ namespace lp::gl
             glVertexArrayAttribBinding(mVertexArrayBulletLineDebug, 0, 0);
             glVertexArrayAttribBinding(mVertexArrayBulletLineDebug, 1, 0);
 
+            
+
             glCreateVertexArrays(1, &mVertexArrayDummy);
+        }
+
+
+        {
+            glCreateVertexArrays(1, &mVertexArrayISOSphere);
+            glEnableVertexArrayAttrib(mVertexArrayISOSphere, 0);
+            glVertexArrayAttribFormat(mVertexArrayISOSphere, 0, 3, GL_FLOAT, GL_FALSE, 0);
+            glVertexArrayAttribBinding(mVertexArrayISOSphere, 0, 0);
+            glCreateBuffers(1, &mVertexBufferISOSphere);
+            glCreateBuffers(1, &mElementBufferISOSphere);
+            glNamedBufferStorage(mVertexBufferISOSphere, sizeof(isoSphere::Positions), isoSphere::Positions, 0);
+            glNamedBufferStorage(mElementBufferISOSphere, sizeof(isoSphere::Indicies), isoSphere::Indicies, 0);
+
+            glVertexArrayVertexBuffer(mVertexArrayISOSphere, 0, mVertexBufferISOSphere, 0, sizeof(isoSphere::Positions[0]));
+            glVertexArrayElementBuffer(mVertexArrayISOSphere, mElementBufferISOSphere);
         }
 
         glCreateBuffers(1, &mUBO_Player);
@@ -102,11 +121,14 @@ namespace lp::gl
 
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, mUBO_Player);
 
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, cv_pscene.mSSB_Lights);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, cv_pscene.mSSB_AliveLights);
+
         RegularShader shader;
         shader.LoadShader(ShaderType::SimpleColor);
         shader.Use();
         
-        const glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0, -10, 0));;
+        const glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0, -10, 0));
         
         shader.SetUniform(3, model);
         shader.SetUniform(4, glm::vec3(0.1, 1.0f, 0.0f));
@@ -149,6 +171,19 @@ namespace lp::gl
             }
             glBindVertexArray(0);
             lp::gl::Texture::Unbind(0);
+        }
+
+        if(cv_pscene.mLightCount != 0)
+        {
+            shader.LoadShader(ShaderType::IsoLightSphere);
+            shader.Use();
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glBindVertexArray(mVertexArrayISOSphere);
+            glDisable(GL_CULL_FACE);
+            glDrawElementsInstanced(GL_TRIANGLES, sizeof(isoSphere::Indicies) / sizeof(isoSphere::Indicies[0]), GL_UNSIGNED_INT, nullptr, cv_pscene.mLightCount);
+            glEnable(GL_CULL_FACE);
+            glBindVertexArray(0);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
         glUseProgram(0);
 

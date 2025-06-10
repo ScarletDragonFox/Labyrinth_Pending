@@ -21,6 +21,11 @@ LP_PRAGMA_DISABLE_ALL_WARNINGS_POP();
 ///UBO Bindings:
 // 0 - DebugRendererData / mUBO_Player
 
+//SSBO Bindings:
+// 0 - Point lights allocation array
+// 1 - Point lights uint array of live
+
+
 namespace lp::gl
 {
     class ForwardRenderer
@@ -66,8 +71,17 @@ namespace lp::gl
         /// @brief VAO used for bullet debug drawing
         GLuint mVertexArrayBulletLineDebug = 0;
 
+        /// @brief VAO used by the debug light range drawing
+        GLuint mVertexArrayISOSphere = 0;
+
         /// @brief empty VAO to stop OpenGL complaints
         GLuint mVertexArrayDummy = 0;
+
+        /// @brief VBO used by the debug light range drawing
+        GLuint mVertexBufferISOSphere = 0;
+
+        /// @brief EBO used by the debug light range drawing
+        GLuint mElementBufferISOSphere = 0;
 
         //GLsync mSyncCamera = {};
         GLuint mUBO_Player = 0;
