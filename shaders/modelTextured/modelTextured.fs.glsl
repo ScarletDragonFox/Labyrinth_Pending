@@ -11,7 +11,7 @@ layout (location = 2) in vec3 in_FragPos;
 layout (binding = 0) uniform sampler2D  tex_diffuse;
 layout (binding = 1) uniform sampler2D  tex_specular;
 
-layout (location = 4) uniform float u_model;
+layout (location = 4) uniform float u_mat_shininess = 16.0;
 
 #include "../includes/lightBuffer.glsl"
 #include "../includes/playerData.glsl"
@@ -51,7 +51,7 @@ void main()
     for(uint i = 0; i < b_PointLightsAlive.length(); ++i) //without the '()' here the glsl compiler in the DRIVER crashes our program.
     {
         const SingularPointLightStructure light = b_PointLights[b_PointLightsAlive[i]];
-        res += CalcPointLight(light.color, light.position, light.radius, 16.0, colDiffuse, colSpecular, in_Normals, in_FragPos, viewDir);
+        res += CalcPointLight(light.color, light.position, light.radius, u_mat_shininess, colDiffuse, colSpecular, in_Normals, in_FragPos, viewDir);
     }
     FragColor = vec4(res, 1.0);
 }
