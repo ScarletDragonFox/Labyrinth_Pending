@@ -42,6 +42,12 @@ namespace lp::res
         {
             /// @brief a BaseColor/Albedo Texture of the material
             lp::gl::Texture mColor;
+
+            /// @brief a specular reflaection color of this material
+            lp::gl::Texture mSpecular;
+
+            /// @brief shininess of the material. 16.0 by default
+            float mShininess = 16.0f;
         };
 
         std::vector<LoadedModel::Mesh> mMeshes;

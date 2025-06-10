@@ -181,20 +181,39 @@ namespace lp::res
                 return resturnStruct;
             }
 
-            std::shared_ptr<std::latch> vLatchTextures = std::make_shared<std::latch>(static_cast<std::ptrdiff_t>(scene->mNumMaterials));
+            const std::ptrdiff_t vLatchTexturesExpected = static_cast<std::ptrdiff_t>(scene->mNumMaterials) * 2; //color + specular textures need waiting
+            std::shared_ptr<std::latch> vLatchTextures = std::make_shared<std::latch>(vLatchTexturesExpected);
 
             outputModel.mMaterials.resize(scene->mNumMaterials);
 
             //std::cerr << "Before Txtures!\n";
 
+            const auto getLoadDataFromColourlambda = [](lp::res::ModelLoader::TaskTextureData& outData, const aiColor4D colour)
+            {
+                float* dt = new float[4];
+                dt[0] = colour.r;
+                dt[1] = colour.g;
+                dt[2] = colour.b;
+                dt[3] = colour.a;
+                outData.mTextureData = dt;
+                outData.mMipmapCount = 0;
+                outData.noMipmaps = true;
+                outData.mTexSize = { 1, 1};
+                outData.mTexFormat = lp::gl::Format::RGBA32F;
+            };
+
             ///process textures
             for (unsigned int i = 0; i < scene->mNumMaterials; i++)
             {
                 aiMaterial* material = scene->mMaterials[i];
-                ModelLoader::TaskTextureData data;
+                ModelLoader::TaskTextureData colorTextureLoadData;
+                ModelLoader::TaskTextureData specularTextureLoadData;
 
-                data.mTex = &(outputModel.mMaterials[i].mColor);
-                data.mLatchPtr = vLatchTextures;
+                colorTextureLoadData.mTex = &(outputModel.mMaterials[i].mColor);
+                colorTextureLoadData.mLatchPtr = vLatchTextures;
+
+                specularTextureLoadData.mTex = &(outputModel.mMaterials[i].mSpecular);
+                specularTextureLoadData.mLatchPtr = vLatchTextures;
 
                 bool colorNOTLoaded = true;
 
@@ -203,7 +222,7 @@ namespace lp::res
                     {
                         aiString str;
                         material->GetTexture(aiTextureType_BASE_COLOR, 0, &str);
-                        if(loadTexture(data, str.C_Str(), directory) == false)
+                        if(loadTexture(colorTextureLoadData, str.C_Str(), directory) == false)
                         {
                             //texture loaded correctly
                             colorNOTLoaded = false;
@@ -214,7 +233,7 @@ namespace lp::res
                     {
                         aiString str;
                         material->GetTexture(aiTextureType_DIFFUSE, 0, &str);
-                        if(loadTexture(data, str.C_Str(), directory) == false)
+                        if(loadTexture(colorTextureLoadData, str.C_Str(), directory) == false)
                         {
                             //texture loaded correctly
                             colorNOTLoaded = false;
@@ -226,25 +245,47 @@ namespace lp::res
                     
                     if (AI_SUCCESS != aiGetMaterialColor(material, AI_MATKEY_BASE_COLOR, &temp_color))
                     {
-                        if (AI_SUCCESS != aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &temp_color))
+                        if (AI_SUCCESS != aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &temp_color))
                         {
                             temp_color = aiColor4D(1.f, 1.f, 1.f, 1.f);
                         }
                     }
-                    float* dt = new float[4];
-                    dt[0] = temp_color.r;
-                    dt[1] = temp_color.g;
-                    dt[2] = temp_color.b;
-                    dt[3] = temp_color.a;
-                    data.mTextureData = dt;
-                    data.mMipmapCount = 0;
-                    data.noMipmaps = true;
-                    data.mTexSize = { 1, 1};
-                    data.mTexFormat = lp::gl::Format::RGBA32F;
+                    getLoadDataFromColourlambda(colorTextureLoadData, temp_color);
+                }
+
+                 bool specularNOTLoaded = true;
+
+                if (material->GetTextureCount(aiTextureType_SPECULAR) > 0)
+                {
+                    aiString str;
+                    material->GetTexture(aiTextureType_SPECULAR, 0, &str);
+                    if(loadTexture(specularTextureLoadData, str.C_Str(), directory) == false)
+                    {
+                        //texture loaded correctly
+                        specularNOTLoaded = false;
+                    }
+                }
+                if(specularNOTLoaded)
+                {
+                    aiColor4D temp_color;
+                    if(AI_SUCCESS != aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &temp_color))
+                    {
+                        temp_color = aiColor4D(1.f, 1.f, 1.f, 1.f);
+                    }
+                    getLoadDataFromColourlambda(specularTextureLoadData, temp_color);
+                }
+                {
+                    ai_real shiny;
+                    if(AI_SUCCESS != aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shiny))
+                    {
+                        shiny = 16.0;
+                    }
+                    outputModel.mMaterials[i].mShininess = shiny;
                 }
                 {
                     std::scoped_lock<std::mutex> LOK(this->mTasksTextureLoadMutex);
-                    mTasksTextureLoad.push(data);
+                    mTasksTextureLoad.push(colorTextureLoadData);
+                    mTasksTextureLoad.push(specularTextureLoadData);
                 }
             }
             

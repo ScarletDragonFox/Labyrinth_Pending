@@ -156,7 +156,10 @@ namespace lp::gl
                 {
                     if(lastMaterial != mesh.mMaterialID)
                     {
-                        mdl.second.mPtr->mMaterials[mesh.mMaterialID].mColor.Bind(0);
+                        lp::res::LoadedModel::Material& mat = mdl.second.mPtr->mMaterials[mesh.mMaterialID];
+                        mat.mColor.Bind(0);
+                        mat.mSpecular.Bind(1);
+                        shader.SetUniform(4, mat.mShininess);
                         lastMaterial = mesh.mMaterialID;
                     }
                     glVertexArrayVertexBuffer(mVertexArrayModelTextured, 0, mesh.mVBO, 0, sizeof(lp::res::VertexFull));
@@ -171,6 +174,7 @@ namespace lp::gl
             }
             glBindVertexArray(0);
             lp::gl::Texture::Unbind(0);
+            lp::gl::Texture::Unbind(1);
         }
 
         if(cv_pscene.mLightCount != 0)
