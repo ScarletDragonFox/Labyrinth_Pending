@@ -2,7 +2,9 @@
 
 #include "Labyrinth/engine.hpp"
 
-#include <GLFW/glfw3.h>
+#include <GLFW/glfw3.h> //GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D
+
+#include <iostream> //std::cerr
 
 LP_PRAGMA_DISABLE_ALL_WARNINGS_PUSH();
 #include <glm/gtc/quaternion.hpp> //glm::angleAxis, glm::quat
@@ -17,6 +19,35 @@ namespace
     inline glm::vec3 int_to_glm(btVector3& vec)
     {
         return glm::vec3(vec.getX(), vec.getY(), vec.getZ());
+    }
+
+    /// @brief Fixes nan's & inf's from the given vector
+    ///
+    /// vector will be set to [0, 0, 0] if inf or nan, else nothing happens
+    /// @param cv_vec vector to check
+    inline void glmFixInvalid(glm::dvec3& cv_vec)
+    {
+        const glm::bvec3 why = glm::isnan(cv_vec) || glm::isinf(cv_vec);
+        if(why.x || why.y || why.z){
+            cv_vec = {0.0, 0.0, 0.0};
+        }
+    }
+
+    /// @brief projection with inf zFar + Reversed Z + Right Handed (OpenGL convenction)
+    ///
+    /// Borrowed from glm & modified to add the infinite zFar
+    /// @param fovY_radians Field of View in radians
+    /// @param aspectWbyH Width / Height of the output screen
+    /// @param zNear the near distance (0.1 as default)
+    /// @return the 
+    inline glm::mat4 MakeInfReversedZProjRH(float fovY_radians, float aspectWbyH, float zNear)
+    {
+        const float f = 1.0f / tan(fovY_radians / 2.0f);
+        return glm::mat4(
+            f / aspectWbyH, 0.0f, 0.0f, 0.0f,
+            0.0f, f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, -1.0f,
+            0.0f, 0.0f, zNear, 0.0f);
     }
 }
 
@@ -83,18 +114,17 @@ namespace lp
         ghostObject->setCollisionShape(shape);
         ghostObject->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
 
-        
+        ghostObject->setCcdSweptSphereRadius(10.0);
+        ghostObject->setCcdMotionThreshold(1e-7);
+
+        ghostObject->setFriction(1.5); // set hight friction to stop player from 'sliding' when touching something
 
         // Create the character controller object
         characterController = new btKinematicCharacterController(ghostObject, shape, (btScalar)0.35f, btVector3(0.0, 1.0, 0.0));
         characterController->setLinearDamping(0.3);
         
         characterController->setUseGhostSweepTest(true);
-       // characterController->setGravity(btVector3(0, -9.8, 0));
-        ghostObject->setFriction(0.5);
-        // Set initial position and attach it to the world
-        ghostObject->setWorldTransform(startTransform);
-
+        
         dynamicsWorld->addCollisionObject(this->ghostObject, btBroadphaseProxy::CharacterFilter, btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
         dynamicsWorld->addAction(this->characterController);
     }
@@ -119,18 +149,6 @@ namespace lp
     glm::mat4 Player::getViewMatrix()const
     {
         return (glm::mat4)glm::lookAt(this->mCameraPosition, this->mCameraPosition + this->mVectorFront, this->mVectorUp);
-    }
-
-    namespace{
-        inline glm::mat4 MakeInfReversedZProjRH(float fovY_radians, float aspectWbyH, float zNear)
-        {
-            const float f = 1.0f / tan(fovY_radians / 2.0f);
-            return glm::mat4(
-                f / aspectWbyH, 0.0f, 0.0f, 0.0f,
-                0.0f, f, 0.0f, 0.0f,
-                0.0f, 0.0f, 0.0f, -1.0f,
-                0.0f, 0.0f, zNear, 0.0f);
-        }
     }
 
     glm::mat4 Player::getProjectionMatrix(double width_by_height)const
@@ -208,19 +226,26 @@ namespace lp
 
             if(motionOcurred)
             {
-                //mPosition = glm::normalize(mPositionDelta) * mFreeCamSpeed * deltaTime;
-                glm::dvec3 deltaCalct = glm::normalize(mPositionDelta) * mFreeCamSpeed * deltaTime;
-                {
-                    const glm::bvec3 why = glm::isnan(deltaCalct) || glm::isinf(deltaCalct);
-                    if(why.x || why.y || why.z){
-                        deltaCalct = {0.0, 0.0, 0.0};
-                    }
-                }
-                const glm::dvec3 problemSolver = deltaCalct.x * mVectorFront + deltaCalct.y * mVectorUp + deltaCalct.z * mVectorRight;
-                characterController->setWalkDirection(btVector3(problemSolver.x, problemSolver.y, problemSolver.z));
+                // the mPositionDelta.y * mVectorUp is unneeded here, as mPositionDelta.y is not set, and thus will always be 0.0
+                glm::dvec3 walkDirection = glm::normalize(mPositionDelta.x * mVectorFront + mPositionDelta.y * mVectorUp + mPositionDelta.z * mVectorRight);
+                glmFixInvalid(walkDirection);
+                walkDirection.y = 0.0; //set y to 0 to force player to only move in the xz plane
+
+                const glm::dvec3 walkDirWithSpeed =  glm::normalize(walkDirection) * mFreeCamSpeed * deltaTime;
+
+                characterController->setWalkDirection(btVector3(walkDirWithSpeed.x, walkDirWithSpeed.y, walkDirWithSpeed.z));
             }
 
             mPosition = int_to_glm(ghostObject->getWorldTransform().getOrigin());
+            
+            { //reset position if bullet broke it
+                const glm::bvec3 why = glm::isnan(mPosition) || glm::isinf(mPosition);
+                if(why.x || why.y || why.z){
+                    mPosition = {0.0, 0.0, 0.0};
+                    std::cerr << "ERROR::PLAYER: invalid position detected. Please reset collision.\n";
+                }
+            }
+
             mCameraPosition = mPosition + glm::dvec3(0, 1.5, 0); // Camera above character
         } else
         { //if there is no characterController, fallback to this
@@ -298,17 +323,17 @@ namespace lp
         constexpr glm::dvec3 ConstexprCameraFront = glm::dvec3(0.0f, 0.0f, -1.0f);
         constexpr glm::dvec3 ConstexprCameraRight = glm::dvec3(1.0f, 0.0f, 0.0f);
 
-        glm::dquat qPitch = glm::angleAxis(glm::radians(-this->mOrientation.y), ConstexprCameraRight); //'right'
-        glm::dquat qYaw = glm::angleAxis(glm::radians(this->mOrientation.x), ConstexprCameraUp); //'up'
-        //glm::quat qRoll = glm::angleAxis(0.0f, -ConstexprCameraFront);//this does not work? //'front'
+        const glm::dquat qPitch = glm::angleAxis(glm::radians(-this->mOrientation.y), ConstexprCameraRight); //'right'
+        const glm::dquat qYaw = glm::angleAxis(glm::radians(this->mOrientation.x), ConstexprCameraUp); //'up'
+        //const glm::quat qRoll = glm::angleAxis(0.0f, -ConstexprCameraFront);//this does not work? //'front'
 
-        glm::dquat orient = normalize(qPitch * qYaw);
+        const glm::dquat orient = normalize(qPitch * qYaw);
 
-        glm::highp_dmat4 cast = glm::mat4_cast(orient);
+        const glm::highp_dmat4 cast = glm::mat4_cast(orient);
 
-        glm::dvec3 front = glm::dvec4(ConstexprCameraFront, 1.0) * cast;
-        glm::dvec3 right = glm::dvec4(ConstexprCameraRight, 1.0) * cast;
-        glm::dvec3 up = glm::dvec4(ConstexprCameraUp, 1.0) * cast;
+        const glm::dvec3 front = glm::dvec4(ConstexprCameraFront, 1.0) * cast;
+        const glm::dvec3 right = glm::dvec4(ConstexprCameraRight, 1.0) * cast;
+        const glm::dvec3 up = glm::dvec4(ConstexprCameraUp, 1.0) * cast;
 
         this->mVectorFront = glm::normalize(front);
         this->mVectorRight = glm::normalize(right);
